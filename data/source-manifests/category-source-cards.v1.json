@@ -1,0 +1,83 @@
+{
+  "manifestVersion": "1.0",
+  "createdAt": "2026-07-16",
+  "purpose": "Source-attributed, category-only research coverage for the seven final-demo concern contexts.",
+  "deploymentScope": "research_only_noncommercial",
+  "clinicalReviewStatus": "pending_qualified_review",
+  "routineSelectionAllowed": false,
+  "strictCueEligible": false,
+  "rules": [
+    "Cards are original category-scope metadata, not source passages or treatment summaries.",
+    "Every card remains pending qualified clinical review and cannot enter strict CUE or live synthesis.",
+    "No card may carry ingredient-selection metadata, product matching, dosing, frequency, compatibility, safety, or individual-use claims.",
+    "Non-commercial licences remain isolated in the demo-category-cue-v1 namespace and must not be used for a commercial deployment."
+  ],
+  "sources": [
+    {
+      "documentId": "pmc-pract-india-acne-consensus-2025",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12382837/",
+      "licence": "CC BY",
+      "contexts": ["acne"]
+    },
+    {
+      "documentId": "pmc-dermocosmetics-adherence-2022",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9381271/",
+      "licence": "CC BY",
+      "contexts": ["acne", "barrier", "oil"]
+    },
+    {
+      "documentId": "pmc-acne-prone-dermocosmetics-2025",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12274962/",
+      "licence": "CC BY",
+      "contexts": ["acne", "sensitivity", "oil"]
+    },
+    {
+      "documentId": "pmc-korea-atopic-dermatitis-guideline-2015",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4622891/",
+      "licence": "CC BY-NC",
+      "contexts": ["barrier", "dryness"]
+    },
+    {
+      "documentId": "pmc-pandhi-sensitive-skin-india-2025",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12419229/",
+      "licence": "CC BY",
+      "contexts": ["barrier", "sensitivity"]
+    },
+    {
+      "documentId": "pmc-melasma-systematic-review-2023",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10718129/",
+      "licence": "CC BY-NC-SA",
+      "contexts": ["pigment"]
+    },
+    {
+      "documentId": "pmc-tsai-kang-photoaging-2026",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13243712/",
+      "licence": "CC BY-NC",
+      "contexts": ["pigment", "texture"]
+    },
+    {
+      "documentId": "pmc-skin-quality-consensus-2021",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8214518/",
+      "licence": "CC BY-NC",
+      "contexts": ["pigment", "dryness", "texture"]
+    },
+    {
+      "documentId": "pmc-sunscreen-contact-sensitivity-2024",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11616936/",
+      "licence": "CC BY-NC-SA",
+      "contexts": ["sensitivity"]
+    },
+    {
+      "documentId": "journal-urea-review-2021",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8611129/",
+      "licence": "CC BY-NC",
+      "contexts": ["dryness"]
+    },
+    {
+      "documentId": "journal-kozlowska-niacinamide-sebum-2017",
+      "sourceUrl": "https://www.mdpi.com/2079-9284/4/3/36",
+      "licence": "CC BY 4.0",
+      "contexts": ["oil"]
+    }
+  ]
+}

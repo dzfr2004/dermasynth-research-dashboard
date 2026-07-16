@@ -1,0 +1,621 @@
+{
+  "schemaVersion": "1.0",
+  "suite": "dermasynth-research-atlas-retrieval-evaluation",
+  "fixture": {
+    "path": "data/evaluation/fixtures/retrieval-evaluation.v1.json",
+    "version": "2026-07-16",
+    "sha256": "ee3ecf3d59f36738e66e394f0f74419ccd6945e24baa18d4fdeca333a4532741"
+  },
+  "execution": {
+    "mode": "offline deterministic local BM25 evaluation",
+    "liveProvidersCalled": false,
+    "vectorProviderCalled": false,
+    "retrievalStrategy": "local BM25 over the versioned source-linked ingredient registry"
+  },
+  "summary": {
+    "total": 30,
+    "passed": 30,
+    "failed": 0,
+    "recallAt5": 1,
+    "meanReciprocalRank": 0.9833,
+    "provenanceCoverage": 1,
+    "medianLatencyMs": 0.541
+  },
+  "limitations": [
+    "This deterministic fixture evaluates whether the final-demo research atlas retrieves its expected source-mapped ingredient record. It does not establish clinical relevance, treatment effectiveness, or individual suitability.",
+    "Offline evaluation uses the versioned local registry and BM25 path. The live Pinecone dense-plus-BM25 fusion is demonstrated separately in the application and must be measured against a judged corpus before any production claim.",
+    "CIR and EWG remain source-link metadata; their protected source text is not evaluated as embedded corpus content."
+  ],
+  "cases": [
+    {
+      "id": "rq-01",
+      "concern": "barrier",
+      "query": "niacinamide",
+      "expectedIngredientId": "niacinamide",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 6.209,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "niacinamide",
+        "ceramide-eop",
+        "ceramide-np",
+        "phytosphingosine",
+        "ceramide-ap"
+      ]
+    },
+    {
+      "id": "rq-02",
+      "concern": "barrier",
+      "query": "ceramide NP",
+      "expectedIngredientId": "ceramide-np",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.917,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "ceramide-np",
+        "ceramide-eop",
+        "ceramide-ap",
+        "cholesterol",
+        "glycerin"
+      ]
+    },
+    {
+      "id": "rq-03",
+      "concern": "barrier",
+      "query": "ceramide EOP",
+      "expectedIngredientId": "ceramide-eop",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.866,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "ceramide-eop",
+        "ceramide-np",
+        "ceramide-ap",
+        "cholesterol",
+        "glycerin"
+      ]
+    },
+    {
+      "id": "rq-04",
+      "concern": "barrier",
+      "query": "cholesterol",
+      "expectedIngredientId": "cholesterol",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.828,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "cholesterol",
+        "ceramide-eop",
+        "ceramide-np",
+        "phytosphingosine",
+        "ceramide-ap"
+      ]
+    },
+    {
+      "id": "rq-05",
+      "concern": "barrier",
+      "query": "ceramide 1",
+      "expectedIngredientId": "ceramide-1",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.717,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "ceramide-1",
+        "ceramide-eop",
+        "ceramide-np",
+        "ceramide-ap",
+        "cholesterol"
+      ]
+    },
+    {
+      "id": "rq-06",
+      "concern": "barrier",
+      "query": "ceramide 3",
+      "expectedIngredientId": "ceramide-3",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.675,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "ceramide-3",
+        "ceramide-eop",
+        "ceramide-np",
+        "ceramide-ap",
+        "cholesterol"
+      ]
+    },
+    {
+      "id": "rq-07",
+      "concern": "barrier",
+      "query": "ceramide 6 II",
+      "expectedIngredientId": "ceramide-6-ii",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.625,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "ceramide-6-ii",
+        "ceramide-eop",
+        "ceramide-np",
+        "ceramide-ap",
+        "cholesterol"
+      ]
+    },
+    {
+      "id": "rq-08",
+      "concern": "sensitivity",
+      "query": "panthenol",
+      "expectedIngredientId": "dexpanthenol",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.511,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "dexpanthenol",
+        "glycerin",
+        "allantoin",
+        "asiaticoside",
+        "bisabolol"
+      ]
+    },
+    {
+      "id": "rq-09",
+      "concern": "dryness",
+      "query": "glycerin",
+      "expectedIngredientId": "glycerin",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.604,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "glycerin",
+        "ceramide-eop",
+        "ceramide-np",
+        "allantoin",
+        "beta-glucan"
+      ]
+    },
+    {
+      "id": "rq-10",
+      "concern": "acne",
+      "query": "salicylic acid",
+      "expectedIngredientId": "salicylic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.431,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "salicylic-acid",
+        "azelaic-acid",
+        "niacinamide"
+      ]
+    },
+    {
+      "id": "rq-11",
+      "concern": "dryness",
+      "query": "urea",
+      "expectedIngredientId": "urea",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.635,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "urea",
+        "ceramide-eop",
+        "ceramide-np",
+        "allantoin",
+        "beta-glucan"
+      ]
+    },
+    {
+      "id": "rq-12",
+      "concern": "barrier",
+      "query": "sodium hyaluronate",
+      "expectedIngredientId": "sodium-hyaluronate",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.626,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "sodium-hyaluronate",
+        "ceramide-eop",
+        "ceramide-np",
+        "phytosphingosine",
+        "ceramide-ap"
+      ]
+    },
+    {
+      "id": "rq-13",
+      "concern": "pigment",
+      "query": "ascorbic acid",
+      "expectedIngredientId": "ascorbic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.488,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "ascorbic-acid",
+        "azelaic-acid",
+        "kojic-acid",
+        "tranexamic-acid",
+        "niacinamide"
+      ]
+    },
+    {
+      "id": "rq-14",
+      "concern": "sensitivity",
+      "query": "tocopherol",
+      "expectedIngredientId": "tocopherol",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.471,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "tocopherol",
+        "dexpanthenol",
+        "glycerin",
+        "allantoin",
+        "asiaticoside"
+      ]
+    },
+    {
+      "id": "rq-15",
+      "concern": "acne",
+      "query": "azelaic acid",
+      "expectedIngredientId": "azelaic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.387,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "azelaic-acid",
+        "salicylic-acid",
+        "niacinamide"
+      ]
+    },
+    {
+      "id": "rq-16",
+      "concern": "pigment",
+      "query": "tranexamic acid",
+      "expectedIngredientId": "tranexamic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.567,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "tranexamic-acid",
+        "ascorbic-acid",
+        "azelaic-acid",
+        "kojic-acid",
+        "niacinamide"
+      ]
+    },
+    {
+      "id": "rq-17",
+      "concern": "pigment",
+      "query": "kojic acid",
+      "expectedIngredientId": "kojic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.457,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "kojic-acid",
+        "ascorbic-acid",
+        "azelaic-acid",
+        "tranexamic-acid",
+        "niacinamide"
+      ]
+    },
+    {
+      "id": "rq-18",
+      "concern": "texture",
+      "query": "glycolic acid",
+      "expectedIngredientId": "glycolic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.534,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "glycolic-acid",
+        "lactic-acid",
+        "ascorbic-acid",
+        "citric-acid",
+        "mandelic-acid"
+      ]
+    },
+    {
+      "id": "rq-19",
+      "concern": "texture",
+      "query": "lactic acid",
+      "expectedIngredientId": "lactic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.353,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "lactic-acid",
+        "glycolic-acid",
+        "ascorbic-acid",
+        "citric-acid",
+        "mandelic-acid"
+      ]
+    },
+    {
+      "id": "rq-20",
+      "concern": "barrier",
+      "query": "colloidal oatmeal",
+      "expectedIngredientId": "colloidal-oatmeal",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.717,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "colloidal-oatmeal",
+        "ceramide-eop",
+        "ceramide-np",
+        "phytosphingosine",
+        "ceramide-ap"
+      ]
+    },
+    {
+      "id": "rq-21",
+      "concern": "oil",
+      "query": "oil shine context",
+      "expectedIngredientId": "niacinamide",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.308,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "niacinamide"
+      ]
+    },
+    {
+      "id": "rq-22",
+      "concern": "acne",
+      "query": "acne research azelaic",
+      "expectedIngredientId": "azelaic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.314,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "azelaic-acid",
+        "salicylic-acid",
+        "niacinamide"
+      ]
+    },
+    {
+      "id": "rq-23",
+      "concern": "barrier",
+      "query": "barrier urea",
+      "expectedIngredientId": "urea",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.632,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "urea",
+        "ceramide-eop",
+        "ceramide-np",
+        "phytosphingosine",
+        "ceramide-ap"
+      ]
+    },
+    {
+      "id": "rq-24",
+      "concern": "dryness",
+      "query": "dry feeling glycerin",
+      "expectedIngredientId": "glycerin",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.482,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "glycerin",
+        "dexpanthenol",
+        "ceramide-eop",
+        "ceramide-np",
+        "allantoin"
+      ]
+    },
+    {
+      "id": "rq-25",
+      "concern": "sensitivity",
+      "query": "sensitive colloidal oatmeal",
+      "expectedIngredientId": "colloidal-oatmeal",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.453,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "colloidal-oatmeal",
+        "dexpanthenol",
+        "glycerin",
+        "allantoin",
+        "asiaticoside"
+      ]
+    },
+    {
+      "id": "rq-26",
+      "concern": "pigment",
+      "query": "uneven tone vitamin C",
+      "expectedIngredientId": "ascorbic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.4,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "ascorbic-acid",
+        "tocopherol",
+        "niacinamide",
+        "alpha-arbutin",
+        "azelaic-acid"
+      ]
+    },
+    {
+      "id": "rq-27",
+      "concern": "texture",
+      "query": "texture glycolic",
+      "expectedIngredientId": "glycolic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.466,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "glycolic-acid",
+        "lactic-acid",
+        "ascorbic-acid",
+        "caffeine",
+        "citric-acid"
+      ]
+    },
+    {
+      "id": "rq-28",
+      "concern": "barrier",
+      "query": "ceramide barrier source",
+      "expectedIngredientId": "ceramide-np",
+      "rank": 2,
+      "recallAt5": true,
+      "reciprocalRank": 0.5,
+      "latencyMs": 0.548,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "ceramide-eop",
+        "ceramide-np",
+        "ceramide-ap",
+        "cholesterol",
+        "glycerin"
+      ]
+    },
+    {
+      "id": "rq-29",
+      "concern": "barrier",
+      "query": "hyaluronic barrier",
+      "expectedIngredientId": "sodium-hyaluronate",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.627,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "sodium-hyaluronate",
+        "ceramide-eop",
+        "ceramide-np",
+        "phytosphingosine",
+        "ceramide-ap"
+      ]
+    },
+    {
+      "id": "rq-30",
+      "concern": "texture",
+      "query": "lactic texture source",
+      "expectedIngredientId": "lactic-acid",
+      "rank": 1,
+      "recallAt5": true,
+      "reciprocalRank": 1,
+      "latencyMs": 0.37,
+      "provenanceLinked": true,
+      "retrievalMode": "local-research-registry",
+      "strategy": "local BM25 over the versioned 50-ingredient research registry",
+      "topIngredientIds": [
+        "lactic-acid",
+        "glycolic-acid",
+        "ascorbic-acid",
+        "caffeine",
+        "citric-acid"
+      ]
+    }
+  ]
+}

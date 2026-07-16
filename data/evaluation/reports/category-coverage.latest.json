@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0",
+  "suite": "dermasynth-category-source-coverage",
+  "execution": {
+    "mode": "offline-versioned-source-card-validation",
+    "corpus": "data/evidence/category-source-cards.research.v1.jsonl",
+    "corpusSha256": "1e6d1cc01cc05270bf65c07d9247cbf34a2e6b562a21224347686244005b1a77",
+    "deterministicRunMarker": "2026-07-16-category-coverage-v1"
+  },
+  "summary": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "categorySourceCards": 21,
+    "mappedContexts": 7
+  },
+  "coverage": {
+    "acne": {
+      "cards": 3,
+      "documents": 3
+    },
+    "barrier": {
+      "cards": 3,
+      "documents": 3
+    },
+    "pigment": {
+      "cards": 3,
+      "documents": 3
+    },
+    "sensitivity": {
+      "cards": 3,
+      "documents": 3
+    },
+    "dryness": {
+      "cards": 3,
+      "documents": 3
+    },
+    "oil": {
+      "cards": 3,
+      "documents": 3
+    },
+    "texture": {
+      "cards": 3,
+      "documents": 2
+    }
+  },
+  "results": [
+    {
+      "id": "category-card-schema",
+      "title": "Every category-source card preserves its isolated non-clinical contract",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "category-coverage-acne",
+      "title": "acne has source-mapped coverage across distinct documents",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "category-coverage-barrier",
+      "title": "barrier has source-mapped coverage across distinct documents",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "category-coverage-pigment",
+      "title": "pigment has source-mapped coverage across distinct documents",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "category-coverage-sensitivity",
+      "title": "sensitivity has source-mapped coverage across distinct documents",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "category-coverage-dryness",
+      "title": "dryness has source-mapped coverage across distinct documents",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "category-coverage-oil",
+      "title": "oil has source-mapped coverage across distinct documents",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "category-coverage-texture",
+      "title": "texture has source-mapped coverage across distinct documents",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "strict-cue-separation",
+      "title": "No category-source card can be mistaken for a clinically approved strict-CUE record",
+      "status": "passed",
+      "detail": ""
+    }
+  ],
+  "limitations": [
+    "This validates source-mapped, category-only research coverage; it is not a clinical evidence assessment, a CUE score, or a model-authorisation gate.",
+    "All records remain pending qualified clinical review and are isolated from strict retrieval, live GPT category selection, ingredient activation, and routine selection.",
+    "Non-commercial source cards remain restricted to the final-review demonstrator and require a new rights review before any commercial deployment."
+  ]
+}

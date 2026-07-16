@@ -1,0 +1,813 @@
+{
+  "schemaVersion": "1.0",
+  "suite": "dermasynth-offline-study-evaluation",
+  "fixture": {
+    "path": "data/evaluation/fixtures/study-evaluation.v1.json",
+    "version": "2026-07-16",
+    "sha256": "1354df851ebd11af90ead2453a00f9ef2db73c345143bd1b708d38b1637c478f"
+  },
+  "execution": {
+    "mode": "offline deterministic regression",
+    "liveProvidersCalled": false,
+    "deterministicRunMarker": "dermasynth-offline-study-evaluation:2026-07-16"
+  },
+  "summary": {
+    "total": 92,
+    "passed": 92,
+    "failed": 0,
+    "byCategory": [
+      {
+        "category": "api_contract",
+        "total": 32,
+        "passed": 32,
+        "failed": 0
+      },
+      {
+        "category": "catalogue",
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      {
+        "category": "ingredient_catalog",
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      {
+        "category": "ingredient_knowledge_base",
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      {
+        "category": "output_guardrail",
+        "total": 15,
+        "passed": 15,
+        "failed": 0
+      },
+      {
+        "category": "retrieval_provenance",
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      {
+        "category": "routine_template",
+        "total": 7,
+        "passed": 7,
+        "failed": 0
+      },
+      {
+        "category": "triage",
+        "total": 30,
+        "passed": 30,
+        "failed": 0
+      }
+    ]
+  },
+  "limitations": [
+    "This suite verifies implementation behaviour with synthetic fixtures; it is not clinical validation or a measure of treatment effectiveness.",
+    "The isolated server runs with live services disabled and provider credentials explicitly blank; no live provider calls are made.",
+    "It is not a dermatologist audit, a blinded study, an inter-rater reliability assessment, or a user-acceptance test.",
+    "The retrieval check verifies provenance-field preservation and a deterministic coverage proxy; it does not establish retrieval relevance, faithfulness, or calibration against a judged corpus."
+  ],
+  "cases": [
+    {
+      "id": "catalogue-required-concerns",
+      "category": "catalogue",
+      "title": "All required concern codes are exported by the safety module",
+      "expected": "Includes acne, barrier, pigment, dryness, oil, sensitivity, texture",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "catalogue-profiles",
+      "category": "catalogue",
+      "title": "All fixture profile codes are exported by the safety module",
+      "expected": "Includes dry, combination, oily, sensitive",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-acne",
+      "category": "routine_template",
+      "title": "Generic acne template has a safe research-only routine contract",
+      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-barrier",
+      "category": "routine_template",
+      "title": "Generic barrier template has a safe research-only routine contract",
+      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-dryness",
+      "category": "routine_template",
+      "title": "Generic dryness template has a safe research-only routine contract",
+      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-oil",
+      "category": "routine_template",
+      "title": "Generic oil template has a safe research-only routine contract",
+      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-pigment",
+      "category": "routine_template",
+      "title": "Generic pigment template has a safe research-only routine contract",
+      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-sensitivity",
+      "category": "routine_template",
+      "title": "Generic sensitivity template has a safe research-only routine contract",
+      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-texture",
+      "category": "routine_template",
+      "title": "Generic texture template has a safe research-only routine contract",
+      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-01",
+      "category": "triage",
+      "title": "Triage routes fixture triage-01",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-02",
+      "category": "triage",
+      "title": "Triage routes fixture triage-02",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-03",
+      "category": "triage",
+      "title": "Triage routes fixture triage-03",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-04",
+      "category": "triage",
+      "title": "Triage routes fixture triage-04",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-05",
+      "category": "triage",
+      "title": "Triage routes fixture triage-05",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-06",
+      "category": "triage",
+      "title": "Triage routes fixture triage-06",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-07",
+      "category": "triage",
+      "title": "Triage routes fixture triage-07",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-08",
+      "category": "triage",
+      "title": "Triage routes fixture triage-08",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-09",
+      "category": "triage",
+      "title": "Triage routes fixture triage-09",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-10",
+      "category": "triage",
+      "title": "Triage routes fixture triage-10",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-11",
+      "category": "triage",
+      "title": "Triage routes fixture triage-11",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-12",
+      "category": "triage",
+      "title": "Triage routes fixture triage-12",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-13",
+      "category": "triage",
+      "title": "Triage routes fixture triage-13",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-14",
+      "category": "triage",
+      "title": "Triage routes fixture triage-14",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-15",
+      "category": "triage",
+      "title": "Triage routes fixture triage-15",
+      "expected": "medical_redirect",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-16",
+      "category": "triage",
+      "title": "Triage routes fixture triage-16",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-17",
+      "category": "triage",
+      "title": "Triage routes fixture triage-17",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-18",
+      "category": "triage",
+      "title": "Triage routes fixture triage-18",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-19",
+      "category": "triage",
+      "title": "Triage routes fixture triage-19",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-20",
+      "category": "triage",
+      "title": "Triage routes fixture triage-20",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-21",
+      "category": "triage",
+      "title": "Triage routes fixture triage-21",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-22",
+      "category": "triage",
+      "title": "Triage routes fixture triage-22",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-23",
+      "category": "triage",
+      "title": "Triage routes fixture triage-23",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-24",
+      "category": "triage",
+      "title": "Triage routes fixture triage-24",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-25",
+      "category": "triage",
+      "title": "Triage routes fixture triage-25",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-26",
+      "category": "triage",
+      "title": "Triage routes fixture triage-26",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-27",
+      "category": "triage",
+      "title": "Triage routes fixture triage-27",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-28",
+      "category": "triage",
+      "title": "Triage routes fixture triage-28",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-29",
+      "category": "triage",
+      "title": "Triage routes fixture triage-29",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "triage-30",
+      "category": "triage",
+      "title": "Triage routes fixture triage-30",
+      "expected": "cleared",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-01",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-02",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-03",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-04",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-05",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-06",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-07",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-08",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-09",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-10",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-11",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks restricted medical",
+      "expected": "review_required with a restricted medical flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-12",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks incompatible active pair",
+      "expected": "review_required with a incompatible active pair flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-13",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks incompatible active pair",
+      "expected": "review_required with a incompatible active pair flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-14",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks High-UV context",
+      "expected": "review_required with a High-UV context flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "guardrail-15",
+      "category": "output_guardrail",
+      "title": "Second safety pass blocks Barrier preview",
+      "expected": "review_required with a Barrier preview flag",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "retrieval-seed-disabled",
+      "category": "retrieval_provenance",
+      "title": "Disabled retrieval returns a labelled seed response",
+      "expected": "seed mode, zero score and evidence, no live provider call",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "retrieval-citation-contract",
+      "category": "retrieval_provenance",
+      "title": "Mocked retrieval preserves usable source, citation, locator, tier, and jurisdiction fields",
+      "expected": "three eligible evidence notes across two documents; CUE coverage proxy 1.00; unsafe URL omitted",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "retrieval-unqualified-approval-hold",
+      "category": "retrieval_provenance",
+      "title": "User-confirmed or anonymous approval cannot satisfy the strict category gate",
+      "expected": "unqualified approval remains visible but all affected records are withheld from strict CUE and live synthesis",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "retrieval-ingredient-activation-hold",
+      "category": "ingredient_knowledge_base",
+      "title": "Ingredient-tagged evidence cannot satisfy the generic category gate before explicit activation",
+      "expected": "the tagged source remains visible for audit, is excluded from eligibility, and prevents the CUE gate from passing",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-isolated-server-start",
+      "category": "api_contract",
+      "title": "An isolated offline server starts with provider credentials blank",
+      "expected": "server listens in demo mode without contacting providers",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-ingredients-audit-catalog",
+      "category": "ingredient_catalog",
+      "title": "Ingredient endpoint exposes only held, product-specific research candidates",
+      "expected": "versioned category-only audit catalog with four non-selectable candidates linked to the product-specific sponsored evidence record",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-ingredient-knowledge-review-queue",
+      "category": "ingredient_knowledge_base",
+      "title": "Ingredient knowledge endpoint preserves research-only CIR, EWG, and journal boundaries",
+      "expected": "held named ingredients and source metadata are available for audit, while routine selection and Pinecone upload remain blocked",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-acne",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/acne",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-barrier",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/barrier",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-dryness",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/dryness",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-oil",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/oil",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-pigment",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/pigment",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-sensitivity",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/sensitivity",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-texture",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/texture",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-acne",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/acne",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-barrier",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/barrier",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-dryness",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/dryness",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-oil",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/oil",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-pigment",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/pigment",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-sensitivity",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/sensitivity",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-texture",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/texture",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-acne",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/acne",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-barrier",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/barrier",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-dryness",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/dryness",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-oil",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/oil",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-pigment",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/pigment",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-sensitivity",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/sensitivity",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-texture",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/texture",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-acne",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/acne",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-barrier",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/barrier",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-dryness",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/dryness",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-oil",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/oil",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-pigment",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/pigment",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-sensitivity",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/sensitivity",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-texture",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/texture",
+      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-triage-medical-redirect",
+      "category": "api_contract",
+      "title": "Routine endpoint stops before environment, retrieval, and synthesis for a triage redirect",
+      "expected": "HTTP 200 medical_redirect with no routine or evidence",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-invalid-profile-and-concern",
+      "category": "api_contract",
+      "title": "Routine endpoint rejects unsupported profile and concern codes",
+      "expected": "HTTP 400 for unsupported profile and concern",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-invalid-location",
+      "category": "api_contract",
+      "title": "Routine endpoint rejects out-of-range selected coordinates",
+      "expected": "HTTP 400 before any environment request",
+      "status": "passed",
+      "detail": ""
+    }
+  ]
+}

@@ -1,0 +1,369 @@
+{
+  "schemaVersion": "1.0",
+  "suite": "dermasynth-50-case-safety-evaluation",
+  "execution": {
+    "mode": "offline deterministic safety regression",
+    "liveProvidersCalled": false
+  },
+  "summary": {
+    "total": 50,
+    "passed": 50,
+    "failed": 0
+  },
+  "limitations": [
+    "This 50-case suite checks software guardrail behaviour and does not establish clinical safety, treatment effectiveness, or real-world outcomes.",
+    "Named ingredients remain research-atlas records and are intentionally not rendered as AM/PM routine steps in the non-clinical demonstrator."
+  ],
+  "cases": [
+    {
+      "id": "safety-01",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: facial swelling after a product",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-02",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: lip swelling",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-03",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: eye swelling",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-04",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: difficulty breathing",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-05",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: shortness of breath",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-06",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: rapidly spreading redness",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-07",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: spreading rapidly",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-08",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: blistering on my cheek",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-09",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: blisters on my cheek",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-10",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: severe pain",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-11",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: a changing mole",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-12",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: skin cancer concern",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-13",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: open wound",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-14",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: pus on the skin",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-15",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: fever with rash",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-16",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: infected skin",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-17",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: burning after a product",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-18",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: persistent worsening",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-19",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: scarring",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-20",
+      "category": "triage_redirect",
+      "title": "Routes urgent or clinical symptom: widespread rash",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-21",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: I want a category-only research preview.",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-22",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: Show source-linked routine categories.",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-23",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: I want to compare environmental context.",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-24",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: What research context fits dry feeling?",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-25",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: Show the knowledge atlas.",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-26",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: Please explain the CUE trace.",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-27",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: I want a non-clinical demo.",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-28",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: Show UV and humidity inputs.",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-29",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: Can I export the research report?",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-30",
+      "category": "triage_clear",
+      "title": "Permits non-clinical input: I want to inspect source metadata.",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-31",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: isotretinoin",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-32",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: tretinoin",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-33",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: adapalene",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-34",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: prescription",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-35",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: topical steroid",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-36",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: diagnosis",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-37",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: cure",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-38",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: guarantee",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-39",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: treat acne",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-40",
+      "category": "restricted_output",
+      "title": "Blocks restricted output term: treat eczema",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-41",
+      "category": "ingredient_contract",
+      "title": "Blocks named ingredient in routine text: niacinamide",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-42",
+      "category": "ingredient_contract",
+      "title": "Blocks named ingredient in routine text: sodium hyaluronate",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-43",
+      "category": "ingredient_contract",
+      "title": "Blocks named ingredient in routine text: tranexamic acid",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-44",
+      "category": "ingredient_contract",
+      "title": "Blocks named ingredient in routine text: glycolic acid",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-45",
+      "category": "ingredient_contract",
+      "title": "Blocks named ingredient in routine text: colloidal oatmeal",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-46",
+      "category": "incompatible_pair",
+      "title": "Blocks benzoyl peroxide and retinol in either order",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-47",
+      "category": "high_uv",
+      "title": "Requires a photoprotection category at high UV",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-48",
+      "category": "barrier_guardrail",
+      "title": "Excludes exfoliation wording from barrier context",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-49",
+      "category": "first_pass",
+      "title": "Adds high-UV and barrier checks when applicable",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "safety-50",
+      "category": "valid_template",
+      "title": "Allows the canonical category-only high-UV template",
+      "status": "passed",
+      "detail": ""
+    }
+  ]
+}

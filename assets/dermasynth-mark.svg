@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">DermaSynth mark</title>
+  <desc id="desc">An abstract droplet, leaf, and molecular node symbol.</desc>
+  <defs>
+    <linearGradient id="ground" x1="18" y1="12" x2="144" y2="151" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B4F49"/>
+      <stop offset="1" stop-color="#082F31"/>
+    </linearGradient>
+    <linearGradient id="drop" x1="51" y1="35" x2="109" y2="121" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D5FFF2"/>
+      <stop offset=".54" stop-color="#81E0C9"/>
+      <stop offset="1" stop-color="#37A998"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="45" y1="113" x2="119" y2="47" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5DE5CA"/>
+      <stop offset="1" stop-color="#E1FFF6"/>
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="78" fill="url(#ground)"/>
+  <circle cx="80" cy="80" r="65" fill="none" stroke="#B8F7E6" stroke-opacity=".18"/>
+  <path d="M79.5 29C68.8 47.2 46 66.6 46 90.2c0 19.3 15.2 34.9 34 34.9s34-15.6 34-34.9C114 66.6 91.2 47.2 79.5 29Z" fill="url(#drop)"/>
+  <path d="M65.5 102.6c14.7-2.8 28.9-15.7 34.6-34.2-15.2 2.1-29.2 15.9-34.6 34.2Z" fill="#0E7067" fill-opacity=".74"/>
+  <path d="M60 108c16-5.5 32-21.1 41.1-43.7" fill="none" stroke="url(#leaf)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M69.1 93.3 87 95.7M77.7 81.1l13.3 2.1" fill="none" stroke="#DBFFF5" stroke-opacity=".82" stroke-width="2.5" stroke-linecap="round"/>
+  <g stroke="#C7FFF0" stroke-opacity=".8" stroke-width="2">
+    <path d="M108.5 50.8 123.8 42M108.5 50.8l14.8 10.8M108.5 50.8l-3.4-16.1"/>
+  </g>
+  <g fill="#FFCA82">
+    <circle cx="126" cy="40.6" r="4.4"/>
+    <circle cx="126" cy="63.7" r="4.4"/>
+    <circle cx="103.9" cy="31.8" r="3.8"/>
+  </g>
+  <circle cx="80" cy="80" r="52" fill="none" stroke="#E6FFF8" stroke-opacity=".1" stroke-width="2" filter="url(#softGlow)"/>
+</svg>

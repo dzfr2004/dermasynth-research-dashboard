@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "1.0",
+  "catalogVersion": "1.0.0",
+  "createdAt": "2026-07-16",
+  "catalogStatus": "audit_only",
+  "outputMode": "category_only",
+  "routineSelectionAllowed": false,
+  "scope": "This is a provenance and research-audit catalogue. A named entry is not a recommendation, routine step, product match, dose, frequency, suitability decision, or treatment claim.",
+  "selectionPolicy": {
+    "status": "blocked",
+    "rationale": "The only linked evidence evaluates a product-specific, multi-ingredient cream-plus-cleanser regimen. It cannot attribute outcomes or safety to any one listed ingredient or authorize named-ingredient routine selection."
+  },
+  "limitations": [
+    "The linked study evaluated a combined tested regimen, not any ingredient alone or a generic product containing one of these names.",
+    "The study involved 100 adults with clinician-diagnosed moderate eczema at one Australian centre; it does not establish results for other concerns, locations, ages, or consumer self-selection.",
+    "The intervention lasted 28 days, so it does not establish long-term or universal safety.",
+    "The study excluded people with known reactions to the tested moisturizer or its components; a short trial does not establish individual tolerance.",
+    "Six study authors were employees of the manufacturer or sponsor, so the conflict disclosure remains attached to every candidate.",
+    "The reported between-group EASI difference was not significant; the catalogue must not be used to claim that the listed ingredients treat eczema or improve disease severity."
+  ],
+  "evidenceRecords": [
+    {
+      "id": "pmc-spada-ceramide-barrier-rct-2021",
+      "title": "A daily regimen of a ceramide-dominant moisturizing cream and cleanser restores the skin permeability barrier in adults with moderate eczema: A randomized trial",
+      "source": "Spada et al. / Dermatologic Therapy",
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8459234/",
+      "citation": "Spada F et al. A daily regimen of a ceramide-dominant moisturizing cream and cleanser restores the skin permeability barrier in adults with moderate eczema: A randomized trial. Dermatologic Therapy. 2021. doi:10.1111/dth.14970.",
+      "evidenceTier": "randomized-controlled-trial",
+      "documentType": "randomized-controlled-trial",
+      "publishedYear": 2021,
+      "studyDesign": "28-day randomized, double-blind, placebo-controlled trial",
+      "populationScope": "100 adults with clinician-diagnosed moderate eczema at one Australian centre",
+      "interventionScope": "A specific active cream-plus-cleanser regimen; this catalogue does not identify or recommend a product.",
+      "sourceRecordIds": [
+        "pmc-spada-ceramide-barrier-rct-2021#chunk-0001",
+        "pmc-spada-ceramide-barrier-rct-2021#chunk-0002",
+        "pmc-spada-ceramide-barrier-rct-2021#chunk-0003"
+      ],
+      "productSpecific": true,
+      "industrySponsored": true,
+      "conflictFlag": true,
+      "conflictDisclosure": "Six authors were employees of the manufacturer or sponsor.",
+      "outcomeContext": [
+        "The combined active regimen showed greater improvement than placebo in transepidermal water loss and skin-hydration measures.",
+        "The between-group difference in EASI was not significant.",
+        "A small share of the active group reported treatment-related stinging or pain; this is not proof of universal safety."
+      ],
+      "limitations": [
+        "Product-specific, multi-ingredient regimen; effects cannot be attributed to a single ingredient.",
+        "Short, single-centre adult moderate-eczema study; it is not a generic barrier-care or consumer-routine trial.",
+        "Known moisturizer/component reactions were an exclusion criterion, and sponsor employment conflicts were recorded."
+      ]
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "ceramide-np",
+      "displayName": "Ceramide NP",
+      "concernContexts": ["barrier"],
+      "status": "held_audit_only",
+      "routineSelectionAllowed": false,
+      "evidenceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021"],
+      "sourceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021#chunk-0001"],
+      "researchContext": "Listed as a component name recorded for the tested product-specific regimen only.",
+      "selectionBlockedReasons": [
+        "product-specific-regimen",
+        "multi-ingredient-intervention",
+        "no-single-ingredient-effect-estimate",
+        "no-qualified-clinical-selection-approval-recorded"
+      ]
+    },
+    {
+      "id": "ceramide-eop",
+      "displayName": "Ceramide EOP",
+      "concernContexts": ["barrier"],
+      "status": "held_audit_only",
+      "routineSelectionAllowed": false,
+      "evidenceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021"],
+      "sourceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021#chunk-0001"],
+      "researchContext": "Listed as a component name recorded for the tested product-specific regimen only.",
+      "selectionBlockedReasons": [
+        "product-specific-regimen",
+        "multi-ingredient-intervention",
+        "no-single-ingredient-effect-estimate",
+        "no-qualified-clinical-selection-approval-recorded"
+      ]
+    },
+    {
+      "id": "cholesterol",
+      "displayName": "cholesterol",
+      "concernContexts": ["barrier"],
+      "status": "held_audit_only",
+      "routineSelectionAllowed": false,
+      "evidenceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021"],
+      "sourceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021#chunk-0001"],
+      "researchContext": "Listed as a component name recorded for the tested product-specific regimen only.",
+      "selectionBlockedReasons": [
+        "product-specific-regimen",
+        "multi-ingredient-intervention",
+        "no-single-ingredient-effect-estimate",
+        "no-qualified-clinical-selection-approval-recorded"
+      ]
+    },
+    {
+      "id": "niacinamide",
+      "displayName": "niacinamide",
+      "concernContexts": ["barrier"],
+      "status": "held_audit_only",
+      "routineSelectionAllowed": false,
+      "evidenceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021"],
+      "sourceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021#chunk-0001"],
+      "researchContext": "Listed as a component name recorded for the tested product-specific regimen only.",
+      "selectionBlockedReasons": [
+        "product-specific-regimen",
+        "multi-ingredient-intervention",
+        "no-single-ingredient-effect-estimate",
+        "no-qualified-clinical-selection-approval-recorded"
+      ]
+    }
+  ]
+}

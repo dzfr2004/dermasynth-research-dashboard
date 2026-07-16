@@ -1,0 +1,12 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+*.log
+.idea/
+tmp/
+work/
+outputs/
+data/reviewer-queue/*.local.json
+data/reviewer-queue/*.tmp

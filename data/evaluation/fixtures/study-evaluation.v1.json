@@ -1,0 +1,200 @@
+{
+  "schemaVersion": "1.0",
+  "suiteId": "dermasynth-offline-study-evaluation",
+  "fixtureVersion": "2026-07-16",
+  "requiredConcernCodes": [
+    "acne",
+    "barrier",
+    "pigment",
+    "dryness",
+    "oil",
+    "sensitivity",
+    "texture"
+  ],
+  "profiles": [
+    "dry",
+    "combination",
+    "oily",
+    "sensitive"
+  ],
+  "routineContract": {
+    "minimumSteps": 3,
+    "maximumSteps": 5,
+    "testLocation": {
+      "name": "Evaluation Harbour, MY",
+      "lat": 3.139,
+      "lon": 101.6869
+    },
+    "restrictedContentPattern": "\\b(isotretinoin|tretinoin|adapalene|prescription|topical steroid|corticosteroid|clindamycin|antibiotic(?:s)?|diagnos(?:e|is|tic)|cure|guarantee)\\b"
+  },
+  "ingredientResearch": {
+    "schemaVersion": "1.0",
+    "catalogVersion": "1.0.0",
+    "outputMode": "category_only",
+    "catalogStatus": "audit_only",
+    "routineSelectionAllowed": false,
+    "evidenceRecords": [
+      {
+        "id": "pmc-spada-ceramide-barrier-rct-2021",
+        "productSpecific": true,
+        "industrySponsored": true,
+        "requiredLimitationFragments": [
+          "product-specific",
+          "sponsor"
+        ]
+      }
+    ],
+    "candidates": [
+      {
+        "id": "ceramide-np",
+        "displayName": "Ceramide NP",
+        "concernContexts": ["barrier"],
+        "status": "held_audit_only",
+        "evidenceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021"],
+        "routineSelectionAllowed": false,
+        "requiredBlockedReasonFragments": ["product-specific"]
+      },
+      {
+        "id": "ceramide-eop",
+        "displayName": "Ceramide EOP",
+        "concernContexts": ["barrier"],
+        "status": "held_audit_only",
+        "evidenceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021"],
+        "routineSelectionAllowed": false,
+        "requiredBlockedReasonFragments": ["product-specific"]
+      },
+      {
+        "id": "cholesterol",
+        "displayName": "cholesterol",
+        "concernContexts": ["barrier"],
+        "status": "held_audit_only",
+        "evidenceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021"],
+        "routineSelectionAllowed": false,
+        "requiredBlockedReasonFragments": ["product-specific"]
+      },
+      {
+        "id": "niacinamide",
+        "displayName": "niacinamide",
+        "concernContexts": ["barrier"],
+        "status": "held_audit_only",
+        "evidenceRecordIds": ["pmc-spada-ceramide-barrier-rct-2021"],
+        "routineSelectionAllowed": false,
+        "requiredBlockedReasonFragments": ["product-specific"]
+      }
+    ]
+  },
+  "triageCases": [
+    { "id": "triage-01", "input": "I have facial swelling after a product.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-02", "input": "My lip swelling is getting worse.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-03", "input": "There is eye swelling after use.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-04", "input": "I have difficulty breathing.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-05", "input": "I have shortness of breath.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-06", "input": "There is rapidly spreading redness.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-07", "input": "The redness is spreading rapidly.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-08", "input": "I have blistering on my cheek.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-09", "input": "There are blisters on my cheek.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-10", "input": "I have severe pain.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-11", "input": "I am concerned about a changing mole.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-12", "input": "There is pus in the affected area.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-13", "input": "I have a fever with this skin concern.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-14", "input": "The area may be infected.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-15", "input": "I am worried this could be skin cancer.", "expectedStatus": "medical_redirect" },
+    { "id": "triage-16", "input": "I would like a research preview.", "expectedStatus": "cleared" },
+    { "id": "triage-17", "input": "I am comparing category labels.", "expectedStatus": "cleared" },
+    { "id": "triage-18", "input": "Please show the evidence context.", "expectedStatus": "cleared" },
+    { "id": "triage-19", "input": "I want to change the selected location.", "expectedStatus": "cleared" },
+    { "id": "triage-20", "input": "I want a category-only routine preview.", "expectedStatus": "cleared" },
+    { "id": "triage-21", "input": "I am exploring an environment-aware dashboard demonstration.", "expectedStatus": "cleared" },
+    { "id": "triage-22", "input": "I want a non-prescriptive explanation.", "expectedStatus": "cleared" },
+    { "id": "triage-23", "input": "Please show the safety-gate summary.", "expectedStatus": "cleared" },
+    { "id": "triage-24", "input": "I am testing the profile selector.", "expectedStatus": "cleared" },
+    { "id": "triage-25", "input": "I want to inspect retrieval citations.", "expectedStatus": "cleared" },
+    { "id": "triage-26", "input": "Can I export a research run record?", "expectedStatus": "cleared" },
+    { "id": "triage-27", "input": "I want to test a high UV display.", "expectedStatus": "cleared" },
+    { "id": "triage-28", "input": "I want to inspect the CUE gate.", "expectedStatus": "cleared" },
+    { "id": "triage-29", "input": "Please show a generic preview.", "expectedStatus": "cleared" },
+    { "id": "triage-30", "input": "I am evaluating the interface.", "expectedStatus": "cleared" }
+  ],
+  "adversarialRoutineCases": [
+    { "id": "guardrail-01", "text": "This preview includes isotretinoin.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-02", "text": "This preview includes tretinoin.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-03", "text": "This preview includes adapalene.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-04", "text": "This is a prescription plan.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-05", "text": "This preview mentions a topical steroid.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-06", "text": "This preview mentions a corticosteroid.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-07", "text": "This preview mentions clindamycin.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-08", "text": "This preview mentions antibiotics.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-09", "text": "This preview makes a diagnosis.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-10", "text": "This preview says it can cure a concern.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-11", "text": "This preview offers a guarantee.", "context": {}, "expectedFlag": "restricted medical" },
+    { "id": "guardrail-12", "text": "Use benzoyl peroxide, then retinol.", "context": {}, "expectedFlag": "incompatible active pair" },
+    { "id": "guardrail-13", "text": "Benzoyl peroxide context context context context context context context context context context retinol.", "context": {}, "expectedFlag": "incompatible active pair" },
+    { "id": "guardrail-14", "text": "Gentle cleansing category only.", "context": { "concern": "acne", "uvi": 8 }, "expectedFlag": "High-UV context" },
+    { "id": "guardrail-15", "text": "Use an exfoliation category.", "context": { "concern": "barrier", "uvi": 2 }, "expectedFlag": "Barrier preview" }
+  ],
+  "retrievalFixture": {
+    "indexName": "offline-study-fixture-index",
+    "namespace": "__offline_evaluation__",
+    "descriptor": {
+      "host": "offline-study-fixture-index.pinecone.invalid",
+      "status": { "ready": true },
+      "embed": { "field_map": { "text": "chunk_text" } }
+    },
+    "hits": [
+      {
+        "_id": "fixture-acne-01",
+        "_score": 0.94,
+        "fields": {
+          "chunk_text": "Fixture excerpt one: category-level research context only.",
+          "title": "Fixture source one",
+          "source": "Offline evidence fixture",
+          "document_id": "fixture-doc-a",
+          "source_url": "https://example.org/fixture-a",
+          "source_locator": "Section A",
+          "citation_text": "Fixture Author. Fixture source one. 2026.",
+          "evidence_tier": "fixture-tier",
+          "jurisdiction": "Fixture jurisdiction",
+          "clinical_review_status": "approved: qualified-reviewer fixture; synthetic evaluation only",
+          "claim_category": "acne-appearance-context",
+          "env_tags": ["uv"]
+        }
+      },
+      {
+        "_id": "fixture-acne-02",
+        "_score": 0.9,
+        "fields": {
+          "chunk_text": "Fixture excerpt two: a qualifier belongs with the source record.",
+          "title": "Fixture source one",
+          "source": "Offline evidence fixture",
+          "document_id": "fixture-doc-a",
+          "source_url": "https://example.org/fixture-a",
+          "source_locator": "Section B",
+          "citation_text": "Fixture Author. Fixture source one. 2026.",
+          "evidence_tier": "fixture-tier",
+          "jurisdiction": "Fixture jurisdiction",
+          "clinical_review_status": "approved: qualified-reviewer fixture; synthetic evaluation only",
+          "claim_category": "acne-appearance-context",
+          "env_tags": []
+        }
+      },
+      {
+        "_id": "fixture-barrier-01",
+        "_score": 0.88,
+        "fields": {
+          "chunk_text": "Fixture excerpt three: provenance remains visible without making a clinical claim.",
+          "title": "Fixture source two",
+          "source": "Offline evidence fixture",
+          "document_id": "fixture-doc-b",
+          "source_url": "javascript:alert(1)",
+          "source_locator": "Section C",
+          "citation_text": "Fixture Author. Fixture source two. 2026.",
+          "evidence_tier": "fixture-tier",
+          "jurisdiction": "Fixture jurisdiction",
+          "clinical_review_status": "approved: qualified-reviewer fixture; synthetic evaluation only",
+          "claim_category": "environmental-exposure-context",
+          "env_tags": ["uv"]
+        }
+      }
+    ]
+  }
+}

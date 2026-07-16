@@ -1,0 +1,1223 @@
+{
+  "schemaVersion": "1.0",
+  "extensionVersion": "0.3.0-atlas-50",
+  "baseKnowledgeBaseVersion": "0.1.0",
+  "deploymentScope": "research_only_noncommercial",
+  "purpose": "This staged 30-ingredient expansion brings the final-review research Atlas to 50 held records. It preserves original citation metadata, source links, review-pending status, and activation blockers; it is not a vector upload, an ingredient selector, or an individual-use system.",
+  "sourceRecords": [
+    {
+      "id": "journal-retinoids-topical-review-2022",
+      "sourceFamily": "medical_journal",
+      "sourceType": "focused-clinical-evidence-review",
+      "title": "Use of Retinoids in Topical Antiaging Treatments: A Focused Review of Clinical Evidence for Conventional and Nanoformulations.",
+      "publisher": "Advances in Therapy",
+      "publishedYear": 2022,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9618501/",
+      "doiOrPmid": "doi:10.1007/s12325-022-02319-7; PMID:36220974; PMCID:PMC9618501",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "retinol",
+        "retinal",
+        "retinyl-palmitate"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-arbutin-review-2021",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "Arbutin as a Skin Depigmenting Agent with Antimelanogenic and Antioxidant Properties.",
+      "publisher": "Antioxidants (Basel)",
+      "publishedYear": 2021,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8301119/",
+      "doiOrPmid": "doi:10.3390/antiox10071129; PMID:34356362; PMCID:PMC8301119",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "alpha-arbutin"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-ectoine-systematic-review-2022",
+      "sourceFamily": "medical_journal",
+      "sourceType": "systematic-review",
+      "title": "Topical Ectoine Application in Children and Adults to Treat Inflammatory Diseases Associated with an Impaired Skin Barrier: A Systematic Review.",
+      "publisher": "Dermatology and Therapy",
+      "publishedYear": 2022,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8850511/",
+      "doiOrPmid": "doi:10.1007/s13555-021-00676-9; PMID:35038127; PMCID:PMC8850511",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "ectoin"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-beta-glucans-review-2018",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "β-Glucans: Multi-Functional Modulator of Wound Healing.",
+      "publisher": "Molecules",
+      "publishedYear": 2018,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6017669/",
+      "doiOrPmid": "doi:10.3390/molecules23040806; PMID:29614757; PMCID:PMC6017669",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "beta-glucan"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-centella-cosmetology-review-2013",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "Centella asiatica in cosmetology.",
+      "publisher": "Postępy Dermatologii i Alergologii",
+      "publishedYear": 2013,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3834700/",
+      "doiOrPmid": "doi:10.5114/pdia.2013.33378; PMID:24278045; PMCID:PMC3834700",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "centella-asiatica-extract",
+        "madecassoside",
+        "asiaticoside"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-squalene-cosmetic-dermatology-review-2009",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "Biological and pharmacological activities of squalene and related compounds: potential uses in cosmetic dermatology.",
+      "publisher": "Molecules",
+      "publishedYear": 2009,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6253993/",
+      "doiOrPmid": "doi:10.3390/molecules14010540; PMID:19169201; PMCID:PMC6253993",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "squalane"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "The source names squalene and related compounds; a curator must confirm squalane normalization. The proposal retains citation metadata only.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-cosmetic-moisturizer-vehicles-review-2021",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "Vehicles for Drug Delivery and Cosmetic Moisturizers: Review and Comparison.",
+      "publisher": "Pharmaceutics",
+      "publishedYear": 2021,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8703425/",
+      "doiOrPmid": "doi:10.3390/pharmaceutics13122012; PMID:34959294; PMCID:PMC8703425",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "dimethicone",
+        "petrolatum",
+        "mineral-oil",
+        "propylene-glycol",
+        "lanolin",
+        "caprylic-capric-triglyceride"
+      ],
+      "evidenceRole": "formulation_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains a citation locator for formulation-context review only; it does not copy a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "Formulation and vehicle discussion does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-popular-cosmeceuticals-review-2024",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "Overview of popular cosmeceuticals in dermatology.",
+      "publisher": "Skin Health and Disease",
+      "publishedYear": 2024,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10988741/",
+      "doiOrPmid": "doi:10.1002/ski2.340; PMID:38577050; PMCID:PMC10988741",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "allantoin"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-bisabolol-piroctone-formulation-study-2015",
+      "sourceFamily": "medical_journal",
+      "sourceType": "intra-subject-formulation-study",
+      "title": "Evaluation of a Topical Anti-inflammatory/Antifungal Combination Cream in Mild-to-moderate Facial Seborrheic Dermatitis: An Intra-subject Controlled Trial Examining Treated vs. Untreated Skin Utilizing Clinical Features and Erythema-directed Digital Photography.",
+      "publisher": "Journal of Clinical and Aesthetic Dermatology",
+      "publishedYear": 2015,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4587893/",
+      "doiOrPmid": "PMID:26430489; PMCID:PMC4587893",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "bisabolol",
+        "piroctone-olamine"
+      ],
+      "evidenceRole": "multi_ingredient_formulation_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "The proposal records a multi-ingredient formulation citation only. It does not attribute any source outcome or tolerance observation to a component.",
+      "claimBoundary": "A multi-ingredient formulation source does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim for either component."
+    },
+    {
+      "id": "journal-sunscreens-photoaging-review-2021",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "Sunscreens and Photoaging: A Review of Current Literature.",
+      "publisher": "American Journal of Clinical Dermatology",
+      "publishedYear": 2021,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8361399/",
+      "doiOrPmid": "doi:10.1007/s40257-021-00632-5; PMID:34387824; PMCID:PMC8361399",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "zinc-oxide",
+        "titanium-dioxide"
+      ],
+      "evidenceRole": "regulatory_and_formulation_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it makes no jurisdictional, product, or individual-use determination.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, filter coverage, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-hydroxy-acids-review-2010",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "Applications of hydroxy acids: classification, mechanisms, and photoactivity.",
+      "publisher": "Clinical, Cosmetic and Investigational Dermatology",
+      "publishedYear": 2010,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3047947/",
+      "doiOrPmid": "doi:10.2147/CCID.S9042; PMID:21437068; PMCID:PMC3047947",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "gluconolactone",
+        "mandelic-acid",
+        "citric-acid"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, pairing, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-skin-barrier-lipids-review-2023",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "The skin barrier: An extraordinary interface with an exceptional lipid organization.",
+      "publisher": "Progress in Lipid Research",
+      "publishedYear": 2023,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10841493/",
+      "doiOrPmid": "doi:10.1016/j.plipres.2023.101252; PMID:37666282; PMCID:PMC10841493",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "linoleic-acid",
+        "phytosphingosine",
+        "ceramide-ap"
+      ],
+      "evidenceRole": "biological_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains a citation locator for ingredient-normalization and biological-context review only; it does not copy source text or embed a source-derived conclusion.",
+      "claimBoundary": "Biological context does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-herbal-dermatology-review-2020",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "New Herbal Biomedicines for the Topical Treatment of Dermatological Disorders.",
+      "publisher": "Biomedicines",
+      "publishedYear": 2020,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7168306/",
+      "doiOrPmid": "doi:10.3390/biomedicines8020027; PMID:32046246; PMCID:PMC7168306",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "licorice-root-extract"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-caffeine-human-skin-permeation-2009",
+      "sourceFamily": "medical_journal",
+      "sourceType": "human-in-vivo-and-in-vitro-permeation-study",
+      "title": "Permeation of topically applied caffeine through human skin--a comparison of in vivo and in vitro data.",
+      "publisher": "British Journal of Clinical Pharmacology",
+      "publishedYear": 2009,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC2767280/",
+      "doiOrPmid": "doi:10.1111/j.1365-2125.2009.03463.x; PMID:19694736; PMCID:PMC2767280",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "caffeine"
+      ],
+      "evidenceRole": "formulation_and_permeation_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "Permeation context does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    },
+    {
+      "id": "journal-resveratrol-skin-review-2021",
+      "sourceFamily": "medical_journal",
+      "sourceType": "narrative-review",
+      "title": "The bioactivities of resveratrol and its naturally occurring derivatives on skin.",
+      "publisher": "Journal of Food and Drug Analysis",
+      "publishedYear": 2021,
+      "sourceUrl": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9261849/",
+      "doiOrPmid": "doi:10.38212/2224-6614.1151; PMID:35696226; PMCID:PMC9261849",
+      "licenceOrAccess": "Citation metadata only; full-text reuse is not asserted by this proposal.",
+      "commercialRestriction": true,
+      "attributionRequired": true,
+      "ingredientIds": [
+        "resveratrol"
+      ],
+      "evidenceRole": "research_context_metadata_only",
+      "useMode": "citation_metadata_only_noncommercial",
+      "corpusEligibility": "demo_metadata_only_noncommercial",
+      "rightsStatus": "citation_metadata_only_pending_permission",
+      "clinicalReviewStatus": "pending_qualified_review",
+      "reuseNote": "Proposal retains only citation metadata and an original boundary note; it does not reproduce a source passage, abstract, figure, table, rating, or embedding.",
+      "claimBoundary": "This source mapping does not establish a routine selection, product match, concentration, compatibility decision, individual suitability, or treatment claim."
+    }
+  ],
+  "ingredients": [
+    {
+      "id": "retinol",
+      "displayName": "Retinol",
+      "inciNames": [
+        "Retinol"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "texture",
+        "pigment"
+      ],
+      "sourceIds": [
+        "journal-retinoids-topical-review-2022"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "retinal",
+      "displayName": "Retinal",
+      "inciNames": [
+        "Retinal"
+      ],
+      "aliases": [
+        "Retinaldehyde"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "texture",
+        "pigment"
+      ],
+      "sourceIds": [
+        "journal-retinoids-topical-review-2022"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "retinyl-palmitate",
+      "displayName": "Retinyl Palmitate",
+      "inciNames": [
+        "Retinyl Palmitate"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "texture",
+        "pigment"
+      ],
+      "sourceIds": [
+        "journal-retinoids-topical-review-2022"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "alpha-arbutin",
+      "displayName": "Alpha-Arbutin",
+      "inciNames": [
+        "Alpha-Arbutin"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "pigment"
+      ],
+      "sourceIds": [
+        "journal-arbutin-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "ectoin",
+      "displayName": "Ectoin",
+      "inciNames": [
+        "Ectoin"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "barrier",
+        "sensitivity",
+        "dryness"
+      ],
+      "sourceIds": [
+        "journal-ectoine-systematic-review-2022"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "beta-glucan",
+      "displayName": "Beta-Glucan",
+      "inciNames": [
+        "Beta-Glucan"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "barrier",
+        "dryness"
+      ],
+      "sourceIds": [
+        "journal-beta-glucans-review-2018"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "centella-asiatica-extract",
+      "displayName": "Centella Asiatica Extract",
+      "inciNames": [
+        "Centella Asiatica Extract"
+      ],
+      "aliases": [
+        "Gotu Kola Extract"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "barrier",
+        "sensitivity"
+      ],
+      "sourceIds": [
+        "journal-centella-cosmetology-review-2013"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "madecassoside",
+      "displayName": "Madecassoside",
+      "inciNames": [
+        "Madecassoside"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "barrier",
+        "sensitivity"
+      ],
+      "sourceIds": [
+        "journal-centella-cosmetology-review-2013"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "asiaticoside",
+      "displayName": "Asiaticoside",
+      "inciNames": [
+        "Asiaticoside"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "barrier",
+        "sensitivity"
+      ],
+      "sourceIds": [
+        "journal-centella-cosmetology-review-2013"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "squalane",
+      "displayName": "Squalane",
+      "inciNames": [
+        "Squalane"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "dryness",
+        "barrier"
+      ],
+      "sourceIds": [
+        "journal-squalene-cosmetic-dermatology-review-2009"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "source_normalization_pending",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "dimethicone",
+      "displayName": "Dimethicone",
+      "inciNames": [
+        "Dimethicone"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "dryness",
+        "barrier"
+      ],
+      "sourceIds": [
+        "journal-cosmetic-moisturizer-vehicles-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_context_only",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "petrolatum",
+      "displayName": "Petrolatum",
+      "inciNames": [
+        "Petrolatum"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "dryness",
+        "barrier"
+      ],
+      "sourceIds": [
+        "journal-cosmetic-moisturizer-vehicles-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_context_only",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "mineral-oil",
+      "displayName": "Mineral Oil",
+      "inciNames": [
+        "Paraffinum Liquidum"
+      ],
+      "aliases": [
+        "Liquid Paraffin"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "dryness",
+        "barrier"
+      ],
+      "sourceIds": [
+        "journal-cosmetic-moisturizer-vehicles-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_context_only",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "propylene-glycol",
+      "displayName": "Propylene Glycol",
+      "inciNames": [
+        "Propylene Glycol"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "dryness",
+        "barrier"
+      ],
+      "sourceIds": [
+        "journal-cosmetic-moisturizer-vehicles-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_context_only",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "lanolin",
+      "displayName": "Lanolin",
+      "inciNames": [
+        "Lanolin"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "dryness",
+        "barrier"
+      ],
+      "sourceIds": [
+        "journal-cosmetic-moisturizer-vehicles-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_context_only",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "caprylic-capric-triglyceride",
+      "displayName": "Caprylic/Capric Triglyceride",
+      "inciNames": [
+        "Caprylic/Capric Triglyceride"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "dryness",
+        "barrier"
+      ],
+      "sourceIds": [
+        "journal-cosmetic-moisturizer-vehicles-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_context_only",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "allantoin",
+      "displayName": "Allantoin",
+      "inciNames": [
+        "Allantoin"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "dryness",
+        "sensitivity"
+      ],
+      "sourceIds": [
+        "journal-popular-cosmeceuticals-review-2024"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "bisabolol",
+      "displayName": "Bisabolol",
+      "inciNames": [
+        "Bisabolol"
+      ],
+      "aliases": [
+        "Alpha-Bisabolol"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "sensitivity"
+      ],
+      "sourceIds": [
+        "journal-bisabolol-piroctone-formulation-study-2015"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "multi_ingredient_formulation_context",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "multi_ingredient_formulation_context",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "piroctone-olamine",
+      "displayName": "Piroctone Olamine",
+      "inciNames": [
+        "Piroctone Olamine"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "sensitivity"
+      ],
+      "sourceIds": [
+        "journal-bisabolol-piroctone-formulation-study-2015"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "multi_ingredient_formulation_context",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "multi_ingredient_formulation_context",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "zinc-oxide",
+      "displayName": "Zinc Oxide",
+      "inciNames": [
+        "Zinc Oxide"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "pigment"
+      ],
+      "sourceIds": [
+        "journal-sunscreens-photoaging-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "regulatory_context_only",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "jurisdiction_and_product_review_required",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "titanium-dioxide",
+      "displayName": "Titanium Dioxide",
+      "inciNames": [
+        "Titanium Dioxide"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "pigment"
+      ],
+      "sourceIds": [
+        "journal-sunscreens-photoaging-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "regulatory_context_only",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "jurisdiction_and_product_review_required",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "gluconolactone",
+      "displayName": "Gluconolactone",
+      "inciNames": [
+        "Gluconolactone"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "texture"
+      ],
+      "sourceIds": [
+        "journal-hydroxy-acids-review-2010"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_and_photoactivity_review_required",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "mandelic-acid",
+      "displayName": "Mandelic Acid",
+      "inciNames": [
+        "Mandelic Acid"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "texture"
+      ],
+      "sourceIds": [
+        "journal-hydroxy-acids-review-2010"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_and_photoactivity_review_required",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "citric-acid",
+      "displayName": "Citric Acid",
+      "inciNames": [
+        "Citric Acid"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "texture"
+      ],
+      "sourceIds": [
+        "journal-hydroxy-acids-review-2010"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_and_photoactivity_review_required",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "linoleic-acid",
+      "displayName": "Linoleic Acid",
+      "inciNames": [
+        "Linoleic Acid"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "barrier",
+        "dryness"
+      ],
+      "sourceIds": [
+        "journal-skin-barrier-lipids-review-2023"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "biological_context_only",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "biological_context_not_product_evidence",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "phytosphingosine",
+      "displayName": "Phytosphingosine",
+      "inciNames": [
+        "Phytosphingosine"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "barrier",
+        "dryness"
+      ],
+      "sourceIds": [
+        "journal-skin-barrier-lipids-review-2023"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "biological_context_only",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "biological_context_not_product_evidence",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "ceramide-ap",
+      "displayName": "Ceramide AP",
+      "inciNames": [
+        "Ceramide AP"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "barrier",
+        "dryness"
+      ],
+      "sourceIds": [
+        "journal-skin-barrier-lipids-review-2023"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "biological_context_only",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "biological_context_not_product_evidence",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "licorice-root-extract",
+      "displayName": "Licorice Root Extract",
+      "inciNames": [
+        "Glycyrrhiza Glabra (Licorice) Root Extract"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "pigment",
+        "sensitivity"
+      ],
+      "sourceIds": [
+        "journal-herbal-dermatology-review-2020"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "botanical_standardization_review_required",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "caffeine",
+      "displayName": "Caffeine",
+      "inciNames": [
+        "Caffeine"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "texture"
+      ],
+      "sourceIds": [
+        "journal-caffeine-human-skin-permeation-2009"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "formulation_and_permeation_context",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "formulation_context_only",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    },
+    {
+      "id": "resveratrol",
+      "displayName": "Resveratrol",
+      "inciNames": [
+        "Resveratrol"
+      ],
+      "normalizationStatus": "proposed_label_only_inci_review_required",
+      "status": "held_research_only",
+      "routineSelectionAllowed": false,
+      "concernContexts": [
+        "pigment",
+        "texture"
+      ],
+      "sourceIds": [
+        "journal-resveratrol-skin-review-2021"
+      ],
+      "evidenceStates": [
+        "citation_metadata_only_pending_review",
+        "research_queue_not_activated"
+      ],
+      "activationBlockers": [
+        "qualified_clinical_review_pending",
+        "rights_scope_not_cleared_for_full_text_reuse",
+        "no_individual_suitability_assessment",
+        "no_product_or_dose_mapping",
+        "no_routine_selection_authority"
+      ]
+    }
+  ]
+}
