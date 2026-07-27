@@ -94,6 +94,24 @@ const profileRoutines = {
     pm: [["Gentle cleansing category", "Low-irritation research context"], ["Supportive moisturising category", "Low-irritation support context"]],
     reason: "This generic research preview is not a personalised treatment plan.",
   },
+  redness: {
+    label: "Redness-prone appearance research preview",
+    am: [["Low-irritation cleansing category", "Research preview category"], ["Comfort-focused hydration category", "Non-prescriptive context"], ["Daytime photoprotection category", "Research context only"]],
+    pm: [["Low-irritation cleansing category", "Research preview category"], ["Barrier-support moisturising category", "Research preview category"]],
+    reason: "This generic research preview is not a personalised treatment plan.",
+  },
+  radiance: {
+    label: "Dullness/radiance appearance research preview",
+    am: [["Gentle cleansing category", "Low-irritation research context"], ["Light hydration category", "Supportive non-prescriptive category"], ["Daytime photoprotection category", "Research context only"]],
+    pm: [["Gentle cleansing category", "Low-irritation research context"], ["Supportive moisturising category", "Low-irritation support context"]],
+    reason: "This generic research preview is not a personalised treatment plan.",
+  },
+  pores: {
+    label: "Visible-pore appearance research preview",
+    am: [["Gentle cleansing category", "Low-irritation research context"], ["Light hydration category", "Supportive non-prescriptive category"], ["Daytime photoprotection category", "Research context only"]],
+    pm: [["Gentle cleansing category", "Low-irritation research context"], ["Lightweight moisturising category", "Humidity-aware finish context"]],
+    reason: "This generic research preview is not a personalised treatment plan.",
+  },
 };
 
 const concernOptions = [
@@ -104,6 +122,9 @@ const concernOptions = [
   { id: "oil", label: "Oil / shine", description: "Lightweight finish context" },
   { id: "sensitivity", label: "Sensitivity context", description: "Low-irritation context" },
   { id: "texture", label: "Texture appearance", description: "Cosmetic appearance context" },
+  { id: "redness", label: "Redness-prone appearance", description: "Self-reported comfort context" },
+  { id: "radiance", label: "Dullness / radiance appearance", description: "Cosmetic appearance context" },
+  { id: "pores", label: "Visible-pore appearance", description: "Cosmetic appearance context" },
 ];
 
 // These records mirror the versioned category-source coverage report. They are
@@ -228,6 +249,9 @@ const state = {
   activeView: viewFromHash() || "dashboard",
   selectedStage: null,
   profile: "combination",
+  finishPreference: "",
+  reactivityLevel: "",
+  exposureContext: "mixed",
   concern: "acne",
   symptoms: "",
   generatedRoutine: null,
@@ -236,6 +260,12 @@ const state = {
   runStartedAt: null,
   runHistory: loadRunHistory(),
   environment: demoEnvironment,
+  forecast: { status: "idle", next24Hours: [], next7Days: [], providerReliability: [] },
+  forecastSynthesis: { status: "idle", text: "", generatedAt: "" },
+  forecastSynthesisKey: "",
+  ingredientRationales: {},
+  ingredientRationaleStatus: "idle",
+  ingredientRationaleKey: "",
   selectedLocation: { ...defaultLocation },
   locationQuery: "",
   locationResults: [],
@@ -275,6 +305,7 @@ const state = {
   knowledgeQuery: "",
   knowledgeSearchResult: null,
   knowledgeSearchStatus: "idle",
+  corpusSummary: null,
   evaluation: null,
   evaluationStatus: "idle",
   reviewer: {
@@ -413,11 +444,23 @@ function normaliseRoutine(rawRoutine = state.generatedRoutine, concern = state.c
   };
 }
 
-function routineStepList(steps, { dark = false } = {}) {
+function routineStepList(steps, { dark = false, ingredientCandidates = [], phase = "" } = {}) {
   return `<ol class="${dark ? "synth-step-list" : "routine-list"}">${steps.map((step, index) => {
     const sourceText = step.sourceIds?.length ? ` · evidence ${step.sourceIds.join(", ")}` : "";
-    return `<li><span class="routine-step-title">${escapeHtml(step.title)}</span><small>${escapeHtml(step.note)}${escapeHtml(sourceText)}</small>${!dark ? "" : `<span class="synth-step-number">${index + 1}</span>`}</li>`;
+    const names = ingredientCandidates
+      .filter((entry) => entry?.categoryId === step?.id && (!phase || entry?.phase === phase))
+      .map((entry) => entry.displayName)
+      .filter(Boolean);
+    const recommendation = names.length ? `<span class="routine-step-ingredients">Recommended: ${escapeHtml(names.join(", "))}</span>` : "";
+    return `<li><span class="routine-step-title">${escapeHtml(step.title)}</span><small>${escapeHtml(step.note)}${escapeHtml(sourceText)}</small>${recommendation}${!dark ? "" : `<span class="synth-step-number">${index + 1}</span>`}</li>`;
   }).join("")}</ol>`;
+}
+
+function approvedIngredientCandidatePanel(meta = state.routineMeta) {
+  const selection = meta?.ingredientCandidates;
+  const entries = Array.isArray(selection?.entries) ? selection.entries : [];
+  if (selection?.status !== "available" || !entries.length) return "";
+  return `<section class="research-context-card ingredient-candidate-panel"><div class="ingredient-card-top"><div><p class="ingredient-eyebrow">${icon("shield", 14)} Approved ingredient recommendations</p><h3>Named AM/PM recommendations</h3></div><span class="ingredient-output-mode">${escapeHtml(selection.registryVersion || "live database")}</span></div><p class="ingredient-card-summary">Approved database ingredients matched to each safety-cleared category.</p><div class="research-context-list">${entries.map((entry) => { const source = Array.isArray(entry.sourceRecords) ? entry.sourceRecords[0] : null; const url = safeEvidenceUrl(source?.sourceUrl); const trace = entry.selectionTrace || {}; const checked = Array.isArray(trace.compatibility?.checkedAgainst) && trace.compatibility.checkedAgainst.length ? trace.compatibility.checkedAgainst.map((item) => item.displayName).join(", ") : "No earlier named recommendation"; const llm = state.ingredientRationales?.[entry.ingredientId]; const rationaleText = (llm && llm.text) ? llm.text : (entry.rationale || "Matched from the approved knowledge base."); const rationaleTag = (llm && llm.text) ? ('<span class="ingredient-rationale-tag">' + icon("sparkles", 11) + ' GPT · grounded' + (llm.source ? (' · ' + escapeHtml(llm.source)) : '') + '</span>') : (state.ingredientRationaleStatus === "loading" ? '<span class="ingredient-rationale-tag is-loading">Explaining…</span>' : ''); const attr = entry.attribution; const pickChip = entry.selectedBy === 'llm_from_rag_pool' ? ('<span class="ingredient-pick-chip">' + icon('sparkles', 10) + ' LLM · from RAG pool</span>') : '<span class="ingredient-pick-chip is-rule">rule-based</span>'; const attrMarkup = (attr && Array.isArray(attr.features)) ? ('<div class="ingredient-attr"><span class="ingredient-attr-head">' + icon('activity', 11) + ' Why chosen · ' + escapeHtml((attr.dominant && attr.dominant.label) || '') + '</span>' + attr.features.map(function (f) { return '<span class="ingredient-attr-row"><i>' + escapeHtml(f.label) + '</i><b class="ingredient-attr-bar"><b style="width:' + (f.influencePercent || 0) + '%"></b></b></span>'; }).join('') + '</div>') : ''; return `<article><div><strong>${escapeHtml(entry.displayName || "Approved ingredient")}</strong><small>${escapeHtml(`${entry.phase === "am" ? "Morning" : "Evening"} · ${entry.categoryTitle || entry.categoryId || "routine category"}`)} ${pickChip}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Evidence ${icon("arrow", 12)}</a>` : ""}<p class="ingredient-rationale ${llm && llm.text ? "is-grounded" : ""}">${escapeHtml(rationaleText)}</p>${rationaleTag}${attrMarkup}<details class="selection-trace"><summary>Selection trace</summary><span>Category: ${escapeHtml(trace.category?.title || entry.categoryId || "—")}</span><span>Record: ${escapeHtml(trace.selectedRecord?.ingredientId || entry.ingredientId || "—")} · v${escapeHtml(String(trace.selectedRecord?.version || "—"))}</span><span>Compatibility: ${escapeHtml(trace.compatibility?.status || "not reported")} · checked against ${escapeHtml(checked)}</span></details></article>`; }).join("")}</div></section>`;
 }
 
 function safelyNumber(value, digits = 2) {
@@ -487,18 +530,18 @@ function shell(view) {
         <div class="sidebar-navigation-group">
           <p class="side-section-label">Core workflow</p>
           <nav class="nav-list" aria-label="Core research workflow">
-            ${navItem("dashboard", "Overview", "Start or resume", "grid")}
-            ${navItem("monitor", "Environment", "Location context", "activity")}
-            ${navItem("simulator", "Routine Preview", "Gated category run", "flask")}
-            ${navItem("knowledge", "Ingredient Atlas", `${ingredientCount} Atlas records`, "file")}
-            ${navItem("evaluation", "Evaluation", "Checks and coverage", "check")}
+            ${navItem("dashboard", "Overview", "At a glance", "grid")}
+            ${navItem("monitor", "Environment", "Live conditions", "activity")}
+            ${navItem("simulator", "Routine", "Build routine", "flask")}
+            ${navItem("knowledge", "Ingredient Atlas", `${ingredientCount} ingredients`, "file")}
+            ${navItem("evaluation", "Evaluation", "System checks", "check")}
           </nav>
         </div>
         <div class="sidebar-navigation-group is-advanced">
           <p class="side-section-label">Research tools</p>
           <nav class="nav-list" aria-label="Advanced research tools">
-            ${navItem("bulk", "Cohort Analysis", "Batch workflow", "layers")}
-            ${navItem("reviewer", "Reviewer Queue", "Local instrument", "shield")}
+            ${navItem("bulk", "Cohort Analysis", "Batch runs", "layers")}
+            ${navItem("reviewer", "Reviewer Queue", "Source review", "shield")}
           </nav>
         </div>
       </div>
@@ -617,7 +660,7 @@ function dashboardHero() {
       <h2 id="dashboard-hero-title">Environment-aware insight,<span>made visibly explainable.</span></h2>
       <p class="hero-description">DermaSynth connects live environmental context, source-linked ingredient research, safety traces, and transparent reasoning in one final-review experience.</p>
       <div class="hero-actions">
-        <button class="primary-button" type="button" data-action="navigate" data-view="simulator">${icon("sparkles", 15)} Start research preview</button>
+        <button class="primary-button" type="button" data-action="navigate" data-view="simulator">${icon("sparkles", 15)} Start a preview</button>
         <button class="ghost-button" type="button" data-action="presentation-start">Begin defence walkthrough</button>
         <button class="hero-secondary-action" type="button" data-action="navigate" data-view="knowledge">Browse Ingredient Atlas ${icon("arrow", 15)}</button>
       </div>
@@ -693,6 +736,7 @@ function routinePanel() {
       <div class="routine-slot"><p class="routine-label">${icon("sun", 13)} Morning</p>${routineStepList(routine.am)}</div>
       <div class="routine-slot"><p class="routine-label">${icon("sparkles", 13)} Evening</p>${routineStepList(routine.pm)}</div>
     </div>
+    ${approvedIngredientCandidatePanel()}
     <p class="screening-pass ${cleared ? "" : "is-warning"}">${icon("shield", 15)} ${escapeHtml(statusLine)}</p>
   </section>`;
 }
@@ -724,7 +768,7 @@ function researchContextPanel(meta = state.routineMeta) {
     const atlasCount = Number(state.knowledgeExplorer?.overview?.ingredientCount) || 50;
     return `<section class="research-context-card is-empty"><div><p class="ingredient-eyebrow">${icon("layers", 14)} Research corpus</p><h3>Ingredient source retrieval awaits a run</h3></div><p>Run the simulator to retrieve the selected concern from the ${escapeHtml(String(atlasCount))}-ingredient final-review Atlas. It combines the existing isolated demo segment with local, review-pending metadata; neither is a treatment selector.</p></section>`;
   }
-  return `<section class="research-context-card"><div class="ingredient-card-top"><div><p class="ingredient-eyebrow">${icon("layers", 14)} Synthesised ingredient research context</p><h3>${escapeHtml(String(coverage.uniqueIngredients || 0))} mapped ingredient record${Number(coverage.uniqueIngredients) === 1 ? "" : "s"}</h3></div><span class="ingredient-output-mode">${escapeHtml(research.mode || "research retrieval")}</span></div><p class="ingredient-card-summary">${escapeHtml(coverage.rationale || "Source-linked research context only.")}</p><div class="research-context-list">${evidence.map((item) => { const url = safeEvidenceUrl(item.sourceUrl); return `<article><div><strong>${escapeHtml((item.ingredientNames || []).join(" · ") || item.title || "Ingredient record")}</strong><small>${escapeHtml(item.source || "Source metadata")}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Source ${icon("arrow", 12)}</a>` : ""}<p>${escapeHtml(item.evidenceScope || item.excerpt || "No outcome or individual-use inference is generated.")}</p></article>`; }).join("") || `<p>No matching record was returned for this context.</p>`}</div><p class="ingredient-card-foot">This panel makes the research corpus inspectable for final review. It is not a product, dose, frequency, compatibility, or treatment recommendation.</p></section>`;
+  return `<section class="research-context-card"><div class="ingredient-card-top"><div><p class="ingredient-eyebrow">${icon("layers", 14)} Research context</p><h3>${escapeHtml(String(coverage.uniqueIngredients || 0))} mapped ingredient record${Number(coverage.uniqueIngredients) === 1 ? "" : "s"}</h3></div><span class="ingredient-output-mode">${escapeHtml(research.mode || "research retrieval")}</span></div><p class="ingredient-card-summary">${escapeHtml(coverage.rationale || "Source-linked context for this preview.")}</p><div class="research-context-list">${evidence.map((item) => { const url = safeEvidenceUrl(item.sourceUrl); return `<article><div><strong>${escapeHtml((item.ingredientNames || []).join(" · ") || item.title || "Ingredient record")}</strong><small>${escapeHtml(item.source || "Source metadata")}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Source ${icon("arrow", 12)}</a>` : ""}</article>`; }).join("") || `<p>No matching record was returned for this context.</p>`}</div></section>`;
 }
 
 function evidencePanel() {
@@ -734,18 +778,18 @@ function evidencePanel() {
   const cue = Number(grounding?.cueScore);
   const cueText = Number.isFinite(cue) ? `CUE proxy ${cue.toFixed(2)}` : "CUE proxy not run";
   const detail = String(grounding?.scoreType || "").includes("retrieval_coverage_proxy")
-    ? "Retrieval-coverage proxy — calibration is still required."
+    ? "A source-coverage check, not a diagnosis score."
     : "No indexed evidence was used for this preview.";
 
   if (!evidence.length) {
     return `<section class="panel evidence-panel"><div class="panel-header"><h2 class="panel-title">${icon("file", 17)} Evidence grounding</h2><p class="panel-note">${escapeHtml(cueText)}</p></div><div class="evidence-empty"><strong>No retrieved sources yet.</strong><span>Run the gated preview to inspect the limited research notes used by this prototype.</span></div></section>`;
   }
 
-  return `<section class="panel evidence-panel"><div class="panel-header"><h2 class="panel-title">${icon("file", 17)} Evidence grounding</h2><p class="panel-note">${escapeHtml(cueText)} · ${evidence.length} retrieved note${evidence.length === 1 ? "" : "s"}</p></div><p class="evidence-summary">${escapeHtml(detail)}</p><div class="evidence-list">${evidence.map((item) => {
+  return `<section class="panel evidence-panel"><div class="panel-header"><h2 class="panel-title">${icon("file", 17)} Evidence grounding</h2><p class="panel-note">${escapeHtml(cueText)} · ${evidence.length} sources</p></div><p class="evidence-summary">${escapeHtml(detail)}</p><div class="evidence-list">${evidence.map((item) => {
     const sourceUrl = safeEvidenceUrl(item.sourceUrl);
     const tags = [item.evidenceTier, item.jurisdiction, item.conflictFlag || item.conflictOfInterest ? "Conflict flag" : "", item.productSpecific ? "Product-specific" : ""].filter(Boolean);
     const score = Number(item.score ?? item.relevanceScore);
-    return `<article class="evidence-item"><div class="evidence-item-head"><div><strong>${escapeHtml(item.title || "Indexed evidence")}</strong><span>${escapeHtml(item.source || "Source unavailable")}${Number.isFinite(score) ? ` · relevance ${escapeHtml(score.toFixed(2))}` : ""}</span></div>${sourceUrl ? `<a class="evidence-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">Open source ${icon("arrow", 13)}</a>` : ""}</div><p>${escapeHtml(item.excerpt || "No research note was returned.")}</p>${item.citation ? `<small class="evidence-citation">${escapeHtml(item.citation)}</small>` : ""}${item.sourceLocator ? `<small class="evidence-locator">Locator: ${escapeHtml(item.sourceLocator)}</small>` : ""}${tags.length ? `<div class="evidence-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}</article>`;
+    return `<article class="evidence-item"><div class="evidence-item-head"><div><strong>${escapeHtml(item.title || "Indexed evidence")}</strong><span>${escapeHtml(item.source || "Source unavailable")}${Number.isFinite(score) ? ` · relevance ${escapeHtml(score.toFixed(2))}` : ""}</span></div>${sourceUrl ? `<a class="evidence-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">Open source ${icon("arrow", 13)}</a>` : ""}</div>${tags.length ? `<div class="evidence-tags">${tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("")}</div>` : ""}</article>`;
   }).join("")}</div></section>`;
 }
 
@@ -818,7 +862,7 @@ function reportPanel() {
     ["Safety flags", safetyFlags.length ? safetyFlags.length : "None reported"],
     ["Run time", generatedAt],
   ];
-  return `<section class="panel run-report"><div class="panel-header"><div><h3 class="panel-title">${icon("file", 17)} Explainable run report</h3><p class="panel-note">No free-text symptoms are retained locally</p></div><div class="run-report-actions"><button class="ghost-button" type="button" data-action="print-research-report" ${meta ? "" : "disabled"}>${icon("file", 14)} Print / Save PDF</button><button class="ghost-button" type="button" data-action="export-current-run" ${meta?.runReport ? "" : "disabled"}>${icon("download", 14)} Export JSON</button></div></div><dl class="run-report-grid">${reportRows.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>${safetyFlags.length ? `<p class="report-flags"><strong>Reported safety flags:</strong> ${escapeHtml(safetyFlags.join(" · "))}</p>` : `<p class="report-flags">The UI shows source, evidence-coverage proxy, research-atlas, Shapley contribution, and rule trace fields when the server returns them. It does not convert them into a clinical claim.</p>`}</section>`;
+  return `<section class="panel run-report"><div class="panel-header"><div><h3 class="panel-title">${icon("file", 17)} Explainable run report</h3></div><div class="run-report-actions"><button class="ghost-button" type="button" data-action="print-research-report" ${meta ? "" : "disabled"}>${icon("file", 14)} Print / Save PDF</button><button class="ghost-button" type="button" data-action="export-current-run" ${meta?.runReport ? "" : "disabled"}>${icon("download", 14)} Export JSON</button></div></div><dl class="run-report-grid">${reportRows.map(([term, value]) => `<div><dt>${escapeHtml(term)}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>${safetyFlags.length ? `<p class="report-flags"><strong>Reported safety flags:</strong> ${escapeHtml(safetyFlags.join(" · "))}</p>` : ""}</section>`;
 }
 
 function historyPanel() {
@@ -894,6 +938,117 @@ function environmentComparisonPanel() {
   return `<section class="panel environment-comparison" aria-labelledby="comparison-title"><div class="panel-header"><div><h3 class="panel-title" id="comparison-title">${icon("activity", 17)} Location comparison</h3><p class="panel-note">Two locations · no GPT synthesis</p></div><span class="pill is-neutral">Same ${escapeHtml(concernOption().label)} context</span></div><div class="comparison-picker-row">${comparisonLocationPicker()}</div>${comparisonReady ? `<div class="comparison-sides"><article class="comparison-side"><div class="comparison-side-head"><span>Primary</span><strong>${escapeHtml(locationLabel())}</strong><small>${escapeHtml(environmentModeLabel())} · ${escapeHtml(state.lastUpdated)}</small></div>${primaryCards.map((item) => { const other = alternateByKey.get(item.key); return `<div class="comparison-metric"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)} <small>${escapeHtml(item.unit)}</small></strong><em>${escapeHtml(numericalDelta(item.value, other?.value))} vs comparison</em></div>`; }).join("")}</article><article class="comparison-side is-alternate"><div class="comparison-side-head"><span>Comparison</span><strong>${escapeHtml(comparisonLocationLabel())}</strong><small>${escapeHtml(comparison.environment?.mode || "labelled")} · ${escapeHtml(comparison.updatedAt || "not reported")}</small></div>${alternateCards.map((item) => { const original = primaryCards.find((candidate) => candidate.key === item.key); return `<div class="comparison-metric"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)} <small>${escapeHtml(item.unit)}</small></strong><em>${escapeHtml(numericalDelta(original?.value, item.value))} vs primary</em></div>`; }).join("")}</article></div>${explanationRows ? `<div class="comparison-explanation"><div><strong>Transparent contribution comparison</strong><span>Configured additive-surrogate Shapley values; this visual does not express clinical risk or a treatment decision.</span></div><div class="comparison-explanation-head"><span>Input</span><span>${escapeHtml(locationLabel())}</span><span>${escapeHtml(comparisonLocationLabel())}</span><span>Δ</span></div>${explanationRows}</div>` : `<p class="comparison-empty">The comparison location has labelled environmental readings. Contribution values will appear when both transparent explanation responses are available.</p>`}` : `<div class="comparison-empty"><strong>Preparing a second environmental snapshot.</strong><span>Select another location to compare UV, humidity, PM2.5, and the same configured non-clinical contribution model.</span></div>`}</section>`;
 }
 
+function forecastSynthesisCard() {
+  const synth = state.forecastSynthesis || {};
+  if (synth.status === "available" && synth.text) {
+    const when = synth.generatedAt ? new Date(synth.generatedAt) : null;
+    const stamp = when && !Number.isNaN(when.getTime()) ? when.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : "";
+    return `<article class="forecast-synthesis is-available"><div class="forecast-synthesis-head"><span>${icon("sparkles", 15)} Weather synthesis</span><small>GPT${stamp ? ` · ${escapeHtml(stamp)}` : ""}</small></div><p>${escapeHtml(synth.text)}</p></article>`;
+  }
+  if (synth.status === "loading") return `<article class="forecast-synthesis is-loading"><div class="forecast-synthesis-head"><span>${icon("sparkles", 15)} Weather synthesis</span><small>GPT</small></div><p>Synthesising the next-24-hour outlook…</p></article>`;
+  return `<article class="forecast-synthesis is-empty"><div class="forecast-synthesis-head"><span>${icon("sparkles", 15)} Weather synthesis</span><small>GPT</small></div><p>A GPT weather synthesis will appear here when live services are available.</p></article>`;
+}
+
+let forecastHoverData = null;
+
+function forecastSmoothPath(points) {
+  if (!points.length) return "";
+  if (points.length < 3) return `M ${points.map((p) => `${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" L ")}`;
+  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const p0 = points[i - 1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)}, ${c2x.toFixed(2)} ${c2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+  return d;
+}
+
+function forecastRoutinePanel() {
+  const forecast = state.forecast || {};
+  const hourly = Array.isArray(forecast.next24Hours) ? forecast.next24Hours : [];
+  const reliability = Array.isArray(forecast.providerReliability) ? forecast.providerReliability : [];
+  const provider = reliability.find((item) => item.provider === "OpenWeather");
+  const pm = Number(activeEnvironment().readings?.pm25);
+  const head = `<div class="panel-header"><div><h3 class="panel-title">${icon("activity", 17)} Forecast outlook</h3><p class="panel-note">Next 24 hours · adaptive routine</p></div><span class="pill is-neutral">${escapeHtml(forecast.status || "labelled")}</span></div>`;
+  if (!hourly.length) return `<section class="panel forecast-panel">${head}<p class="forecast-empty">No 24-hour forecast trend is available from the current weather provider.</p>${forecastSynthesisCard()}</section>`;
+
+  // Plot area within a 100 x VBH viewBox; lines are inset from the edges and each
+  // metric is scaled to its own 24-hour range so the shapes stay comparable.
+  const VBH = 42;
+  const TOP = 5;
+  const BOTTOM = 37;
+  const span = BOTTOM - TOP;
+  const n = hourly.length;
+  const xAt = (index) => (index / Math.max(1, n - 1)) * 100;
+  const series = (key) => {
+    const values = hourly.map((period) => Number(period.environment?.readings?.[key]));
+    const finite = values.filter(Number.isFinite);
+    if (!finite.length) return null;
+    const low = Math.min(...finite);
+    const high = Math.max(...finite);
+    const range = high - low || 1;
+    const points = [];
+    const cells = values.map((value, index) => {
+      if (!Number.isFinite(value)) return { value: null, y: null };
+      const y = BOTTOM - ((value - low) / range) * span;
+      points.push({ x: xAt(index), y });
+      return { value, y };
+    });
+    return { low, high, points, cells };
+  };
+
+  const defs = [
+    { key: "uvi", label: "UV", color: "var(--warning)", unit: "UVI", digits: 1 },
+    { key: "humidity", label: "Humidity", color: "var(--accent)", unit: "%", digits: 0 },
+    { key: "temperature", label: "Temperature", color: "var(--danger)", unit: "°C", digits: 1 },
+  ];
+  const lines = [];
+  const legend = [];
+  const hoverSeries = [];
+  for (const def of defs) {
+    const s = series(def.key);
+    if (!s) { legend.push(`<span class="forecast-key is-off"><i style="--dot:${def.color}"></i>${escapeHtml(def.label)} · n/a</span>`); continue; }
+    lines.push(`<path class="forecast-line" d="${forecastSmoothPath(s.points)}" style="stroke:${def.color}" />`);
+    legend.push(`<span class="forecast-key"><i style="--dot:${def.color}"></i>${escapeHtml(def.label)} · ${s.low.toFixed(def.digits)}–${s.high.toFixed(def.digits)} ${def.unit}</span>`);
+    hoverSeries.push({ label: def.label, color: def.color, unit: def.unit, digits: def.digits, cells: s.cells });
+  }
+  // PM2.5 has no hourly series; draw it as a horizontal reference line placed on a 0–150 µg/m³ scale.
+  const pmColor = "var(--faint)";
+  if (Number.isFinite(pm)) {
+    const y = (BOTTOM - Math.max(0, Math.min(1, pm / 150)) * span).toFixed(2);
+    lines.push(`<line class="forecast-ref" x1="0" y1="${y}" x2="100" y2="${y}" style="stroke:${pmColor}" />`);
+    legend.push(`<span class="forecast-key"><i class="is-dashed" style="--dot:${pmColor}"></i>PM2.5 · ${pm.toFixed(1)} µg/m³ now</span>`);
+  } else {
+    legend.push(`<span class="forecast-key is-off"><i class="is-dashed" style="--dot:${pmColor}"></i>PM2.5 · n/a</span>`);
+  }
+
+  const gridlines = [0, 0.25, 0.5, 0.75, 1].map((f) => `<line class="grid" x1="0" y1="${(TOP + span * f).toFixed(2)}" x2="100" y2="${(TOP + span * f).toFixed(2)}" />`).join("");
+  const vgrid = [25, 50, 75].map((x) => `<line class="grid vgrid" x1="${x}" y1="${TOP}" x2="${x}" y2="${BOTTOM}" />`).join("");
+  const timeShort = (index) => { const at = hourly[index]?.at; const d = at ? new Date(at) : null; return d && !Number.isNaN(d.getTime()) ? d.toLocaleTimeString(undefined, { hour: "numeric" }) : ""; };
+  const timeLong = (index) => { const at = hourly[index]?.at; const d = at ? new Date(at) : null; return d && !Number.isNaN(d.getTime()) ? d.toLocaleString(undefined, { weekday: "short", hour: "numeric", minute: "2-digit" }) : ""; };
+  const midIndex = Math.floor((n - 1) / 2);
+  const axis = `<div class="forecast-axis"><span>${escapeHtml(timeShort(0))}</span><span>${escapeHtml(timeShort(midIndex))}</span><span>${escapeHtml(timeShort(n - 1))}</span></div>`;
+
+  // Data used by the shared hover handler (see setupForecastHover).
+  forecastHoverData = {
+    n, top: TOP, bottom: BOTTOM, vbh: VBH,
+    times: hourly.map((_, index) => timeLong(index)),
+    xFracs: hourly.map((_, index) => xAt(index) / 100),
+    series: hoverSeries,
+    pm: Number.isFinite(pm) ? { color: pmColor, value: pm } : null,
+  };
+
+  const overlay = `<div class="forecast-hover" aria-hidden="true"><div class="forecast-guide"></div><div class="forecast-dots"></div><div class="forecast-tooltip"></div></div>`;
+
+  return `<section class="panel forecast-panel">${head}<div class="forecast-legend">${legend.join("")}</div><div class="forecast-timeline" data-forecast-hover><svg viewBox="0 0 100 ${VBH}" preserveAspectRatio="none" role="img" aria-label="Next 24-hour UV, humidity, temperature, and PM2.5 timeline">${vgrid}${gridlines}${lines.join("")}</svg>${overlay}</div>${axis}<p class="forecast-scale-note">Each line is scaled to its own 24-hour range; PM2.5 is a current reference on a 0–150 µg/m³ scale. Hover the chart for hourly readings.</p>${forecastSynthesisCard()}<div class="forecast-reliability">OpenWeather: ${escapeHtml(provider?.successRate === null || provider?.successRate === undefined ? "not observed" : `${provider.successRate}% available`)}${provider?.averageLatencyMs ? ` · ${provider.averageLatencyMs} ms` : ""}</div></section>`;
+}
+
 function safetyDecisionTrace(safety) {
   const rules = Array.isArray(safety?.rules) ? safety.rules : [];
   if (!rules.length) return `<details class="safety-decision-trace"><summary>Safety decision trace <span>Awaiting server rule details</span></summary><p>Run a server preview to inspect the deterministic rule IDs, statuses, and any reported detail.</p></details>`;
@@ -937,12 +1092,22 @@ function monitorView() {
   const weatherStatus = env.sources?.weather?.status || "demo";
   const notice = env.notices?.[0] || "Refresh readings to check the current source state.";
   const locationLabelText = state.presentation.active && state.presentation.step === 0 ? "Choose or confirm weather location" : "Weather location";
-  return shell(`<div class="view-heading"><div><h2>Environmental context, not a static skin label.</h2><p>Module 1 passes available UV, humidity, temperature, and particulate readings into the safety and routine layers.</p></div><button type="button" class="primary-button" data-action="refresh" ${isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 15)} Refresh readings</button></div><section class="panel monitor-location-panel" id="monitor-location">${locationPicker({ label: locationLabelText, compact: true })}</section><div class="module-hero" id="monitor-readings"><section class="panel monitor-card"><div class="panel-header"><h3 class="panel-title">${icon("sun", 17)} UV exposure index</h3><p class="panel-note">${escapeHtml(environmentModeLabel())}</p></div><div class="monitor-readout"><strong>${escapeHtml(uvi)}</strong><span>${uvi === "—" ? "UVI unavailable" : "Received UVI"}<br />${escapeHtml(state.lastUpdated)}</span></div><p>The system preserves missing values rather than substituting a value from another provider or a demo reading.</p><div class="monitor-chip-row"><span class="monitor-chip">${escapeHtml(locationLabel())}</span><span class="monitor-chip">OpenWeather ${escapeHtml(weatherStatus)}</span><span class="monitor-chip">Updated ${escapeHtml(state.lastUpdated)}</span></div></section><section class="panel guidance-panel"><div class="panel-header"><h3 class="panel-title">${icon("sparkles", 17)} Environment-aware rules</h3><p class="panel-note">Research prototype</p></div><div class="guidance-list"><div class="guidance"><span class="guidance-icon">${icon("sun", 16)}</span><div><strong>High UV</strong><p>Raises the visibility of a daytime photoprotection category in the research preview.</p></div></div><div class="guidance"><span class="guidance-icon">${icon("droplet", 16)}</span><div><strong>Humidity context</strong><p>Provides context for the formulation-finish category; it is not a clinical rule.</p></div></div><div class="guidance"><span class="guidance-icon">${icon("wind", 16)}</span><div><strong>PM2.5 context</strong><p>Is surfaced to the evidence query only when a concentration is actually available.</p></div></div></div><div class="reason-card"><strong>Source state:</strong> ${escapeHtml(notice)}</div></section></div>${environmentComparisonPanel()}<div class="dashboard-grid">${environmentPanel()}${insightPanel()}</div>`);
+  return shell(`<div class="view-heading"><div><h2>Live environmental context.</h2><p>Weather and air-quality inputs update the routine view.</p></div><button type="button" class="primary-button" data-action="refresh" ${isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button></div><section class="panel monitor-location-panel" id="monitor-location">${locationPicker({ label: locationLabelText, compact: true })}</section><div class="module-hero" id="monitor-readings"><section class="panel monitor-card"><div class="panel-header"><h3 class="panel-title">${icon("sun", 17)} UV index</h3><p class="panel-note">${escapeHtml(environmentModeLabel())}</p></div><div class="monitor-readout"><strong>${escapeHtml(uvi)}</strong><span>${uvi === "—" ? "Unavailable" : "Current reading"}<br />${escapeHtml(state.lastUpdated)}</span></div><div class="monitor-chip-row"><span class="monitor-chip">${escapeHtml(locationLabel())}</span><span class="monitor-chip">OpenWeather ${escapeHtml(weatherStatus)}</span></div></section><section class="panel guidance-panel"><div class="panel-header"><h3 class="panel-title">${icon("sparkles", 17)} Active signals</h3><p class="panel-note">Routine inputs</p></div><div class="guidance-list"><div class="guidance"><span class="guidance-icon">${icon("sun", 16)}</span><div><strong>UV</strong><p>Daytime protection category.</p></div></div><div class="guidance"><span class="guidance-icon">${icon("droplet", 16)}</span><div><strong>Humidity</strong><p>Finish and hydration context.</p></div></div><div class="guidance"><span class="guidance-icon">${icon("wind", 16)}</span><div><strong>PM2.5</strong><p>Antioxidant context when available.</p></div></div></div></section></div>${forecastRoutinePanel()}${environmentComparisonPanel()}<div class="dashboard-grid">${environmentPanel()}${insightPanel()}</div>`);
 }
 
 function concernPicker() {
   const disabled = state.runStatus === "running";
   return `<div class="field concern-field"><label id="concern-label">Primary research concern</label><div class="concern-grid" role="group" aria-labelledby="concern-label">${concernOptions.map((option) => `<button type="button" class="concern-choice ${state.concern === option.id ? "is-selected" : ""}" data-action="concern-choice" data-concern="${option.id}" aria-pressed="${state.concern === option.id}" ${disabled ? "disabled" : ""}><strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(option.description)}</small></button>`).join("")}</div><p class="field-help">These are non-medical research contexts, not diagnoses or treatment categories.</p></div>`;
+}
+
+function profilePreferenceFields() {
+  const disabled = state.runStatus === "running";
+  const finishPreference = ["matte", "dewy", "no-preference"].includes(state.finishPreference) ? state.finishPreference : "";
+  const reactivityLevel = ["low", "moderate", "high"].includes(state.reactivityLevel) ? state.reactivityLevel : "";
+  return `<div class="profile-secondary-fields" aria-label="Optional self-report context">
+    <div class="field"><label for="finish-preference">Finish preference <span class="field-optional">(optional)</span></label><select id="finish-preference" data-action="finish-preference" ${disabled ? "disabled" : ""}><option value="" ${finishPreference ? "" : "selected"}>Not specified</option><option value="matte" ${finishPreference === "matte" ? "selected" : ""}>Matte</option><option value="dewy" ${finishPreference === "dewy" ? "selected" : ""}>Dewy</option><option value="no-preference" ${finishPreference === "no-preference" ? "selected" : ""}>No preference</option></select><p class="field-help">Optional self-described finish context; it only helps select between existing category variants.</p></div>
+    <div class="field"><label for="reactivity-level">How easily does your skin usually react to new products? <span class="field-optional">(optional)</span></label><select id="reactivity-level" data-action="reactivity-level" ${disabled ? "disabled" : ""}><option value="" ${reactivityLevel ? "" : "selected"}>Not specified</option><option value="low" ${reactivityLevel === "low" ? "selected" : ""}>Low</option><option value="moderate" ${reactivityLevel === "moderate" ? "selected" : ""}>Moderate</option><option value="high" ${reactivityLevel === "high" ? "selected" : ""}>High</option></select><p class="field-help">Self-reported cosmetic context only; it does not change the primary research concern.</p></div>
+    <div class="field"><label for="exposure-context">Today’s exposure</label><select id="exposure-context" data-action="exposure-context" ${disabled ? "disabled" : ""}><option value="indoors" ${state.exposureContext === "indoors" ? "selected" : ""}>Mostly indoors</option><option value="mixed" ${state.exposureContext === "mixed" ? "selected" : ""}>Mixed</option><option value="outdoors" ${state.exposureContext === "outdoors" ? "selected" : ""}>Mostly outdoors</option></select><p class="field-help">Adjusts the UV activation threshold.</p></div></div>`;
 }
 
 function synthesizedRoutineCard(routine, meta) {
@@ -952,24 +1117,25 @@ function synthesizedRoutineCard(routine, meta) {
   if (!meta && !running) {
     return `<section class="synthesized-routine-card is-ready" aria-live="polite"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Ready to run</p><h3>Your category preview will appear here</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status is-review">Awaiting run</span></div><div class="synth-ready-content"><span>${icon("flask", 24)}</span><div><strong>One gated request, then an inspectable result.</strong><p>Choose a research context and run the preview to see the category output, evidence grounding, safety trace, and environmental explanation together.</p></div></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>No routine categories are shown before a gated research run.</span></p></div></section>`;
   }
-  const notices = meta?.notices?.length ? meta.notices.join(" ") : "No server request has run yet; this is a generic research preview.";
+  const notices = "";
   const variant = redirect ? "is-redirect" : cleared ? "is-cleared" : "is-review";
   if (redirect) {
     return `<section class="clinical-redirect" role="alert"><span class="clinical-redirect-icon">${icon("shield", 23)}</span><div><p class="routine-eyebrow">Safety redirect</p><h3>Routine generation stopped</h3><p>${escapeHtml(notices)}</p><small>This research interface cannot assess symptoms or replace in-person care. Seek an appropriate healthcare professional for urgent, worsening, or concerning symptoms.</small></div></section>`;
   }
   const statusMessage = running
-    ? "The request is in flight. This card keeps the prior/fallback research categories visible until the server reports a result."
+    ? "Building your routine…"
     : cleared
-      ? "The server reported a cleared research preview after its configured gates."
+      ? "Safety checks cleared. Approved database ingredients are shown in the matching AM/PM steps."
       : isQuotaFallback()
       ? "Live synthesis is unavailable; this is a generic research preview, not a personalised result."
-        : notices;
+        : (notices || "Routine ready.");
   const aiRationale = meta?.aiCategoryRationale;
   const aiRationaleAvailable = Boolean(aiRationale?.status && aiRationale?.text);
   const aiRationaleMarkup = aiRationaleAvailable
     ? `<section class="ai-category-rationale"><div><span>${icon("sparkles", 14)} AI category rationale</span><small>${escapeHtml(aiRationale.label || String(aiRationale.status).replaceAll("_", " "))}</small></div><p>${escapeHtml(aiRationale.text)}</p><strong>${escapeHtml(aiRationale.boundary || "Deterministic safety checks remain the final authority for every displayed category.")}</strong></section>`
     : `<section class="ai-category-rationale is-unavailable"><div><span>${icon("info", 14)} AI category rationale</span><small>Not available</small></div><p>No AI category rationale is shown because the configured gate did not permit it or the GPT billing/provider connection is unavailable.</p><strong>Deterministic safety checks remain the final authority for every displayed category.</strong></section>`;
-  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Category preview</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span></div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these categories?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p><p>${escapeHtml(notices)}</p>${aiRationaleMarkup}</div>` : ""}</section>`;
+  const candidates = Array.isArray(meta?.ingredientCandidates?.entries) ? meta.ingredientCandidates.entries : [];
+  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span></div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div>${approvedIngredientCandidatePanel(meta)}<div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these categories?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p><p>${escapeHtml(notices)}</p>${aiRationaleMarkup}</div>` : ""}</section>`;
 }
 
 function simulatorView() {
@@ -977,9 +1143,9 @@ function simulatorView() {
   const profileChoices = ["dry", "combination", "oily", "sensitive"].map((profile) => `<button class="profile-choice ${state.profile === profile ? "is-selected" : ""}" type="button" data-action="profile" data-profile="${profile}" aria-pressed="${state.profile === profile}" ${state.runStatus === "running" ? "disabled" : ""}>${profile[0].toUpperCase()}${profile.slice(1)}</button>`).join("");
   const locationUpdating = isLocationUpdating();
   const running = state.runStatus === "running";
-  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} Research preview inputs</h3><p class="panel-note">Server-gated, category-only preview</p></div><div class="form-grid"><div class="field"><label>Skin profile</label><div class="profile-pills">${profileChoices}</div></div>${concernPicker()}<div class="field safety-input"><label for="symptoms">Optional safety context</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="Optional: add only a symptom that should be screened for a safety redirect.">${escapeHtml(state.symptoms)}</textarea><p class="field-help" id="symptoms-help">Do not enter names, contact details, photos, or medical history. This text is sent only for the current safety check and is never added to local run history.</p></div>${locationPicker({ label: "Environmental location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Running gates…" : "Run gated preview"}</button><button class="ghost-button" type="button" data-action="navigate" data-view="monitor">View environment</button></div><p class="form-disclaimer">Kuala Lumpur is preselected as the demonstrator context. Change the location when you want to compare a different labelled environment. This interface is research-only and not medical advice.</p></section>`;
+  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} Build your routine</h3><p class="panel-note">Profile · concern · location</p></div><div class="form-grid"><div class="field"><label>Skin profile</label><div class="profile-pills">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Safety context <span class="field-optional">(optional)</span></label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="Anything that should pause this routine?"></textarea><p class="field-help" id="symptoms-help">Used only for this safety check.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button><button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Environment</button></div></section>`;
   const result = `<section class="sim-result">${synthesizedRoutineCard(routine, state.routineMeta)}${researchContextPanel(state.routineMeta)}</section>`;
-  return shell(`<div class="view-heading"><div><h2>Dynamic routine preview</h2><p>The category preview is shown only after indexed evidence, the coverage proxy gate, and deterministic safety checks report their result.</p></div></div><div class="simulator-grid">${inputs}${result}</div><div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>`);
+  return shell(`<div class="view-heading"><div><h2>Your environment-aware routine</h2><p>Built from live context, approved records, and safety checks.</p></div></div><div class="simulator-grid">${inputs}${result}</div><div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>`);
 }
 
 function concernLabelFromId(value) {
@@ -994,13 +1160,13 @@ function sourceFamilyLabel(value) {
 
 function atlasSourceCard(source) {
   const url = safeEvidenceUrl(source?.sourceUrl);
-  const caveats = textList(source?.caveats, { limit: 2 });
-  return `<article class="atlas-source"><div><span class="atlas-source-family">${escapeHtml(sourceFamilyLabel(source?.sourceFamily))}</span><strong>${escapeHtml(source?.title || "Source record")}</strong><small>${escapeHtml(source?.source || "")}${source?.sourceLocator ? ` · ${escapeHtml(source.sourceLocator)}` : ""}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Open source ${icon("arrow", 12)}</a>` : ""}${caveats.length ? `<p>${escapeHtml(caveats.join(" "))}</p>` : ""}</article>`;
+  return `<article class="atlas-source"><div><span class="atlas-source-family">${escapeHtml(sourceFamilyLabel(source?.sourceFamily))}</span><strong>${escapeHtml(source?.title || "Source record")}</strong><small>${escapeHtml(source?.source || "")}${source?.sourceLocator ? ` · ${escapeHtml(source.sourceLocator)}` : ""}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Open source ${icon("arrow", 12)}</a>` : ""}</article>`;
 }
 
 function contextCoverageEntries() {
   const reported = state.evaluation?.categoryCoverage?.coverage || {};
-  return concernOptions.map((context) => {
+  const mappedContextIds = new Set([...Object.keys(CONTEXT_COVERAGE_FALLBACK), ...Object.keys(reported)]);
+  return concernOptions.filter((context) => mappedContextIds.has(context.id)).map((context) => {
     const fallback = CONTEXT_COVERAGE_FALLBACK[context.id] || { cards: 0, documents: 0 };
     const record = reported[context.id] || fallback;
     return {
@@ -1095,18 +1261,12 @@ function ingredientRelationshipExplorer() {
   const selectedSources = (selectedIngredient?.sources || []).slice(0, 3).map((source) => `<li><span>${escapeHtml(sourceFamilyLabel(source?.sourceFamily))}</span><strong>${escapeHtml(source?.title || source?.source || "Attributed source")}</strong></li>`).join("");
   const recordSummary = filteredIngredients.length ? `${graphIngredients.length} of ${filteredIngredients.length} filtered explorer record${filteredIngredients.length === 1 ? "" : "s"} shown` : "No explorer record matches this filter";
 
-  return `<section class="panel relationship-explorer" aria-labelledby="relationship-explorer-title"><div class="panel-header"><div><h3 class="panel-title" id="relationship-explorer-title">${icon("activity", 17)} Ingredient Relationship Explorer</h3><p class="panel-note">A visual provenance map with inspectable source links</p></div><span class="pill is-neutral">${escapeHtml(String(totalAtlasRecords))} Atlas · ${escapeHtml(String(atlasIngredients.length))} explorer</span></div><p class="relationship-intro">Explore how the source-mapped Atlas subset connects ingredient records to research contexts and source families. Relationships describe provenance metadata only—not compatibility, efficacy, clinical safety, or a routine instruction.</p>${atlasIngredients.length ? `<div class="relationship-filter-groups"><div class="relationship-filter-group"><span>Research context</span><div role="group" aria-label="Filter relationship map by research context">${contextFilters}</div></div><div class="relationship-filter-group"><span>Source family</span><div role="group" aria-label="Filter relationship map by source family">${familyFilters}</div></div></div><div class="relationship-workspace"><section class="relationship-map-panel" aria-label="Relationship topology map"><div class="relationship-map-head"><div><span>Relationship topology</span><small>${escapeHtml(recordSummary)}</small></div><div class="relationship-legend"><span><i></i>Context</span><span><i class="is-source"></i>Source family</span><span><i class="is-record"></i>Ingredient</span></div></div><div class="relationship-canvas"><svg viewBox="0 0 920 ${graphHeight}" role="img" aria-label="Visual relationship topology for ${escapeHtml(relationshipFocusName(focus))}"><title>Ingredient provenance relationship topology</title><desc>Visual map of visible ingredient records between research-context and source-family columns. Use the native filters and ingredient list to inspect the records.</desc><g class="relationship-edge-layer">${graphEdges}</g><g class="relationship-context-nodes">${graphContexts}</g><g class="relationship-ingredient-nodes">${graphIngredientNodes}</g><g class="relationship-source-nodes">${graphSources}</g></svg></div></section><aside class="relationship-inspector" aria-live="polite">${selectedIngredient ? `<span class="relationship-inspector-kicker">Selected record</span><h4>${escapeHtml(selectedIngredient.displayName)}</h4><p>${escapeHtml((selectedIngredient.inciNames || []).join(" · ") || "INCI label not recorded")}</p><div class="relationship-inspector-tags"><div><span>Contexts</span><p>${selectedContexts || "Not recorded"}</p></div><div><span>Source families</span><p>${selectedFamilies || "Not recorded"}</p></div></div><ul class="relationship-source-list">${selectedSources || "<li><strong>No source summary recorded.</strong></li>"}</ul><p class="relationship-inspector-boundary">${escapeHtml((selectedIngredient.limitations || ["Source-linked research metadata only."])[0])}</p>` : `<div class="relationship-inspector-empty"><span>${icon("layers", 22)}</span><strong>No record in this view.</strong><p>Choose another filter to inspect a source-mapped record.</p></div>`}</aside></div><div class="relationship-record-section"><div><span>Select an ingredient</span><small>${escapeHtml(recordSummary)}${filteredIngredients.length > graphIngredients.length ? " · refine the filter to bring other records into view" : ""}</small></div><div class="relationship-record-list" role="list">${recordButtons || `<div class="relationship-no-records">No records match this filter.</div>`}</div></div><div class="relationship-summary" role="status"><strong>${escapeHtml(relationshipFocusName(focus))}</strong><span>${escapeHtml(recordSummary)}. Use filters to change the map and a record to update the inspector.</span><button type="button" class="text-button" data-action="relationship-filter" data-relationship-focus="all">Reset filters</button></div>` : `<div class="evidence-empty"><strong>Loading relationship metadata.</strong><span>The Atlas will populate this explorer once its source registry is available.</span></div>`}</section>`;
+  return `<section class="panel relationship-explorer" aria-labelledby="relationship-explorer-title"><div class="panel-header"><div><h3 class="panel-title" id="relationship-explorer-title">${icon("activity", 17)} Ingredient Relationship Explorer</h3><p class="panel-note">Contexts, ingredients, and source families</p></div><span class="pill is-neutral">${escapeHtml(String(atlasIngredients.length))} records</span></div>${atlasIngredients.length ? `<div class="relationship-filter-groups"><div class="relationship-filter-group"><span>Research context</span><div role="group" aria-label="Filter relationship map by research context">${contextFilters}</div></div><div class="relationship-filter-group"><span>Source family</span><div role="group" aria-label="Filter relationship map by source family">${familyFilters}</div></div></div><div class="relationship-workspace"><section class="relationship-map-panel" aria-label="Relationship topology map"><div class="relationship-map-head"><div><span>Relationship topology</span><small>${escapeHtml(recordSummary)}</small></div><div class="relationship-legend"><span><i></i>Context</span><span><i class="is-source"></i>Source family</span><span><i class="is-record"></i>Ingredient</span></div></div><div class="relationship-canvas"><svg viewBox="0 0 920 ${graphHeight}" role="img" aria-label="Visual relationship topology for ${escapeHtml(relationshipFocusName(focus))}"><title>Ingredient provenance relationship topology</title><desc>Visual map of linked ingredient records.</desc><g class="relationship-edge-layer">${graphEdges}</g><g class="relationship-context-nodes">${graphContexts}</g><g class="relationship-ingredient-nodes">${graphIngredientNodes}</g><g class="relationship-source-nodes">${graphSources}</g></svg></div></section><aside class="relationship-inspector" aria-live="polite">${selectedIngredient ? `<span class="relationship-inspector-kicker">Selected ingredient</span><h4>${escapeHtml(selectedIngredient.displayName)}</h4><p>${escapeHtml((selectedIngredient.inciNames || []).join(" · ") || selectedIngredient.id)}</p><div class="relationship-inspector-tags"><div><span>Contexts</span><p>${selectedContexts || "—"}</p></div><div><span>Source families</span><p>${selectedFamilies || "—"}</p></div></div><ul class="relationship-source-list">${selectedSources || "<li><strong>No source summary recorded.</strong></li>"}</ul>` : `<div class="relationship-inspector-empty"><span>${icon("layers", 22)}</span><strong>No record in this view.</strong></div>`}</aside></div><div class="relationship-record-section"><div><span>Select an ingredient</span><small>${escapeHtml(recordSummary)}</small></div><div class="relationship-record-list" role="list">${recordButtons || `<div class="relationship-no-records">No records match this filter.</div>`}</div></div><div class="relationship-summary" role="status"><strong>${escapeHtml(relationshipFocusName(focus))}</strong><span>${escapeHtml(recordSummary)}</span><button type="button" class="text-button" data-action="relationship-filter" data-relationship-focus="all">Reset</button></div>` : `<div class="evidence-empty"><strong>No relationship records available.</strong></div>`}</section>`;
 }
 
 function knowledgeExplorerView() {
   const atlas = state.knowledgeExplorer;
-  const overview = {
-    ingredientCount: 50,
-    sourceCount: 52,
-    demoEvidenceCards: 31,
-    stagedAtlasIngredientCount: 30,
-    ...atlas?.overview,
-  };
+  const overview = atlas?.overview || {};
   const query = state.knowledgeQuery.trim().toLowerCase();
   const allIngredients = Array.isArray(atlas?.ingredients) ? atlas.ingredients : [];
   const filtered = allIngredients.filter((ingredient) => {
@@ -1119,24 +1279,27 @@ function knowledgeExplorerView() {
   const results = Array.isArray(state.knowledgeSearchResult?.evidence) ? state.knowledgeSearchResult.evidence : [];
   const retrieval = state.knowledgeSearchResult;
   const sourceFamilies = Object.entries(overview.sourceFamilies || {});
-  const statusText = state.knowledgeStatus === "loading"
-    ? "Loading the versioned research registry…"
-    : state.knowledgeNotice || atlas?.scope || "The research atlas is ready.";
+  const liveResearchIndex = overview.liveResearchIndex || { enabled: false, namespace: overview.demoNamespace || "research index" };
+  const statusText = state.knowledgeStatus === "loading" ? "Updating Atlas…" : state.knowledgeNotice;
   const cards = filtered.map((ingredient) => {
     const contexts = (ingredient.concernContexts || []).map((context) => `<span>${escapeHtml(concernLabelFromId(context))}</span>`).join("");
     const inci = (ingredient.inciNames || []).join(" · ");
-    const aliases = (ingredient.aliases || []).join(" · ");
-    const limitations = textList(ingredient.limitations, { limit: 3 });
-    return `<article class="atlas-ingredient"><div class="atlas-ingredient-head"><div><span class="atlas-state">${escapeHtml(String(ingredient.researchUseStatus || "mapped_for_final_demo").replaceAll("_", " "))}</span><h3>${escapeHtml(ingredient.displayName)}</h3><p>${escapeHtml(inci || "INCI label not recorded")}${aliases ? ` · ${escapeHtml(aliases)}` : ""}</p></div><span class="atlas-id">${escapeHtml(ingredient.id)}</span></div><div class="atlas-contexts">${contexts}</div><div class="atlas-meta"><span>Normalisation: ${escapeHtml(ingredient.normalizationStatus || "not recorded")}</span><span>${escapeHtml(String(ingredient.sourceRecordIds?.length || 0))} mapped source record${ingredient.sourceRecordIds?.length === 1 ? "" : "s"}</span></div><div class="atlas-sources">${(ingredient.sources || []).map(atlasSourceCard).join("")}</div>${limitations.length ? `<details class="atlas-limitations"><summary>Recorded research boundaries</summary><ul>${limitations.map((item) => `<li>${escapeHtml(item.replaceAll("_", " "))}</li>`).join("")}</ul></details>` : ""}</article>`;
+    const sources = Array.isArray(ingredient.sources) ? ingredient.sources : [];
+    const primarySource = sources[0];
+    const sourceCount = sources.length;
+    return `<article class="atlas-ingredient"><div class="atlas-ingredient-head"><div><h3>${escapeHtml(ingredient.displayName)}</h3><p>${escapeHtml(inci || ingredient.id)}</p></div><span class="atlas-state">${sourceCount} source${sourceCount === 1 ? "" : "s"}</span></div><div class="atlas-contexts">${contexts}</div>${primarySource ? `<div class="atlas-primary-source">${atlasSourceCard(primarySource)}</div>` : ""}${sources.length > 1 ? `<details class="atlas-limitations"><summary>View ${sources.length - 1} more source${sources.length === 2 ? "" : "s"}</summary><div class="atlas-sources">${sources.slice(1).map(atlasSourceCard).join("")}</div></details>` : ""}</article>`;
   }).join("");
   const retrievalCards = results.slice(0, 8).map((item) => {
     const sourceUrl = safeEvidenceUrl(item.sourceUrl);
     const names = textList(item.ingredientNames, { limit: 3 }).join(" · ");
     return `<article class="research-hit"><div><span class="atlas-state">${escapeHtml(retrieval?.mode || "research retrieval")}</span><strong>${escapeHtml(item.title || "Research record")}</strong><small>${escapeHtml(names || "Ingredient mapping")} · ${escapeHtml(item.source || "Source record")}</small></div>${sourceUrl ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">Source ${icon("arrow", 12)}</a>` : ""}<p>${escapeHtml(item.excerpt || "No metadata excerpt returned.")}</p></article>`;
   }).join("");
-  const ingredientCount = Number(overview.ingredientCount) || allIngredients.length || INCORPORATED_INGREDIENTS.length;
+  const ingredientCount = Number(overview.ingredientCount) || allIngredients.length;
   const sourceMappedCount = allIngredients.length;
-  return shell(`<div class="view-heading"><div><h2>Complete ${escapeHtml(String(ingredientCount))}-ingredient research knowledge base</h2><p>Browse the complete incorporated Atlas alongside its source-mapped explorer subset, normalisation metadata, evidence boundaries, the isolated Pinecone subset, and staged local records. This academic technology demonstrator is not a treatment selector.</p></div><button class="primary-button" type="button" data-action="knowledge-refresh" ${state.knowledgeStatus === "loading" ? "disabled" : ""}>${icon("refresh", 15)} Refresh atlas</button></div><section class="atlas-summary panel"><div class="atlas-summary-stat"><span>Atlas records</span><strong>${escapeHtml(String(ingredientCount))}</strong><small>complete incorporated registry</small></div><div class="atlas-summary-stat"><span>Source-mapped explorer</span><strong>${escapeHtml(String(sourceMappedCount || "—"))}</strong><small>records with inspectable relationship metadata</small></div><div class="atlas-summary-stat"><span>Sources</span><strong>${escapeHtml(String(overview.sourceCount || 37))}</strong><small>${sourceFamilies.map(([family, count]) => `${sourceFamilyLabel(family)} ${count}`).join(" · ")}</small></div><div class="atlas-summary-stat"><span>Pinecone cards</span><strong>${escapeHtml(String(overview.demoEvidenceCards || 31))}</strong><small>${escapeHtml(overview.demoNamespace || "demo namespace")}</small></div></section><section class="panel atlas-controls"><div class="atlas-search"><label for="knowledge-query">Search ingredient, INCI, or alias</label><div><input id="knowledge-query" value="${escapeHtml(state.knowledgeQuery)}" placeholder="e.g. ceramide, vitamin C, urea" data-action="knowledge-query" /><button type="button" class="primary-button" data-action="knowledge-search" ${state.knowledgeSearchStatus === "searching" ? "disabled" : ""}>${icon("sparkles", 14)} ${state.knowledgeSearchStatus === "searching" ? "Searching…" : "Search Atlas"}</button></div></div><div class="atlas-filter"><span>Research context</span><div>${["all", ...concernOptions.map((option) => option.id)].map((concern) => `<button type="button" data-action="knowledge-concern" data-concern="${escapeHtml(concern)}" class="filter-chip ${state.knowledgeConcern === concern ? "is-selected" : ""}" aria-pressed="${state.knowledgeConcern === concern}">${escapeHtml(concernLabelFromId(concern))}</button>`).join("")}</div></div><p class="atlas-notice" role="status">${escapeHtml(statusText)}</p></section>${ingredientRelationshipExplorer()}${retrieval ? `<section class="panel atlas-retrieval"><div class="panel-header"><div><h3 class="panel-title">${icon("sparkles", 17)} Research corpus retrieval</h3><p class="panel-note">${escapeHtml(retrieval.mode || "research retrieval")} · ${escapeHtml(retrieval.namespace || "local registry")}</p></div><span class="pill is-neutral">${escapeHtml(String(retrieval.coverage?.uniqueIngredients ?? 0))} ingredient matches</span></div><p>${escapeHtml(retrieval.coverage?.rationale || "")}</p><div class="research-hit-grid">${retrievalCards || `<div class="evidence-empty"><strong>No match found.</strong><span>Try a different ingredient or research context.</span></div>`}</div></section>` : ""}<section class="atlas-grid" aria-live="polite">${cards || `<div class="panel evidence-empty"><strong>No ingredient records matched this filter.</strong><span>Reset the filter or search another ingredient term.</span></div>`}</section>`);
+  const showRetrieval = Boolean(state.knowledgeQuery.trim() && retrieval);
+  const corpus = state.corpusSummary;
+  const corpusCard = corpus ? `<section class="panel corpus-digest"><div><p class="ingredient-eyebrow">${icon("layers", 14)} ${escapeHtml(corpus.title || "Corpus summary")}</p><h3>${escapeHtml(corpus.digest || "Live database facts are loading.")}</h3></div><div class="corpus-digest-tags">${(corpus.highlights || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div></section>` : "";
+  return shell(`<div class="view-heading atlas-heading"><div><p class="hero-kicker">Knowledge base</p><h2>Ingredient Atlas</h2><p>Search ingredients, filter by context, and open the linked sources.</p></div><button class="ghost-button" type="button" data-action="knowledge-refresh" ${state.knowledgeStatus === "loading" ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button></div><section class="atlas-summary panel"><div class="atlas-summary-stat"><span>Ingredients</span><strong>${escapeHtml(String(ingredientCount || "—"))}</strong><small>incorporated records</small></div><div class="atlas-summary-stat"><span>Sources</span><strong>${escapeHtml(String(overview.sourceCount || "—"))}</strong><small>${sourceFamilies.map(([family, count]) => `${sourceFamilyLabel(family)} ${count}`).join(" · ") || "linked records"}</small></div><div class="atlas-summary-stat"><span>Index</span><strong>${liveResearchIndex.enabled ? "Live" : "Local"}</strong><small>${escapeHtml(liveResearchIndex.namespace || "metadata index")}</small></div></section>${corpusCard}<section class="panel atlas-controls"><div class="atlas-search"><label for="knowledge-query">Find an ingredient</label><div><input id="knowledge-query" value="${escapeHtml(state.knowledgeQuery)}" placeholder="Search Atlas" data-action="knowledge-query" /><button type="button" class="primary-button" data-action="knowledge-search" ${state.knowledgeSearchStatus === "searching" ? "disabled" : ""}>${state.knowledgeSearchStatus === "searching" ? "Searching…" : "Search"}</button></div></div><div class="atlas-filter"><span>Filter by context</span><div>${["all", ...concernOptions.map((option) => option.id)].map((concern) => `<button type="button" data-action="knowledge-concern" data-concern="${escapeHtml(concern)}" class="filter-chip ${state.knowledgeConcern === concern ? "is-selected" : ""}" aria-pressed="${state.knowledgeConcern === concern}">${escapeHtml(concernLabelFromId(concern))}</button>`).join("")}</div></div>${statusText ? `<p class="atlas-notice" role="status">${escapeHtml(statusText)}</p>` : ""}</section>${showRetrieval ? `<section class="panel atlas-retrieval"><div class="panel-header"><div><h3 class="panel-title">Search results</h3><p class="panel-note">${escapeHtml(String(retrieval.coverage?.uniqueIngredients ?? 0))} matches</p></div></div><div class="research-hit-grid">${retrievalCards || `<div class="evidence-empty"><strong>No source match found.</strong></div>`}</div></section>` : ""}<details class="atlas-explorer-details"><summary>${icon("activity", 16)} Explore ingredient relationships</summary>${ingredientRelationshipExplorer()}</details><section class="atlas-grid" aria-live="polite">${cards || `<div class="panel evidence-empty"><strong>No ingredients match this view.</strong></div>`}</section>`);
 }
 
 function evaluationView() {
@@ -1243,7 +1406,6 @@ function navigateView(view, { source = "user", history = source === "presentatio
   settleViewNavigation({ focus, scroll });
   if (view === "knowledge") {
     loadKnowledgeExplorer();
-    loadResearchSearch({ background: true });
   }
   if (view === "evaluation") loadEvaluation();
 }
@@ -1270,12 +1432,24 @@ async function loadKnowledgeExplorer({ force = false } = {}) {
     const payload = await response.json();
     state.knowledgeExplorer = payload;
     state.knowledgeStatus = "ready";
-    state.knowledgeNotice = `${payload.overview?.ingredientCount || 0} mapped ingredients · ${payload.overview?.sourceCount || 0} attributed source records · ${payload.overview?.demoEvidenceCards || 31} existing isolated Pinecone metadata cards · ${payload.overview?.stagedAtlasIngredientCount || 30} additional local, review-pending Atlas ingredients are not uploaded or selectable.`;
+    const liveIndex = payload.overview?.liveResearchIndex;
+    state.knowledgeNotice = `${payload.overview?.ingredientCount || 0} ingredients · ${payload.overview?.sourceCount || 0} linked sources · ${liveIndex?.enabled ? `live index: ${liveIndex.namespace}` : "local index"}`;
   } catch {
     state.knowledgeStatus = "error";
     state.knowledgeNotice = "The source registry could not be loaded. Retry when the local server is available.";
   }
   if (state.activeView === "knowledge") render();
+}
+
+async function loadCorpusSummary() {
+  try {
+    const response = await fetch("/api/corpus-summary");
+    if (!response.ok) return;
+    state.corpusSummary = await response.json();
+    if (state.activeView === "knowledge") render();
+  } catch {
+    // The Atlas stays usable if this compact optional summary is unavailable.
+  }
 }
 
 async function loadResearchSearch({ background = false } = {}) {
@@ -1724,6 +1898,58 @@ function importBulkFile(file) {
   reader.readAsText(file);
 }
 
+function moveForecastHover(event) {
+  if (!(event.target instanceof Element)) { hideForecastHover(); return; }
+  const timeline = event.target.closest("[data-forecast-hover]");
+  if (!timeline || !forecastHoverData || !forecastHoverData.n) { hideForecastHover(); return; }
+  const svg = timeline.querySelector("svg");
+  const overlay = timeline.querySelector(".forecast-hover");
+  const guide = timeline.querySelector(".forecast-guide");
+  const dots = timeline.querySelector(".forecast-dots");
+  const tooltip = timeline.querySelector(".forecast-tooltip");
+  if (!svg || !overlay || !guide || !dots || !tooltip) return;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const data = forecastHoverData;
+  const frac = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+  let index = Math.round(frac * (data.n - 1));
+  index = Math.max(0, Math.min(data.n - 1, index));
+  const toY = (vy) => (vy / data.vbh) * rect.height;
+  const xPx = (data.xFracs[index] ?? frac) * rect.width;
+
+  overlay.classList.add("is-active");
+  guide.style.left = `${xPx}px`;
+  guide.style.top = `${toY(data.top)}px`;
+  guide.style.height = `${toY(data.bottom) - toY(data.top)}px`;
+
+  const rows = [];
+  let dotsHtml = "";
+  for (const s of data.series) {
+    const cell = s.cells[index];
+    if (!cell || cell.value === null) { rows.push(`<span class="forecast-tip-row is-off"><i style="--dot:${s.color}"></i>${escapeHtml(s.label)}<b>n/a</b></span>`); continue; }
+    dotsHtml += `<span class="forecast-dot" style="left:${xPx}px;top:${toY(cell.y)}px;--dot:${s.color}"></span>`;
+    rows.push(`<span class="forecast-tip-row"><i style="--dot:${s.color}"></i>${escapeHtml(s.label)}<b>${cell.value.toFixed(s.digits)} ${escapeHtml(s.unit)}</b></span>`);
+  }
+  if (data.pm) rows.push(`<span class="forecast-tip-row is-ref"><i class="is-dashed" style="--dot:${data.pm.color}"></i>PM2.5<b>${data.pm.value.toFixed(1)} µg/m³</b></span>`);
+  dots.innerHTML = dotsHtml;
+  tooltip.innerHTML = `<strong>${escapeHtml(data.times[index] || "")}</strong>${rows.join("")}`;
+
+  const width = overlay.clientWidth || rect.width;
+  const tipWidth = tooltip.offsetWidth || 150;
+  let left = xPx + 12;
+  if (left + tipWidth > width) left = xPx - tipWidth - 12;
+  if (left < 0) left = 0;
+  tooltip.style.left = `${left}px`;
+}
+
+function hideForecastHover() {
+  document.querySelectorAll(".forecast-hover.is-active").forEach((el) => el.classList.remove("is-active"));
+}
+
+document.addEventListener("pointermove", moveForecastHover);
+document.addEventListener("pointerleave", (event) => { if (event.target.closest?.("[data-forecast-hover]")) hideForecastHover(); }, true);
+document.addEventListener("pointerdown", moveForecastHover);
+
 document.addEventListener("click", (event) => {
   const target = event.target.closest("[data-action]");
   if (!target) return;
@@ -1763,7 +1989,7 @@ document.addEventListener("click", (event) => {
   if (action === "reviewer-connect") { loadReviewerQueue(); return; }
   if (action === "reviewer-disconnect") { disconnectReviewerQueue(); return; }
   if (action === "reviewer-submit") { submitReviewerAnnotation(); return; }
-  if (action === "knowledge-refresh") { loadKnowledgeExplorer({ force: true }); return; }
+  if (action === "knowledge-refresh") { loadKnowledgeExplorer({ force: true }); loadCorpusSummary(); return; }
   if (action === "knowledge-search") { loadResearchSearch(); return; }
   if (action === "knowledge-concern") {
     state.knowledgeConcern = target.dataset.concern || "all";
@@ -1807,6 +2033,21 @@ document.addEventListener("click", (event) => {
 document.addEventListener("change", (event) => {
   const target = event.target;
   if (target.dataset.action === "concern") { state.concern = target.value; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); }
+  if (target.dataset.action === "finish-preference") {
+    state.finishPreference = ["matte", "dewy", "no-preference"].includes(target.value) ? target.value : "";
+    resetPreviewForInputChange();
+    render();
+  }
+  if (target.dataset.action === "reactivity-level") {
+    state.reactivityLevel = ["low", "moderate", "high"].includes(target.value) ? target.value : "";
+    resetPreviewForInputChange();
+    render();
+  }
+  if (target.dataset.action === "exposure-context") {
+    state.exposureContext = ["indoors", "mixed", "outdoors"].includes(target.value) ? target.value : "mixed";
+    resetPreviewForInputChange();
+    render();
+  }
   if (target.dataset.action === "upload" && target.files?.[0]) {
     importBulkFile(target.files[0]);
   }
@@ -1918,6 +2159,78 @@ function environmentEndpoint(location = state.selectedLocation) {
   return `/api/environment?${query}`;
 }
 
+function forecastEndpoint(location = state.selectedLocation) {
+  const selected = locationPayload(location);
+  const query = new URLSearchParams({ concern: state.concern, lat: String(selected.lat), lon: String(selected.lon), location: selected.name });
+  return `/api/environment/forecast?${query}`;
+}
+
+async function refreshForecast(location = state.selectedLocation, { shouldRender = true } = {}) {
+  try {
+    const response = await fetch(forecastEndpoint(location));
+    if (!response.ok) throw new Error("Forecast API is unavailable");
+    state.forecast = await response.json();
+  } catch {
+    state.forecast = { status: "unavailable", next24Hours: [], next7Days: [], providerReliability: [] };
+  }
+  refreshForecastSynthesis();
+  if (shouldRender) render();
+}
+
+function forecastSynthesisFacts() {
+  const hourly = Array.isArray(state.forecast?.next24Hours) ? state.forecast.next24Hours : [];
+  const summarise = (key, digits) => {
+    const values = hourly.map((period) => Number(period.environment?.readings?.[key])).filter(Number.isFinite);
+    if (!values.length) return null;
+    const round = (n) => Number(n.toFixed(digits));
+    return { low: round(Math.min(...values)), high: round(Math.max(...values)), start: round(values[0]), end: round(values[values.length - 1]) };
+  };
+  const pm = Number(activeEnvironment().readings?.pm25);
+  return {
+    scope: "Next 24-hour environmental trend for one location. Numeric context only; not a clinical or product recommendation.",
+    location: state.selectedLocation?.name || "selected location",
+    concern: state.concern || "general",
+    hours: hourly.length,
+    uv_index: summarise("uvi", 1),
+    humidity_percent: summarise("humidity", 0),
+    temperature_celsius: summarise("temperature", 1),
+    pm25_now_ugm3: Number.isFinite(pm) ? Number(pm.toFixed(1)) : null,
+  };
+}
+
+async function refreshForecastSynthesis() {
+  const facts = forecastSynthesisFacts();
+  const key = JSON.stringify(facts);
+  if (!facts.hours) {
+    state.forecastSynthesis = { status: "unavailable", text: "", generatedAt: "" };
+    state.forecastSynthesisKey = key;
+    return;
+  }
+  if (key === state.forecastSynthesisKey && state.forecastSynthesis?.status === "available") return;
+  state.forecastSynthesisKey = key;
+  state.forecastSynthesis = { status: "loading", text: "", generatedAt: "" };
+  render();
+  try {
+    const response = await fetch("/api/ai/augment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ kind: "forecast", facts }),
+    });
+    if (!response.ok) throw new Error("Forecast synthesis is unavailable");
+    const payload = await response.json();
+    if (key !== state.forecastSynthesisKey) return;
+    if (payload.status === "available" && payload.text) {
+      state.forecastSynthesis = { status: "available", text: payload.text, generatedAt: payload.generatedAt || "" };
+    } else {
+      state.forecastSynthesis = { status: "unavailable", text: "", generatedAt: "" };
+    }
+  } catch {
+    if (key !== state.forecastSynthesisKey) return;
+    state.forecastSynthesis = { status: "unavailable", text: "", generatedAt: "" };
+  }
+  render();
+}
+
 async function searchLocations() {
   if (isLocationUpdating() || state.runStatus === "running") return;
   const query = state.locationQuery.trim();
@@ -2009,6 +2322,7 @@ async function refreshEnvironment(location = state.selectedLocation, { announce 
     state.selectedLocation = locationPayload(payload.location || selected);
     state.lastUpdated = payload.updatedAt || "just now";
     await refreshExplainability({ shouldRender: false });
+    await refreshForecast(state.selectedLocation, { shouldRender: false });
     render();
     if (announce) showToast(`${environmentModeLabel()} refreshed for ${state.selectedLocation.name}.`);
     return true;
@@ -2137,6 +2451,9 @@ async function generateRoutine() {
   render();
   try {
     const body = { profile: state.profile, concern: state.concern, location };
+    if (state.finishPreference) body.finishPreference = state.finishPreference;
+    if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
+    if (state.exposureContext) body.exposureContext = state.exposureContext;
     if (symptoms) body.symptoms = symptoms;
     const response = await fetch("/api/routine", {
       method: "POST",
@@ -2159,6 +2476,7 @@ async function generateRoutine() {
     state.explainability = payload.explainability || state.explainability;
     recordRunSummary(payload, location);
     render();
+    refreshIngredientRationales();
     if (payload.status === "cleared") {
       showToast("Grounded research preview cleared the configured gates.");
     } else if (payload.status === "medical_redirect") {
@@ -2183,6 +2501,44 @@ async function generateRoutine() {
     render();
     showToast("Server unavailable; retained a local generic research preview.");
   }
+}
+
+async function refreshIngredientRationales() {
+  const selection = state.routineMeta?.ingredientCandidates;
+  const entries = Array.isArray(selection?.entries) ? selection.entries : [];
+  if (selection?.status !== "available" || !entries.length) {
+    state.ingredientRationales = {};
+    state.ingredientRationaleStatus = "idle";
+    state.ingredientRationaleKey = "";
+    return;
+  }
+  const candidates = entries.map((entry) => ({ ingredientId: entry.ingredientId, displayName: entry.displayName, categoryTitle: entry.categoryTitle }));
+  const key = JSON.stringify({ c: state.concern, e: state.environment?.readings, ids: candidates.map((c) => c.ingredientId) });
+  if (key === state.ingredientRationaleKey && state.ingredientRationaleStatus === "available") return;
+  state.ingredientRationaleKey = key;
+  state.ingredientRationaleStatus = "loading";
+  render();
+  try {
+    const response = await fetch("/api/ai/ingredient-rationale", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ concern: state.concern, environment: { readings: state.environment?.readings || {} }, candidates }),
+    });
+    if (!response.ok) throw new Error("Ingredient rationale is unavailable");
+    const payload = await response.json();
+    if (key !== state.ingredientRationaleKey) return;
+    const map = {};
+    for (const item of Array.isArray(payload.rationales) ? payload.rationales : []) {
+      if (item && item.ingredientId && item.text) map[item.ingredientId] = { text: item.text, source: item.source || "" };
+    }
+    state.ingredientRationales = map;
+    state.ingredientRationaleStatus = Object.keys(map).length ? "available" : "unavailable";
+  } catch {
+    if (key !== state.ingredientRationaleKey) return;
+    state.ingredientRationales = {};
+    state.ingredientRationaleStatus = "unavailable";
+  }
+  render();
 }
 
 async function runBatch() {
@@ -2251,4 +2607,5 @@ render();
 void refreshEnvironment(defaultLocation, { announce: false });
 void refreshComparisonContext(state.comparison.selectedLocation, { announce: false });
 void loadKnowledgeExplorer();
+void loadCorpusSummary();
 void loadEvaluation();

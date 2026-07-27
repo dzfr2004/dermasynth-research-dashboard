@@ -4,7 +4,7 @@
   "fixture": {
     "path": "data/evaluation/fixtures/study-evaluation.v1.json",
     "version": "2026-07-16",
-    "sha256": "1354df851ebd11af90ead2453a00f9ef2db73c345143bd1b708d38b1637c478f"
+    "sha256": "cc8abce4dc15585cfbe26a4157d728008ca6a766c389cea7df663bad7a5c89bf"
   },
   "execution": {
     "mode": "offline deterministic regression",
@@ -12,18 +12,24 @@
     "deterministicRunMarker": "dermasynth-offline-study-evaluation:2026-07-16"
   },
   "summary": {
-    "total": 92,
-    "passed": 92,
+    "total": 113,
+    "passed": 113,
     "failed": 0,
     "byCategory": [
       {
         "category": "api_contract",
-        "total": 32,
-        "passed": 32,
+        "total": 47,
+        "passed": 47,
         "failed": 0
       },
       {
         "category": "catalogue",
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      {
+        "category": "category_reference",
         "total": 2,
         "passed": 2,
         "failed": 0
@@ -54,8 +60,8 @@
       },
       {
         "category": "routine_template",
-        "total": 7,
-        "passed": 7,
+        "total": 10,
+        "passed": 10,
         "failed": 0
       },
       {
@@ -90,10 +96,26 @@
       "detail": ""
     },
     {
+      "id": "catalogue-profile-modifiers",
+      "category": "catalogue",
+      "title": "Optional cosmetic profile modifiers retain their fixed enum contract",
+      "expected": "finish: matte/dewy/no-preference; reactivity: low/moderate/high",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "category-reference-static-contract",
+      "category": "category_reference",
+      "title": "Every general category reference is static, bounded, and detached from individual routine inputs",
+      "expected": "one-argument category lookup, 2–4 class examples per allowlisted category, and defensive copies",
+      "status": "passed",
+      "detail": ""
+    },
+    {
       "id": "template-acne",
       "category": "routine_template",
       "title": "Generic acne template has a safe research-only routine contract",
-      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
       "status": "passed",
       "detail": ""
     },
@@ -101,7 +123,7 @@
       "id": "template-barrier",
       "category": "routine_template",
       "title": "Generic barrier template has a safe research-only routine contract",
-      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
       "status": "passed",
       "detail": ""
     },
@@ -109,7 +131,7 @@
       "id": "template-dryness",
       "category": "routine_template",
       "title": "Generic dryness template has a safe research-only routine contract",
-      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
       "status": "passed",
       "detail": ""
     },
@@ -117,7 +139,7 @@
       "id": "template-oil",
       "category": "routine_template",
       "title": "Generic oil template has a safe research-only routine contract",
-      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
       "status": "passed",
       "detail": ""
     },
@@ -125,7 +147,31 @@
       "id": "template-pigment",
       "category": "routine_template",
       "title": "Generic pigment template has a safe research-only routine contract",
-      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-pores",
+      "category": "routine_template",
+      "title": "Generic pores template has a safe research-only routine contract",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-radiance",
+      "category": "routine_template",
+      "title": "Generic radiance template has a safe research-only routine contract",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "template-redness",
+      "category": "routine_template",
+      "title": "Generic redness template has a safe research-only routine contract",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
       "status": "passed",
       "detail": ""
     },
@@ -133,7 +179,7 @@
       "id": "template-sensitivity",
       "category": "routine_template",
       "title": "Generic sensitivity template has a safe research-only routine contract",
-      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
       "status": "passed",
       "detail": ""
     },
@@ -141,7 +187,7 @@
       "id": "template-texture",
       "category": "routine_template",
       "title": "Generic texture template has a safe research-only routine contract",
-      "expected": "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+      "expected": "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
       "status": "passed",
       "detail": ""
     },
@@ -546,6 +592,14 @@
       "detail": ""
     },
     {
+      "id": "api-category-reference-static",
+      "category": "category_reference",
+      "title": "Static category references are cacheable and absent from individual routine responses",
+      "expected": "cacheable category-ID map with bounded class examples, no request-specific body fields, and no routine-selection permission",
+      "status": "passed",
+      "detail": ""
+    },
+    {
       "id": "api-ingredients-audit-catalog",
       "category": "ingredient_catalog",
       "title": "Ingredient endpoint exposes only held, product-specific research candidates",
@@ -565,7 +619,7 @@
       "id": "api-routine-dry-acne",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for dry/acne",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -573,7 +627,7 @@
       "id": "api-routine-dry-barrier",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for dry/barrier",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -581,7 +635,7 @@
       "id": "api-routine-dry-dryness",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for dry/dryness",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -589,7 +643,7 @@
       "id": "api-routine-dry-oil",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for dry/oil",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -597,7 +651,31 @@
       "id": "api-routine-dry-pigment",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for dry/pigment",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-pores",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/pores",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-radiance",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/radiance",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-dry-redness",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for dry/redness",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -605,7 +683,7 @@
       "id": "api-routine-dry-sensitivity",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for dry/sensitivity",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -613,7 +691,7 @@
       "id": "api-routine-dry-texture",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for dry/texture",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -621,7 +699,7 @@
       "id": "api-routine-combination-acne",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for combination/acne",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -629,7 +707,7 @@
       "id": "api-routine-combination-barrier",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for combination/barrier",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -637,7 +715,7 @@
       "id": "api-routine-combination-dryness",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for combination/dryness",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -645,7 +723,7 @@
       "id": "api-routine-combination-oil",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for combination/oil",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -653,7 +731,31 @@
       "id": "api-routine-combination-pigment",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for combination/pigment",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-pores",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/pores",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-radiance",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/radiance",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-combination-redness",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for combination/redness",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -661,7 +763,7 @@
       "id": "api-routine-combination-sensitivity",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for combination/sensitivity",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -669,7 +771,7 @@
       "id": "api-routine-combination-texture",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for combination/texture",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -677,7 +779,7 @@
       "id": "api-routine-oily-acne",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for oily/acne",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -685,7 +787,7 @@
       "id": "api-routine-oily-barrier",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for oily/barrier",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -693,7 +795,7 @@
       "id": "api-routine-oily-dryness",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for oily/dryness",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -701,7 +803,7 @@
       "id": "api-routine-oily-oil",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for oily/oil",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -709,7 +811,31 @@
       "id": "api-routine-oily-pigment",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for oily/pigment",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-pores",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/pores",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-radiance",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/radiance",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-oily-redness",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for oily/redness",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -717,7 +843,7 @@
       "id": "api-routine-oily-sensitivity",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for oily/sensitivity",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -725,7 +851,7 @@
       "id": "api-routine-oily-texture",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for oily/texture",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -733,7 +859,7 @@
       "id": "api-routine-sensitive-acne",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for sensitive/acne",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -741,7 +867,7 @@
       "id": "api-routine-sensitive-barrier",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for sensitive/barrier",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -749,7 +875,7 @@
       "id": "api-routine-sensitive-dryness",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for sensitive/dryness",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -757,7 +883,7 @@
       "id": "api-routine-sensitive-oil",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for sensitive/oil",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -765,7 +891,31 @@
       "id": "api-routine-sensitive-pigment",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for sensitive/pigment",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-pores",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/pores",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-radiance",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/radiance",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-routine-sensitive-redness",
+      "category": "api_contract",
+      "title": "Offline routine endpoint returns the generic contract for sensitive/redness",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -773,7 +923,7 @@
       "id": "api-routine-sensitive-sensitivity",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for sensitive/sensitivity",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
       "status": "passed",
       "detail": ""
     },
@@ -781,7 +931,23 @@
       "id": "api-routine-sensitive-texture",
       "category": "api_contract",
       "title": "Offline routine endpoint returns the generic contract for sensitive/texture",
-      "expected": "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+      "expected": "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-profile-modifiers",
+      "category": "api_contract",
+      "title": "Optional finish and reactivity modifiers stay category-only and apply the conservative guardrail",
+      "expected": "HTTP 200 fallback with echoed valid modifiers, a low-irritation rule, and no texture-renewal category at high reactivity",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-new-concern-fallbacks",
+      "category": "api_contract",
+      "title": "New cosmetic research concerns fall back to deterministic category-only previews without evidence",
+      "expected": "HTTP 200 generic fallbacks for redness, radiance, and visible-pore appearance; no fabricated retrieval evidence",
       "status": "passed",
       "detail": ""
     },
@@ -798,6 +964,14 @@
       "category": "api_contract",
       "title": "Routine endpoint rejects unsupported profile and concern codes",
       "expected": "HTTP 400 for unsupported profile and concern",
+      "status": "passed",
+      "detail": ""
+    },
+    {
+      "id": "api-invalid-profile-modifiers",
+      "category": "api_contract",
+      "title": "Routine endpoint rejects unknown optional profile modifier values",
+      "expected": "HTTP 400 for unknown finish preference and reactivity level",
       "status": "passed",
       "detail": ""
     },

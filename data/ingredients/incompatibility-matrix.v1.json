@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "matrixVersion": "2026-07-27.1",
+  "scope": "Approved ingredient-record compatibility configuration for the DermaSynth AM/PM selection layer.",
+  "pairs": [
+    ["retinol", "benzoyl-peroxide"],
+    ["retinol", "glycolic-acid"],
+    ["retinol", "mandelic-acid"],
+    ["retinol", "salicylic-acid"],
+    ["benzoyl-peroxide", "glycolic-acid"],
+    ["benzoyl-peroxide", "mandelic-acid"],
+    ["benzoyl-peroxide", "salicylic-acid"],
+    ["glycolic-acid", "salicylic-acid"],
+    ["glycolic-acid", "mandelic-acid"],
+    ["mandelic-acid", "salicylic-acid"]
+  ]
+}

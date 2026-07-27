@@ -10,3 +10,5 @@ work/
 outputs/
 data/reviewer-queue/*.local.json
 data/reviewer-queue/*.tmp
+data/governance/*.local.json
+data/db/

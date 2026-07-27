@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "modelId": "dermasynth-environmental-surrogate",
+  "modelVersion": "1.0.0",
+  "method": "exact_shapley_values_for_additive_environmental_surrogate",
+  "weightStatus": "configured_study_demo_parameters",
+  "baselineScore": 0.5,
+  "formula": "baseline + sum(weight × (normalised feature - feature baseline))",
+  "features": {
+    "uvi": { "label": "UV index", "unit": "UVI", "baseline": 0.36 },
+    "humidity": { "label": "Humidity context", "unit": "%", "baseline": 0.5 },
+    "pm25": { "label": "PM2.5 context", "unit": "µg/m³", "baseline": 0.2 },
+    "temperature": { "label": "Temperature context", "unit": "°C", "baseline": 0.25 }
+  },
+  "concernWeights": {
+    "acne": { "uvi": 0.18, "humidity": 0.26, "pm25": 0.34, "temperature": 0.22 },
+    "barrier": { "uvi": 0.22, "humidity": 0.34, "pm25": 0.26, "temperature": 0.18 },
+    "pigment": { "uvi": 0.42, "humidity": 0.12, "pm25": 0.29, "temperature": 0.17 },
+    "dryness": { "uvi": 0.18, "humidity": 0.42, "pm25": 0.18, "temperature": 0.22 },
+    "oil": { "uvi": 0.17, "humidity": 0.3, "pm25": 0.22, "temperature": 0.31 },
+    "sensitivity": { "uvi": 0.24, "humidity": 0.34, "pm25": 0.27, "temperature": 0.15 },
+    "texture": { "uvi": 0.31, "humidity": 0.18, "pm25": 0.31, "temperature": 0.2 }
+  },
+  "scope": "Environmental-context explanation for the non-clinical final-review demonstrator; not a skin assessment, efficacy score, or treatment decision."
+}

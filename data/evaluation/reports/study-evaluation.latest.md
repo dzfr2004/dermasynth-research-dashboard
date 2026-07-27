@@ -1,21 +1,22 @@
 # DermaSynth offline study evaluation report
 
 Fixture: `data/evaluation/fixtures/study-evaluation.v1.json`
-Fixture SHA-256: `1354df851ebd11af90ead2453a00f9ef2db73c345143bd1b708d38b1637c478f`
+Fixture SHA-256: `cc8abce4dc15585cfbe26a4157d728008ca6a766c389cea7df663bad7a5c89bf`
 
-Result: **92/92 passed; 0 failed.**
+Result: **113/113 passed; 0 failed.**
 
 ## Coverage
 
 | Category | Passed | Failed | Total |
 | --- | ---: | ---: | ---: |
-| api_contract | 32 | 0 | 32 |
-| catalogue | 2 | 0 | 2 |
+| api_contract | 47 | 0 | 47 |
+| catalogue | 3 | 0 | 3 |
+| category_reference | 2 | 0 | 2 |
 | ingredient_catalog | 1 | 0 | 1 |
 | ingredient_knowledge_base | 2 | 0 | 2 |
 | output_guardrail | 15 | 0 | 15 |
 | retrieval_provenance | 3 | 0 | 3 |
-| routine_template | 7 | 0 | 7 |
+| routine_template | 10 | 0 | 10 |
 | triage | 30 | 0 | 30 |
 
 ## Failures

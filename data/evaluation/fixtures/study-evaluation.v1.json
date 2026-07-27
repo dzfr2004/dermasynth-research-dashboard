@@ -19,7 +19,7 @@
   ],
   "routineContract": {
     "minimumSteps": 3,
-    "maximumSteps": 5,
+    "maximumSteps": 8,
     "testLocation": {
       "name": "Evaluation Harbour, MY",
       "lat": 3.139,

@@ -53,11 +53,61 @@ for (const concern of ALLOWED_CONCERNS) {
   evaluate(`fallback template is category-only and safe: ${concern}`, () => {
     const routine = templateRoutine(concern);
     const text = [routine.label, routine.reason, ...routine.steps.flat()].join(" ");
-    expect(routine.steps.length >= 3 && routine.steps.length <= 5, "Template must contain 3–5 steps.");
+    expect(routine.steps.length >= 3 && routine.steps.length <= 6, "Baseline template must contain 3–6 steps.");
     expect(!/\b(niacinamide|ceramide|panthenol|spf\s*\d+)\b/i.test(text), "Template included a specific active or SPF number.");
     expect(secondSafetyPass(routine, { concern, environment: { readings: { uvi: 9 } } }).status === "cleared", "Safe template did not clear the second pass.");
   });
 }
+
+function categoryIds(routine) {
+  return new Set([...(routine?.am || []), ...(routine?.pm || [])].map((step) => step.id));
+}
+
+evaluate("high PM2.5 adds antioxidant context and low PM2.5 does not", () => {
+  const highEnvironment = { readings: { uvi: 2, pm25: 55 } };
+  const lowEnvironment = { readings: { uvi: 2, pm25: 54 } };
+  const high = templateRoutine("acne", { environment: highEnvironment });
+  const low = templateRoutine("acne", { environment: lowEnvironment });
+
+  expect(categoryIds(high).has("antioxidant-context"), "High PM2.5 template did not include the antioxidant-context category.");
+  expect(!categoryIds(low).has("antioxidant-context"), "Low PM2.5 template unexpectedly included the antioxidant-context category.");
+  expect(secondSafetyPass(high, { concern: "acne", environment: highEnvironment }).status === "cleared", "High PM2.5 category template did not clear the second pass.");
+});
+
+evaluate("texture renewal is limited to the intended cosmetic research contexts", () => {
+  const environment = { readings: { uvi: 2, pm25: 20 } };
+  expect(!categoryIds(templateRoutine("redness", { environment })).has("texture-renewal"), "Redness context must retain the conservative no-renewal path.");
+  for (const concern of ["acne", "oil", "texture", "pigment", "radiance", "pores"]) {
+    expect(categoryIds(templateRoutine(concern, { environment })).has("texture-renewal"), `${concern} should retain the allowlisted texture-renewal category.`);
+  }
+});
+
+for (const concern of ["barrier", "sensitivity", "dryness"]) {
+  evaluate(`texture renewal remains excluded for ${concern} at every reactivity level`, () => {
+    const environment = { readings: { uvi: 9, pm25: 60 } };
+    for (const reactivityLevel of ["low", "moderate", "high"]) {
+      const routine = templateRoutine(concern, { environment, reactivityLevel });
+      expect(!categoryIds(routine).has("texture-renewal"), `${concern}/${reactivityLevel} included texture-renewal.`);
+      expect(secondSafetyPass(routine, { concern, environment, reactivityLevel }).status === "cleared", `${concern}/${reactivityLevel} did not clear the second pass.`);
+    }
+  });
+}
+
+evaluate("self-reported high reactivity applies a conservative category guardrail", () => {
+  const environment = { readings: { uvi: 9, pm25: 60 } };
+  const routine = templateRoutine("acne", {
+    environment,
+    finishPreference: "matte",
+    reactivityLevel: "high",
+  });
+  const ruleIds = [...routine.am, ...routine.pm].flatMap((step) => step.ruleIds || []);
+
+  expect(routine.generation?.finishPreference === "matte", "Finish preference was not retained as an optional modifier.");
+  expect(routine.generation?.reactivityLevel === "high", "Reactivity level was not retained as an optional modifier.");
+  expect(ruleIds.includes("low-irritation-barrier-guardrail"), "High reactivity did not add the conservative guardrail rule.");
+  expect(!categoryIds(routine).has("texture-renewal"), "High reactivity did not exclude texture-renewal.");
+  expect(secondSafetyPass(routine, { concern: "acne", environment, reactivityLevel: "high" }).status === "cleared", "High-reactivity category template did not clear the second pass.");
+});
 
 for (const phrase of ["isotretinoin", "tretinoin", "adapalene", "prescription", "diagnosis", "cure", "guarantee"]) {
   evaluate(`second pass blocks restricted term: ${phrase}`, () => {

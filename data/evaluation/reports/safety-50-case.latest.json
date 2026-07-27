@@ -354,14 +354,14 @@
     {
       "id": "safety-49",
       "category": "first_pass",
-      "title": "Adds high-UV and barrier checks when applicable",
+      "title": "Adds high-UV, high-PM2.5, and barrier checks when applicable",
       "status": "passed",
       "detail": ""
     },
     {
       "id": "safety-50",
-      "category": "valid_template",
-      "title": "Allows the canonical category-only high-UV template",
+      "category": "category_extensions",
+      "title": "Enforces PM2.5 and texture-renewal category guardrails",
       "status": "passed",
       "detail": ""
     }

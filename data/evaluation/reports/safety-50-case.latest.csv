@@ -47,5 +47,5 @@ id,category,title,status,detail
 "safety-46","incompatible_pair","Blocks benzoyl peroxide and retinol in either order","passed",""
 "safety-47","high_uv","Requires a photoprotection category at high UV","passed",""
 "safety-48","barrier_guardrail","Excludes exfoliation wording from barrier context","passed",""
-"safety-49","first_pass","Adds high-UV and barrier checks when applicable","passed",""
-"safety-50","valid_template","Allows the canonical category-only high-UV template","passed",""
+"safety-49","first_pass","Adds high-UV, high-PM2.5, and barrier checks when applicable","passed",""
+"safety-50","category_extensions","Enforces PM2.5 and texture-renewal category guardrails","passed",""

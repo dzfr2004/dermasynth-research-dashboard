@@ -3,17 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
+  "engines": { "node": ">=20" },
   "scripts": {
     "dev": "node --watch server.mjs",
     "start": "node server.mjs",
-    "test": "npm run check && npm run verify:ingredient-kb && npm run verify:demo-kb && npm run eval:study && npm run eval:retrieval && npm run eval:safety-50 && npm run eval:category-coverage",
-    "check": "node --check app.js && node --check server.mjs && node --check lib/config.mjs && node --check lib/evidence-rights.mjs && node --check lib/http-client.mjs && node --check lib/environment.mjs && node --check lib/explainability.mjs && node --check lib/ingredient-knowledge.mjs && node --check lib/ingredients.mjs && node --check lib/pinecone.mjs && node --check lib/retrieval.mjs && node --check lib/reviewer-queue.mjs && node --check lib/safety.mjs && node --check lib/synthesis.mjs && node --check scripts/verify-pinecone.mjs && node --check scripts/verify-ingredient-knowledge.mjs && node --check scripts/verify-demo-ingredient-kb.mjs && node --check scripts/verify-demo-pinecone.mjs && node --check scripts/verify-category-coverage-pinecone.mjs && node --check scripts/ingest-evidence.mjs && node --check scripts/evaluate-evidence-rights.mjs && node --check scripts/evaluate-safety.mjs && node --check scripts/evaluate-safety-50.mjs && node --check scripts/evaluate-location.mjs && node --check scripts/evaluate-study.mjs && node --check scripts/evaluate-retrieval.mjs && node --check scripts/evaluate-category-coverage.mjs",
+    "check": "node --check app.js && node --check server.mjs && node --check lib/environment.mjs && node --check lib/explainability.mjs && node --check lib/ingredient-selection.mjs && node --check scripts/promote-signedoff-corpus.mjs && node --check scripts/reindex-approved-knowledge-base.mjs && node --check scripts/fit-environmental-surrogate.mjs",
+    "test": "npm run check && npm run verify:ingredient-kb && npm run verify:demo-kb && npm run eval:study && npm run eval:retrieval && npm run eval:safety-50 && npm run eval:ingredient-selection && npm run eval:category-coverage",
+    "db:migrate": "node scripts/migrate-db.mjs",
+    "db:seed": "node scripts/seed-ingredient-db.mjs --fresh",
+    "db:seed-approved": "node scripts/seed-ingredient-db.mjs --fresh --state approved",
+    "db:promote-signedoff": "node scripts/promote-signedoff-corpus.mjs",
+    "db:publish-atlas": "node scripts/publish-approved-ingredient-db.mjs",
+    "db:reindex-approved": "node scripts/reindex-approved-knowledge-base.mjs",
+    "data:environmental-training": "node scripts/generate-environmental-training.mjs",
+    "data:cir-ewg-cards": "node scripts/generate-cir-ewg-cards.mjs",
+    "fit:environmental-model": "node scripts/fit-environmental-surrogate.mjs",
+    "fit:environmental-default": "node scripts/generate-environmental-training.mjs && node scripts/fit-environmental-surrogate.mjs data/models/environmental-context-training.v1.csv",
+    "verify:ingredient-db": "node scripts/verify-ingredient-db.mjs",
     "verify:index": "node scripts/verify-pinecone.mjs",
     "verify:ingredient-kb": "node scripts/verify-ingredient-knowledge.mjs",
     "verify:demo-kb": "node scripts/verify-demo-ingredient-kb.mjs",
+    "sync:atlas-pinecone": "node scripts/sync-atlas-research.mjs",
     "verify:demo-pinecone": "node scripts/verify-demo-pinecone.mjs",
     "verify:category-coverage": "node scripts/verify-category-coverage-pinecone.mjs",
     "ingest:evidence": "node scripts/ingest-evidence.mjs",
@@ -23,6 +33,10 @@
     "eval:study": "node scripts/evaluate-study.mjs",
     "eval:retrieval": "node scripts/evaluate-retrieval.mjs",
     "eval:safety-50": "node scripts/evaluate-safety-50.mjs",
-    "eval:category-coverage": "node scripts/evaluate-category-coverage.mjs"
-  }
+    "eval:ingredient-selection": "node scripts/evaluate-ingredient-selection.mjs",
+    "eval:category-coverage": "node scripts/evaluate-category-coverage.mjs",
+    "eval:uat": "node scripts/score-uat.mjs",
+    "eval:inter-rater": "node scripts/score-inter-rater.mjs"
+  },
+  "dependencies": { "better-sqlite3": "^12.11.1" }
 }

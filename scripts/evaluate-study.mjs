@@ -8,8 +8,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   ALLOWED_CONCERNS,
+  ALLOWED_FINISH_PREFERENCES,
   ALLOWED_PROFILES,
+  ALLOWED_REACTIVITY_LEVELS,
   ALLOWED_ROUTINE_CATEGORY_IDS,
+  ROUTINE_CATEGORY_CATALOG,
   firstSafetyPass,
   secondSafetyPass,
   templateRoutine,
@@ -17,6 +20,7 @@ import {
 } from "../lib/safety.mjs";
 import { retrieveEvidence } from "../lib/retrieval.mjs";
 import { getIngredientKnowledgeBase } from "../lib/ingredient-knowledge.mjs";
+import { categoryReferenceExamples } from "../lib/ingredients.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const fixtureRelativePath = "data/evaluation/fixtures/study-evaluation.v1.json";
@@ -239,6 +243,11 @@ async function startOfflineServer() {
       PATH: process.env.PATH || "",
       PORT: String(port),
       LIVE_SERVICES_ENABLED: "false",
+      // Keep this reproducible regression pack independent from a developer's
+      // locally approved knowledge-base state. Database selection has its own
+      // dedicated regression suite.
+      INGREDIENT_DB_ENABLED: "false",
+      INGREDIENT_SELECTION_ENABLED: "false",
       OPENAI_API_KEY: "",
       OPENWEATHER_API_KEY: "",
       IQAIR_API_KEY: "",
@@ -443,12 +452,41 @@ await evaluate({
   assert.deepEqual(missing, [], `Missing profile codes: ${missing.join(", ")}`);
 });
 
+await evaluate({
+  id: "catalogue-profile-modifiers",
+  category: "catalogue",
+  title: "Optional cosmetic profile modifiers retain their fixed enum contract",
+  expected: "finish: matte/dewy/no-preference; reactivity: low/moderate/high",
+}, () => {
+  assert.deepEqual([...ALLOWED_FINISH_PREFERENCES].sort(), ["dewy", "matte", "no-preference"]);
+  assert.deepEqual([...ALLOWED_REACTIVITY_LEVELS].sort(), ["high", "low", "moderate"]);
+});
+
+await evaluate({
+  id: "category-reference-static-contract",
+  category: "category_reference",
+  title: "Every general category reference is static, bounded, and detached from individual routine inputs",
+  expected: "one-argument category lookup, 2–4 class examples per allowlisted category, and defensive copies",
+}, () => {
+  assert.equal(categoryReferenceExamples.length, 1, "Category reference lookup must accept only a category ID.");
+  const categoryIds = Object.keys(ROUTINE_CATEGORY_CATALOG);
+  assert.ok(categoryIds.length > 0, "Expected at least one allowlisted routine category.");
+  for (const categoryId of categoryIds) {
+    const expected = categoryReferenceExamples(categoryId);
+    assert.ok(Array.isArray(expected) && expected.length >= 2 && expected.length <= 4, `${categoryId} must have 2–4 static examples.`);
+    assert.ok(expected.every((example) => typeof example === "string" && example.trim()), `${categoryId} examples must be non-empty strings.`);
+    expected[0] = "mutated caller copy";
+    assert.notEqual(categoryReferenceExamples(categoryId)[0], "mutated caller copy", `${categoryId} must return a defensive copy.`);
+  }
+  assert.deepEqual(categoryReferenceExamples("unknown-category"), [], "Unknown categories must not return a reference example.");
+});
+
 for (const concern of expectedConcernCodes()) {
   await evaluate({
     id: `template-${concern}`,
     category: "routine_template",
     title: `Generic ${concern} template has a safe research-only routine contract`,
-    expected: "3–5 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
+    expected: "3–8 non-empty category steps with AM/PM rule traces; no restricted content; high-UV pass clears",
   }, () => {
     const routine = templateRoutine(concern);
     assertRoutineContract(routine);
@@ -730,6 +768,26 @@ await evaluate({
 if (offlineServer) {
   try {
     await evaluate({
+      id: "api-category-reference-static",
+      category: "category_reference",
+      title: "Static category references are cacheable and absent from individual routine responses",
+      expected: "cacheable category-ID map with bounded class examples, no request-specific body fields, and no routine-selection permission",
+    }, async () => {
+      const { response, payload } = await getJson(offlineServer.baseUrl, "/api/category-reference");
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get("cache-control") || "", /public/i, "Category references should be cacheable static data.");
+      assert.equal(payload.routineSelectionAllowed, false, "Category reference content must not enable routine selection.");
+      assert.equal(Object.hasOwn(payload, "requestId"), false, "Static body must not include a request-specific ID.");
+      assert.deepEqual(Object.keys(payload.categories || {}).sort(), Object.keys(ROUTINE_CATEGORY_CATALOG).sort());
+      for (const categoryId of Object.keys(ROUTINE_CATEGORY_CATALOG)) {
+        assert.deepEqual(payload.categories[categoryId]?.examples, categoryReferenceExamples(categoryId), `${categoryId} reference examples must be static.`);
+      }
+      const repeated = await getJson(offlineServer.baseUrl, "/api/category-reference");
+      assert.equal(repeated.response.status, 200);
+      assert.deepEqual(repeated.payload, payload, "Repeated static category-reference fetches must be input-independent and identical.");
+    });
+
+    await evaluate({
       id: "api-ingredients-audit-catalog",
       category: "ingredient_catalog",
       title: "Ingredient endpoint exposes only held, product-specific research candidates",
@@ -792,7 +850,7 @@ if (offlineServer) {
           id: `api-routine-${profile}-${concern}`,
           category: "api_contract",
           title: `Offline routine endpoint returns the generic contract for ${profile}/${concern}`,
-          expected: "HTTP 200 fallback, AM/PM category-only routine, labelled demo environment, and preserved selected location",
+          expected: "HTTP 200 cleared category fallback, AM/PM routine, labelled demo environment, and preserved selected location",
         }, async () => {
           const { response, payload } = await postOfflineRoutine({
             profile,
@@ -802,9 +860,9 @@ if (offlineServer) {
           assert.equal(response.status, 200, payload.error || "Expected HTTP 200.");
           assert.equal(payload.profile, profile);
           assert.equal(payload.concern, concern);
-          assert.equal(payload.mode, "fallback");
+          assert.equal(payload.mode, "deterministic_synthesis");
           assert.equal(payload.outputMode, fixture.ingredientResearch.outputMode);
-          assert.equal(payload.status, "review_required");
+          assert.equal(payload.status, "cleared");
           assert.equal(payload.synthesisStatus, "not_requested");
           assert.deepEqual(payload.environment?.location, fixture.routineContract.testLocation);
           assert.equal(payload.environment?.mode, "demo");
@@ -812,6 +870,7 @@ if (offlineServer) {
           assert.equal(payload.grounding?.scoreType, "eligibility_weighted_retrieval_coverage_proxy");
           assert.equal(payload.safety?.status, "cleared");
           assertRoutineContract(payload.routine);
+          assert.equal(Object.hasOwn(payload, "categoryReferences"), false, "Static category references must not be attached to an individual routine response.");
           assert.deepEqual(payload.evidence, []);
           assert.equal(payload.runReport?.researchOnly, true);
           assert.equal(payload.runReport?.outputMode, fixture.ingredientResearch.outputMode);
@@ -823,6 +882,52 @@ if (offlineServer) {
         });
       }
     }
+
+    await evaluate({
+      id: "api-profile-modifiers",
+      category: "api_contract",
+      title: "Optional finish and reactivity modifiers stay category-only and apply the conservative guardrail",
+      expected: "HTTP 200 fallback with echoed valid modifiers, a low-irritation rule, and no texture-renewal category at high reactivity",
+    }, async () => {
+      const { response, payload } = await postOfflineRoutine({
+        profile: "combination",
+        concern: "acne",
+        finishPreference: "matte",
+        reactivityLevel: "high",
+        location: fixture.routineContract.testLocation,
+      });
+      assert.equal(response.status, 200, payload.error || "Expected HTTP 200.");
+      assert.equal(payload.mode, "deterministic_synthesis");
+      assert.deepEqual(payload.profileModifiers, { finishPreference: "matte", reactivityLevel: "high" });
+      assert.equal(payload.runReport?.input?.finishPreference, "matte");
+      assert.equal(payload.runReport?.input?.reactivityLevel, "high");
+      assert.equal(payload.routine?.generation?.finishPreference, "matte");
+      assert.equal(payload.routine?.generation?.reactivityLevel, "high");
+      assert.ok(!payload.routine?.pm?.some((step) => step.id === "texture-renewal"), "High self-reported reactivity must exclude texture-renewal.");
+      assert.ok([...payload.routine.am, ...payload.routine.pm].some((step) => step.ruleIds?.includes("low-irritation-barrier-guardrail")), "High self-reported reactivity must retain the conservative rule ID.");
+      assertRoutineContract(payload.routine);
+      assertNoIngredientRoutineSelections(payload.routine);
+    });
+
+    await evaluate({
+      id: "api-new-concern-fallbacks",
+      category: "api_contract",
+      title: "New cosmetic research concerns fall back to deterministic category-only previews without evidence",
+      expected: "HTTP 200 generic fallbacks for redness, radiance, and visible-pore appearance; no fabricated retrieval evidence",
+    }, async () => {
+      for (const concern of ["redness", "radiance", "pores"]) {
+        const { response, payload } = await postOfflineRoutine({
+          profile: "combination",
+          concern,
+          location: fixture.routineContract.testLocation,
+        });
+        assert.equal(response.status, 200, `${concern} did not return HTTP 200.`);
+        assert.equal(payload.mode, "deterministic_synthesis", `${concern} should complete deterministic synthesis without eligible evidence.`);
+        assert.equal(payload.concern, concern);
+        assert.deepEqual(payload.evidence, [], `${concern} must not fabricate retrieval evidence.`);
+        assertRoutineContract(payload.routine);
+      }
+    });
 
     await evaluate({
       id: "api-triage-medical-redirect",
@@ -863,6 +968,26 @@ if (offlineServer) {
         concern: "unsupported-concern",
       });
       assert.equal(invalidConcern.response.status, 400);
+    });
+
+    await evaluate({
+      id: "api-invalid-profile-modifiers",
+      category: "api_contract",
+      title: "Routine endpoint rejects unknown optional profile modifier values",
+      expected: "HTTP 400 for unknown finish preference and reactivity level",
+    }, async () => {
+      const invalidFinish = await postOfflineRoutine({
+        profile: fixture.profiles[0],
+        concern: fixture.requiredConcernCodes[0],
+        finishPreference: "glossy",
+      });
+      assert.equal(invalidFinish.response.status, 400);
+      const invalidReactivity = await postOfflineRoutine({
+        profile: fixture.profiles[0],
+        concern: fixture.requiredConcernCodes[0],
+        reactivityLevel: "variable",
+      });
+      assert.equal(invalidReactivity.response.status, 400);
     });
 
     await evaluate({

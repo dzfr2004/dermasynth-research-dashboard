@@ -26,19 +26,22 @@ In **Routine Simulator**, search for a city or area, select one of the returned 
 
 ## Research concern options
 
-The simulator now supports seven non-medical research contexts: breakout-prone appearance, barrier comfort, uneven-tone context, dry-feeling comfort, oil/shine context, sensitivity context, and texture appearance. They are category-selection contexts, not diagnoses or treatment indications. `GET /api/concerns` exposes the canonical catalog for future clients; the legacy `oiliness` input is accepted as an alias for `oil`.
+The simulator supports ten non-medical research contexts: breakout-prone appearance, barrier comfort, uneven-tone context, dry-feeling comfort, oil/shine context, sensitivity context, texture appearance, redness-prone appearance, dullness/radiance appearance, and visible-pore appearance. They are category-selection contexts, not diagnoses or treatment indications. `GET /api/concerns` exposes the canonical catalog for future clients; the legacy `oiliness` input is accepted as an alias for `oil`.
 
 ## Complete ingredient research atlas
 
 The final-review build exposes a **50-ingredient research Atlas** through the in-app **Ingredient Atlas**, `GET /api/knowledge-explorer`, and `GET /api/research-search`. It contains **52 attributed source records**: 9 CIR safety-provenance links, 1 EWG external link, and 42 medical-journal metadata records, across all seven research contexts.
 
-The existing isolated Pinecone demonstrator remains deliberately bounded at **31 self-authored metadata cards**: 20 ingredient cards plus 11 supplemental journal-mapping cards in `demo-ingredient-kb-v1`. The added 30 ingredient records and 15 source metadata records are held locally in the Atlas, pending qualified review and a separately authorised upload decision. Local BM25 can inspect their project-authored metadata; they are not silently pushed to Pinecone, used for strict CUE, or made selectable in a routine.
+The live Atlas research namespace is `demo-atlas-50-v1`. It contains project-authored metadata-only cards for all **50 ingredients**, plus the separately uploaded non-clinical category-source cards. CIR remains citation/link-only and EWG remains external-link-only; no restricted source text is uploaded.
+
+After project approval is recorded, set both `INGREDIENT_DB_ENABLED=true` and `INGREDIENT_SELECTION_ENABLED=true`, then restart the server. The selector queries only database records that are `approved` or `published`, explicitly marked eligible, source-linked to approved/published records, and mapped to an already-safe category. It does not alter the AM/PM routine steps, accept model-generated ingredient names, provide products/doses/frequencies, or bypass either safety pass.
 
 CIR remains citation/link-only and EWG remains external-link-only. The Atlas stores project-authored metadata and source locators rather than copied restricted source data. Inspect [the base registry](data/ingredients/knowledge-base.v1.json), [the initial demo extension](data/ingredients/demo-extension.v1.json), [the staged 50-ingredient extension](data/ingredients/atlas-extension-50.v1.json), and [the existing supplemental source cards](data/evidence/ingredient-source-supplement.v1.jsonl).
 
 ```sh
 npm run verify:ingredient-kb
 npm run verify:demo-kb
+npm run sync:atlas-pinecone -- --upload
 npm run ingest:evidence -- --file data/evidence/ingredient-demo.v1.jsonl --demo-upload --namespace demo-ingredient-kb-v1
 npm run ingest:evidence -- --file data/evidence/ingredient-source-supplement.v1.jsonl --demo-upload --namespace demo-ingredient-kb-v1
 npm run verify:demo-pinecone
@@ -52,15 +55,49 @@ npm run verify:demo-pinecone
 
 ## Current pipeline
 
-`profile + concern + location → urgent-symptom redirect → environment → Pinecone retrieval + local BM25 fusion → CUE trace → deterministic safety passes → category-only routine → ingredient research context + Shapley/PEG explanation → exportable run report`
+`profile + concern + location → urgent-symptom redirect → environment → Pinecone retrieval + local BM25 fusion → CUE trace → deterministic safety passes → category-only routine → approved category-first research candidates (when enabled) → ingredient research context + Shapley/PEG explanation → exportable run report`
 
 - Live environmental adapter: OpenWeather One Call 3.0, with Current Weather fallback, plus IQAir PM2.5 when the plan returns it.
-- Retrieval: the Atlas fuses the isolated 31-card Pinecone segment with local BM25 metadata. The full 50-record registry stays source-inspection only; the generic category-only routine retains a separate conservative CUE coverage proxy. The 30-query fixture documents local retrieval behaviour, not effectiveness or calibrated performance.
+- Retrieval: the Atlas uses the live `demo-atlas-50-v1` Pinecone metadata namespace, fused with local BM25 metadata. The generic category-only routine retains a separate conservative CUE coverage proxy. The 30-query fixture documents local retrieval behaviour, not effectiveness or calibrated performance.
 - Synthesis: the server-only OpenAI Responses call uses `store: false`. It can only choose an optional hydration category and already-eligible evidence IDs; all visible AM/PM category wording is locally allowlisted. Its optional **AI category rationale** returns allowlisted rationale tags only, and deterministic safety remains the final authority.
 - Safety: explicit urgent-symptom redirect plus two deterministic passes enforce the AM/PM category contract, restricted medical/ingredient content scans, evidence-link validation, high-UV visibility, and barrier-comfort exclusions. If a gate fails, the UI receives a marked deterministic research preview rather than a live synthesis.
-- Ingredient evidence: all 50 named ingredients are searchable in the Atlas. Only the existing 31-card demo segment is indexed in Pinecone; staged records remain local and review-pending. The AM/PM display remains category-only so the demo does not present research cards as individual skincare instructions.
-- Explainability: each routine response includes `grounding`, a compact trace, an exact Shapley decomposition of a configured additive study-demo surrogate, a PEG-style plain-language explanation, and a detailed `runReport`. The configured weights are transparent study parameters, not learned or published clinical coefficients. The browser's local history/export excludes free-text symptoms, source excerpts, and identifiers.
+- Ingredient evidence: all 50 named ingredients are searchable through the live Atlas metadata index. With `INGREDIENT_SELECTION_ENABLED=true`, approved registry entries may appear as separate evidence-linked research candidates only after a cleared safety result; the AM/PM display remains category-only.
+- Explainability: each routine response includes `grounding`, a compact trace, an exact Shapley decomposition of a versioned additive surrogate artifact, a PEG-style plain-language explanation, and a detailed `runReport`. It responds to live environmental readings; its current coefficients are transparent configured study parameters, not learned or published clinical coefficients. The browser's local history/export excludes free-text symptoms, source excerpts, and identifiers.
 - Bulk analysis: the deterministic batch path runs the same environment, retrieval/CUE, research-atlas, safety, and explanation paths for up to 100 de-identified profiles, with CSV and audit-JSON export. It does not fan out paid LLM requests.
+
+## Dynamic ingredient & evidence knowledge base (database-backed)
+
+Checklist section 3 is implemented as an additive, feature-flagged layer. When `INGREDIENT_DB_ENABLED=true`, the Atlas, `GET /api/knowledge-explorer`, and `GET /api/ingredient-knowledge` read from a versioned database instead of the static JSON files; when the flag is off (the default), the original JSON path is used unchanged. The local store uses `better-sqlite3`, which supports the project's Node 20 runtime, and the schema/queries use only the SQLite/Postgres common subset so the same data-access layer ports to Supabase Postgres for production ([lib/db/schema.sql](lib/db/schema.sql), [lib/db/database.mjs](lib/db/database.mjs)).
+
+Structured **ingredient** records (INCI, aliases, categories, concern contexts, AM/PM eligibility, environmental rules, incompatibilities, reactivity, source IDs, selection eligibility, approval state) and **source** records (family, DOI/URL, use rights, review status, evidence type, version) are stored in separate tables. Every write is versioned with a full snapshot, every change is recorded in a persistent `audit_log`, and any prior version can be restored via rollback.
+
+```sh
+npm run db:migrate            # create tables (idempotent)
+npm run db:seed               # import the 50 ingredients + 52 sources from JSON
+npm run db:publish-atlas -- --dry-run # prove the publish/sync workflow without network writes
+npm run db:publish-atlas -- --upload  # publish approved records and synchronise Pinecone metadata cards
+npm run verify:ingredient-db  # offline lifecycle test (create/version/approve/publish/rollback/audit)
+```
+
+Set a 24+ character `GOVERNANCE_ADMIN_TOKEN` and send it as `x-governance-token` to use the local-only admin workflow:
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/admin/knowledge-base` | Counts + full ingredient/source lists across all approval states. |
+| `GET/POST /api/admin/ingredients` | List by `?state=`, or create/edit (each edit creates a new version). |
+| `GET/POST /api/admin/sources` | List by `?state=`, or create/edit source records. |
+| `POST /api/admin/transition` | Run the approval state machine: `submit`/`approve`/`reject`/`publish`/`archive`/`supersede`. |
+| `POST /api/admin/rollback` | Restore an ingredient/source to a prior `version`. |
+| `GET /api/admin/versions` | Version history with snapshots for one record. |
+| `GET /api/admin/audit` | Persistent audit log, optionally filtered by entity. |
+| `POST /api/admin/pinecone/flush` | Push published records to the research namespace and delete archived/superseded vectors. |
+| `GET /api/admin/pinecone/log` | Pinecone sync ledger. |
+
+Publication is wired to Pinecone: approving then publishing an ingredient enqueues a metadata-only upsert, and archiving/superseding enqueues a vector delete, in the `pinecone_sync_log` ledger. `POST /api/admin/pinecone/flush` performs the real upserts/deletes when live services are configured, and is a safe no-op dry run otherwise. Candidate selection requires the independent database eligibility flag *and* an `approved`/`published` state; state changes alone never add a record to the routine.
+
+## Runtime policy registry
+
+The environmental trigger thresholds, category eligibility, and reactivity guardrail categories are loaded at runtime from [policy.seed.json](data/governance/policy.seed.json). Ingredient-to-category membership lives on the versioned database ingredient records. A local, ignored policy override can be written through `POST /api/governance/policy` after setting a 24+ character `GOVERNANCE_ADMIN_TOKEN`; `GET /api/governance/policy` exposes the active, non-secret policy. The policy is re-read when the local override changes, so threshold or category-policy updates take effect on the next request without changing application code. Urgent triage and the final output safety checks intentionally remain code-controlled.
 
 ## Run the offline safety regression
 
@@ -130,7 +167,7 @@ Integrated Pinecone indexes accept text records in batches of up to 96; this pro
 | `POST /api/reviewer-queue` | Appends one bounded local annotation: `sourceId`, `action` (`approve`, `reject`, `annotate`, or `needs_changes`), optional `note`, and optional pseudonymous `reviewerLabel`. Requires `x-reviewer-token`. |
 | `GET /api/locations?q=...` | Server-side city/area lookup. Returns at most five sanitised location candidates, applies a local 20-searches-per-minute guard, and never exposes the OpenWeather key. |
 | `GET /api/environment` | Live/degraded/demo environmental telemetry. Optional `lat`, `lon`, and `location` query values are bounded. |
-| `POST /api/routine` | Safety-gated routine preview with `profile`, `concern`, optional `symptoms`, and an optional bounded `location` object (`name`, `lat`, `lon`). The routine contains structured `am`/`pm` category steps and backward-compatible `steps`, plus `grounding`, `ingredientResearch`, `runReport`, `outputMode`, and safe `synthesisStatus` fields. |
+| `POST /api/routine` | Safety-gated routine preview with `profile`, `concern`, optional `symptoms`, and an optional bounded `location` object (`name`, `lat`, `lon`). The routine contains structured category-only `am`/`pm` steps and backward-compatible `steps`, plus `ingredientCandidates` when the approved registry is enabled and the result clears safety, `grounding`, `ingredientResearch`, `runReport`, `outputMode`, and safe `synthesisStatus` fields. |
 | `POST /api/bulk` | Deterministic cohort-preview processing with up to 100 profiles. |
 
 Static serving is allowlisted to the public frontend files, so configuration, server source, and `.env` are not web-accessible.

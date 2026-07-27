@@ -30,6 +30,10 @@ function legacyRoutine(text) {
   return { label: "Research preview", steps: [["Generic category", text]], reason: "Research-only test fixture." };
 }
 
+function categoryIds(routine) {
+  return new Set([...(routine?.am || []), ...(routine?.pm || [])].map((step) => step.id));
+}
+
 const redirects = [
   "facial swelling after a product", "lip swelling", "eye swelling", "difficulty breathing", "shortness of breath",
   "rapidly spreading redness", "spreading rapidly", "blistering on my cheek", "blisters on my cheek", "severe pain",
@@ -81,17 +85,31 @@ test("safety-48", "barrier_guardrail", "Excludes exfoliation wording from barrie
   expect(result.flags.some((flag) => flag.includes("Barrier preview")), "Missing barrier guardrail flag.");
 });
 
-test("safety-49", "first_pass", "Adds high-UV and barrier checks when applicable", () => {
-  const result = firstSafetyPass({ concern: "barrier", environment: { readings: { uvi: 9 } } });
+test("safety-49", "first_pass", "Adds high-UV, high-PM2.5, and barrier checks when applicable", () => {
+  const result = firstSafetyPass({ concern: "barrier", environment: { readings: { uvi: 9, pm25: 55 } } });
   expect(result.status === "cleared", "First deterministic pass should clear its fixed contract.");
   expect(result.rules.some((rule) => rule.id === "high-uv-photoprotection"), "Missing high-UV first-pass rule.");
+  expect(result.rules.some((rule) => rule.id === "high-pm25-antioxidant-context"), "Missing high-PM2.5 first-pass rule.");
   expect(result.rules.some((rule) => rule.id === "barrier-exfoliation-exclusion"), "Missing barrier first-pass rule.");
 });
 
-test("safety-50", "valid_template", "Allows the canonical category-only high-UV template", () => {
-  const routine = templateRoutine("barrier", { environment: { readings: { uvi: 9 } } });
-  const result = secondSafetyPass(routine, { concern: "barrier", environment: { readings: { uvi: 9 } } });
-  expect(result.status === "cleared", "Canonical category-only routine should clear the second pass.");
+test("safety-50", "category_extensions", "Enforces PM2.5 and texture-renewal category guardrails", () => {
+  const highEnvironment = { readings: { uvi: 9, pm25: 55 } };
+  const lowEnvironment = { readings: { uvi: 9, pm25: 54 } };
+  const highPmAcne = templateRoutine("acne", { environment: highEnvironment });
+  const lowPmAcne = templateRoutine("acne", { environment: lowEnvironment });
+  expect(categoryIds(highPmAcne).has("antioxidant-context"), "High PM2.5 template is missing antioxidant-context.");
+  expect(!categoryIds(lowPmAcne).has("antioxidant-context"), "Low PM2.5 template unexpectedly contains antioxidant-context.");
+  expect(categoryIds(highPmAcne).has("texture-renewal"), "Eligible acne context should retain texture-renewal.");
+  expect(secondSafetyPass(highPmAcne, { concern: "acne", environment: highEnvironment }).status === "cleared", "High-PM2.5 acne template should clear the second pass.");
+
+  for (const concern of ["barrier", "sensitivity", "dryness"]) {
+    for (const reactivityLevel of ["low", "moderate", "high"]) {
+      const routine = templateRoutine(concern, { environment: highEnvironment, reactivityLevel });
+      expect(!categoryIds(routine).has("texture-renewal"), `${concern}/${reactivityLevel} unexpectedly contains texture-renewal.`);
+      expect(secondSafetyPass(routine, { concern, environment: highEnvironment, reactivityLevel }).status === "cleared", `${concern}/${reactivityLevel} template should clear the second pass.`);
+    }
+  }
 });
 
 const failures = results.filter((result) => result.status === "failed");

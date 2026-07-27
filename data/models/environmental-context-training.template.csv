@@ -1,0 +1,4 @@
+concern,uvi,humidity,pm25,temperature,target_context_score
+pigment,8.5,72,42,31,0.72
+dryness,3.0,42,12,24,0.61
+texture,7.0,65,28,29,0.64

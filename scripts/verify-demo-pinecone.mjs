@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { createConfig, loadDotEnv } from "../lib/config.mjs";
 import { fetchJson } from "../lib/http-client.mjs";
-import { getIngredientKnowledgeBase, ingredientKnowledgeSummary } from "../lib/ingredient-knowledge.mjs";
+import { ingredientKnowledgeSummary } from "../lib/ingredient-knowledge.mjs";
 import { assertIntegratedTextIndex, describePineconeIndex, PINECONE_API_VERSION } from "../lib/pinecone.mjs";
 
 const root = resolve(process.cwd());
