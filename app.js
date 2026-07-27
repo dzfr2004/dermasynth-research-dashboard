@@ -11,13 +11,9 @@ const VIEW_META = Object.freeze({
   monitor: { title: "Environment", subtitle: "Live location-aware research context", hash: "environment" },
   simulator: { title: "Routine Preview", subtitle: "Explainable category preview", hash: "routine" },
   knowledge: { title: "Ingredient Atlas", subtitle: "Source-linked research records", hash: "atlas" },
-  evaluation: { title: "Evaluation", subtitle: "Reproducible final-review evidence", hash: "evaluation" },
-  bulk: { title: "Cohort Analysis", subtitle: "Deterministic de-identified processing", hash: "cohort" },
-  reviewer: { title: "Reviewer Queue", subtitle: "Local source-card annotations", hash: "reviewer" },
 });
 
-const CORE_VIEWS = Object.freeze(["dashboard", "monitor", "simulator", "knowledge", "evaluation"]);
-const ADVANCED_VIEWS = Object.freeze(["bulk", "reviewer"]);
+const CORE_VIEWS = Object.freeze(["dashboard", "monitor", "simulator", "knowledge"]);
 
 function viewFromHash() {
   if (typeof window === "undefined") return "dashboard";
@@ -170,13 +166,6 @@ const presentationSteps = Object.freeze([
     eyebrow: "04 · Ingredient evidence",
     title: "Trace the research Atlas",
     detail: "Browse source-linked ingredient metadata and the isolated non-clinical context cards without turning a source map into a treatment rule.",
-  },
-  {
-    view: "evaluation",
-    anchor: "coverage-map-title",
-    eyebrow: "05 · Evaluation",
-    title: "Close with reproducible checks",
-    detail: "Show the deterministic test packs, the 7-context coverage map, and the boundary between software checks and pending human review.",
   },
 ]);
 
@@ -508,11 +497,7 @@ function mobileNavItem(id, label, iconName) {
 }
 
 function mobileNavigation() {
-  const moreActive = ADVANCED_VIEWS.includes(state.activeView) || state.mobileMoreOpen;
-  const sheet = state.mobileMoreOpen
-    ? `<div class="mobile-more-layer"><button type="button" class="mobile-more-scrim" data-action="mobile-more-close" aria-label="Close more navigation"></button><section class="mobile-more-sheet" id="mobile-more-sheet" aria-label="More research tools"><div class="mobile-more-sheet-head"><div><span>Research tools</span><strong>More ways to inspect the study</strong></div><button type="button" class="presentation-close" data-action="mobile-more-close" aria-label="Close more navigation">×</button></div><button class="mobile-more-link ${state.activeView === "evaluation" ? "is-active" : ""}" type="button" data-action="navigate" data-view="evaluation">${icon("check", 16)}<span><strong>Evaluation</strong><small>Reproducible checks and coverage</small></span></button><button class="mobile-more-link ${state.activeView === "bulk" ? "is-active" : ""}" type="button" data-action="navigate" data-view="bulk">${icon("layers", 16)}<span><strong>Cohort Analysis</strong><small>De-identified batch workflow</small></span></button><button class="mobile-more-link ${state.activeView === "reviewer" ? "is-active" : ""}" type="button" data-action="navigate" data-view="reviewer">${icon("shield", 16)}<span><strong>Reviewer Queue</strong><small>Local source-card review tool</small></span></button></section></div>`
-    : "";
-  return `${sheet}<nav class="mobile-nav" aria-label="Primary navigation">${mobileNavItem("dashboard", "Overview", "grid")}${mobileNavItem("monitor", "Environment", "activity")}${mobileNavItem("simulator", "Routine", "flask")}${mobileNavItem("knowledge", "Atlas", "file")}<button class="mobile-nav-item ${moreActive ? "is-active" : ""}" type="button" data-action="mobile-more" aria-expanded="${state.mobileMoreOpen}" aria-controls="mobile-more-sheet">${icon("layers", 17)}<span>More</span></button></nav>`;
+  return `<nav class="mobile-nav" aria-label="Primary navigation">${mobileNavItem("dashboard", "Overview", "grid")}${mobileNavItem("monitor", "Environment", "activity")}${mobileNavItem("simulator", "Routine", "flask")}${mobileNavItem("knowledge", "Atlas", "file")}</nav>`;
 }
 
 function shell(view) {
@@ -534,14 +519,6 @@ function shell(view) {
             ${navItem("monitor", "Environment", "Live conditions", "activity")}
             ${navItem("simulator", "Routine", "Build routine", "flask")}
             ${navItem("knowledge", "Ingredient Atlas", `${ingredientCount} ingredients`, "file")}
-            ${navItem("evaluation", "Evaluation", "System checks", "check")}
-          </nav>
-        </div>
-        <div class="sidebar-navigation-group is-advanced">
-          <p class="side-section-label">Research tools</p>
-          <nav class="nav-list" aria-label="Advanced research tools">
-            ${navItem("bulk", "Cohort Analysis", "Batch runs", "layers")}
-            ${navItem("reviewer", "Reviewer Queue", "Source review", "shield")}
           </nav>
         </div>
       </div>
@@ -1179,19 +1156,6 @@ function contextCoverageEntries() {
   });
 }
 
-function contextCoverageMap() {
-  const entries = contextCoverageEntries();
-  const report = state.evaluation?.categoryCoverage?.summary || {};
-  const totalCards = Number(report.categorySourceCards) || entries.reduce((sum, item) => sum + item.cards, 0);
-  const mappedContexts = Number(report.mappedContexts) || entries.filter((item) => item.cards > 0).length;
-  return `<section class="panel context-coverage-map" aria-labelledby="coverage-map-title">
-    <div class="panel-header"><div><h3 class="panel-title" id="coverage-map-title">${icon("layers", 17)} Context Coverage Map</h3><p class="panel-note">${mappedContexts}/7 research contexts · ${totalCards} source-mapped non-clinical cards</p></div><button class="ghost-button" type="button" data-action="coverage-atlas">View source-linked Atlas ${icon("arrow", 14)}</button></div>
-    <p class="coverage-map-intro">Each node is an inspectable, source-attributed category context. It is not a clinical-coverage claim and remains excluded from strict CUE, live category selection, ingredient activation, and routine selection.</p>
-    <div class="coverage-map-grid" role="list" aria-label="Research-context source-card coverage">${entries.map((item) => `<button class="coverage-context-node" type="button" role="listitem" data-action="coverage-context" data-concern="${escapeHtml(item.id)}" aria-label="View ${escapeHtml(item.label)} in the Ingredient Atlas"><span class="coverage-node-check">${icon("check", 13)}</span><strong>${escapeHtml(item.label)}</strong><small>${escapeHtml(String(item.cards))} source-mapped non-clinical card${item.cards === 1 ? "" : "s"} · ${escapeHtml(String(item.documents))} document${item.documents === 1 ? "" : "s"}</small><span>Inspect Atlas ${icon("arrow", 12)}</span></button>`).join("")}</div>
-    <div class="coverage-map-legend"><span><i class="coverage-legend-dot"></i>Source-mapped research context</span><span><i class="coverage-legend-dot is-held"></i>Pending qualified clinical review</span></div>
-  </section>`;
-}
-
 function relationshipSourceFamilies(ingredient) {
   const families = (ingredient?.sources || []).map((source) => String(source?.sourceFamily || "")).filter(Boolean);
   return [...new Set(families)];
@@ -1303,71 +1267,12 @@ function knowledgeExplorerView() {
   return shell(`<div class="view-heading atlas-heading"><div><p class="hero-kicker">Knowledge base</p><h2>Ingredient Atlas</h2><p>Search ingredients, filter by context, and open the linked sources.</p></div><button class="ghost-button" type="button" data-action="knowledge-refresh" ${state.knowledgeStatus === "loading" ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button></div><section class="atlas-summary panel"><div class="atlas-summary-stat"><span>Ingredients</span><strong>${escapeHtml(String(ingredientCount || "—"))}</strong><small>incorporated records</small></div><div class="atlas-summary-stat"><span>Sources</span><strong>${escapeHtml(String(overview.sourceCount || "—"))}</strong><small>${sourceFamilies.map(([family, count]) => `${sourceFamilyLabel(family)} ${count}`).join(" · ") || "linked records"}</small></div><div class="atlas-summary-stat"><span>Index</span><strong>${liveResearchIndex.enabled ? "Live" : "Local"}</strong><small>${escapeHtml(liveResearchIndex.namespace || "metadata index")}</small></div></section>${corpusCard}<section class="panel atlas-controls"><div class="atlas-search"><label for="knowledge-query">Find an ingredient</label><div><input id="knowledge-query" value="${escapeHtml(state.knowledgeQuery)}" placeholder="Search Atlas" data-action="knowledge-query" /><button type="button" class="primary-button" data-action="knowledge-search" ${state.knowledgeSearchStatus === "searching" ? "disabled" : ""}>${state.knowledgeSearchStatus === "searching" ? "Searching…" : "Search"}</button></div></div><div class="atlas-filter"><span>Filter by context</span><div>${["all", ...concernOptions.map((option) => option.id)].map((concern) => `<button type="button" data-action="knowledge-concern" data-concern="${escapeHtml(concern)}" class="filter-chip ${state.knowledgeConcern === concern ? "is-selected" : ""}" aria-pressed="${state.knowledgeConcern === concern}">${escapeHtml(concernLabelFromId(concern))}</button>`).join("")}</div></div>${statusText ? `<p class="atlas-notice" role="status">${escapeHtml(statusText)}</p>` : ""}</section>${showRetrieval ? `<section class="panel atlas-retrieval"><div class="panel-header"><div><h3 class="panel-title">Search results</h3><p class="panel-note">${escapeHtml(String(retrieval.coverage?.uniqueIngredients ?? 0))} matches</p></div></div><div class="research-hit-grid">${retrievalCards || `<div class="evidence-empty"><strong>No source match found.</strong></div>`}</div></section>` : ""}<details class="atlas-explorer-details"><summary>${icon("activity", 16)} Explore ingredient relationships</summary>${ingredientRelationshipExplorer()}</details><section class="atlas-grid" aria-live="polite">${cards || `<div class="panel evidence-empty"><strong>No ingredients match this view.</strong></div>`}</section>`);
 }
 
-function evaluationView() {
-  const evaluation = state.evaluation;
-  const summary = evaluation?.summary || {};
-  const retrievalSummary = evaluation?.retrieval?.summary || {};
-  const safety50Summary = evaluation?.safety50?.summary || {};
-  const categoryCoverageSummary = evaluation?.categoryCoverage?.summary || {};
-  const categories = Array.isArray(summary.byCategory) ? summary.byCategory : [];
-  const total = Number(summary.total || 0);
-  const passed = Number(summary.passed || 0);
-  const failures = Number(summary.failed || 0);
-  const hasSummary = Number.isFinite(Number(summary.total));
-  const totalLabel = hasSummary ? String(total) : "—";
-  const passedLabel = hasSummary ? String(passed) : "—";
-  const failureLabel = hasSummary ? String(failures) : "—";
-  return shell(`<div class="view-heading"><div><h2>Final-review evaluation evidence</h2><p>Reproducible implementation checks, source-atlas retrieval scoring, safety regression, and a clear boundary between completed software evaluation and pending human studies.</p></div><button class="primary-button" type="button" data-action="evaluation-refresh" ${state.evaluationStatus === "loading" ? "disabled" : ""}>${icon("refresh", 15)} Refresh report</button></div><section class="evaluation-summary"><article class="panel evaluation-stat"><span>Automated checks</span><strong>${escapeHtml(totalLabel)}</strong><small>deterministic implementation cases</small></article><article class="panel evaluation-stat"><span>Passed</span><strong>${escapeHtml(passedLabel)}</strong><small>latest reproducible report</small></article><article class="panel evaluation-stat"><span>Failures</span><strong>${escapeHtml(failureLabel)}</strong><small>report status</small></article><article class="panel evaluation-stat"><span>Execution</span><strong>${escapeHtml(evaluation?.execution?.mode?.includes("offline") ? "Offline" : "Recorded")}</strong><small>no live provider calls required</small></article></section><section class="evaluation-supplemental"><article class="panel evaluation-mini"><span>30-query retrieval pack</span><strong>${escapeHtml(String(retrievalSummary.passed ?? "—"))}/${escapeHtml(String(retrievalSummary.total ?? "—"))}</strong><small>Recall@5 ${escapeHtml(safelyNumber(Number(retrievalSummary.recallAt5) * 100, 1))}% · MRR ${escapeHtml(safelyNumber(retrievalSummary.meanReciprocalRank, 3))}</small></article><article class="panel evaluation-mini"><span>50-case safety pack</span><strong>${escapeHtml(String(safety50Summary.passed ?? "—"))}/${escapeHtml(String(safety50Summary.total ?? "—"))}</strong><small>${escapeHtml(String(safety50Summary.failed ?? "—"))} failed · deterministic guardrail regression</small></article><article class="panel evaluation-mini"><span>Research retrieval</span><strong>${escapeHtml(evaluation?.retrieval?.execution?.retrievalStrategy ? "BM25" : "—")}</strong><small>Local fixture evaluation; live Pinecone fusion is shown in the Atlas.</small></article><article class="panel evaluation-mini"><span>Source coverage</span><strong>${escapeHtml(String(categoryCoverageSummary.mappedContexts ?? "—"))}/7</strong><small>${escapeHtml(String(categoryCoverageSummary.categorySourceCards ?? "—"))} mapped cards · non-clinical only</small></article></section>${contextCoverageMap()}<div class="evaluation-grid"><section class="panel evaluation-categories"><div class="panel-header"><h3 class="panel-title">${icon("check", 17)} Coverage by implementation area</h3><p class="panel-note">${escapeHtml(evaluation?.suite || "Loading report")}</p></div><div class="evaluation-category-list">${categories.map((category) => `<div><span>${escapeHtml(String(category.category || "category").replaceAll("_", " "))}</span><strong>${escapeHtml(String(category.passed || 0))}/${escapeHtml(String(category.total || 0))}</strong><small>${escapeHtml(String(category.failed || 0))} failed</small></div>`).join("") || `<div class="evidence-empty"><strong>Evaluation report is loading.</strong><span>Refresh this view after running the offline suite.</span></div>`}</div></section><section class="panel evaluation-scope"><div class="panel-header"><h3 class="panel-title">${icon("info", 17)} Scope and next evidence</h3><p class="panel-note">Honest final-review boundary</p></div><ul>${(evaluation?.limitations || ["Run npm run eval:study to load the current report."]).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul><div class="evaluation-protocol"><strong>Human-review protocol</strong><p>Use the provided source links and exported run reports for a later blinded domain review and user-acceptance study. No human-study, clinician, or treatment outcome is claimed by this dashboard.</p></div></section></div>`);
-}
-
-function bulkView() {
-  const feedback = state.bulkFeedback || { tone: "neutral", message: "No file imported in this browser session." };
-  const detailById = new Map((state.bulkReport?.results || []).map((item) => [item.profileId, item]));
-  const batchRows = state.bulkRows.map(([id, concern, cue, status]) => {
-    const detail = detailById.get(id);
-    return `<tr><td>${escapeHtml(id)}</td><td>${escapeHtml(concern)}</td><td class="cue-score">${escapeHtml(cue)}</td><td>${escapeHtml(detail?.safetyStatus || "Awaiting run")}</td><td>${escapeHtml(detail?.topDriver || "—")}</td><td><span class="table-status ${status === "Review" ? "review" : ""}">${escapeHtml(status)}</span></td></tr>`;
-  }).join("");
-  const summary = state.bulkReport?.summary;
-  return shell(`<div class="view-heading"><div><h2>Bulk analysis suite</h2><p>Process up to 100 de-identified profiles through the same environment, retrieval/evidence-coverage proxy, research-atlas, safety, and explainability paths—without live LLM fan-out.</p></div></div><div class="bulk-layout"><section class="panel upload-panel"><div class="panel-header"><h3 class="panel-title">${icon("upload", 17)} Import profiles</h3><p class="panel-note">CSV prototype · browser-only read</p></div><div class="dropzone" data-dropzone><div>${icon("file", 30)}<strong>Drop a profile CSV here</strong><p>Use locally de-identified rows only. The preview reads the file in your browser.</p><label class="upload-label">${icon("upload", 14)} Choose CSV<input type="file" accept=".csv,text/csv" data-action="upload" /></label></div></div><div class="bulk-feedback is-${escapeHtml(feedback.tone)}" role="status" aria-live="polite">${icon(feedback.tone === "success" ? "check" : "info", 15)}<span>${escapeHtml(feedback.message)}</span></div><label class="bulk-confirm"><input type="checkbox" data-action="bulk-confirm" ${state.bulkConfirmed ? "checked" : ""} /> <span>I confirm these rows are de-identified and permitted for this local research preview.</span></label><p class="form-disclaimer">Expected columns: profile ID, concern. Quoted cells are supported; blank profile IDs are skipped; imports are capped at 100 rows.</p></section><section class="panel batch-panel"><div class="batch-topline"><div><h3>Current batch</h3><p>${state.bulkRows.length} profiles · ${summary ? `${escapeHtml(String(summary.researchEvidenceRecords || 0))} mapped research records · average CUE proxy ${escapeHtml(safelyNumber(summary.averageCue))}` : "awaiting deterministic analysis"}</p></div><span class="pill is-neutral">No LLM fan-out</span></div><div class="batch-table-scroll"><table class="batch-table"><thead><tr><th>Profile</th><th>Concern</th><th>CUE proxy</th><th>Safety</th><th>Top driver</th><th>Status</th></tr></thead><tbody>${batchRows}</tbody></table></div><div class="batch-actions"><button class="ghost-button" type="button" data-action="export">${icon("download", 15)} Export CSV</button><button class="ghost-button" type="button" data-action="export-batch-audit" ${state.bulkReport?.results?.length ? "" : "disabled"}>${icon("file", 15)} Export audit JSON</button><button class="primary-button" type="button" data-action="batch" ${state.bulkConfirmed ? "" : "disabled"}>${icon("sparkles", 15)} Run deterministic batch</button></div></section></div>`);
-}
-
-function reviewerView() {
-  const reviewer = state.reviewer;
-  const queue = reviewer.queue;
-  const cards = Array.isArray(queue?.cards) ? queue.cards : [];
-  const selectedSourceId = cards.some((card) => card.sourceId === reviewer.selectedSourceId)
-    ? reviewer.selectedSourceId
-    : cards[0]?.sourceId || "";
-  const selectedCard = cards.find((card) => card.sourceId === selectedSourceId) || null;
-  const summary = queue?.summary || {};
-  const connected = reviewer.status === "ready" && Boolean(queue);
-  const canSubmit = connected && Boolean(selectedCard) && Boolean(reviewer.token.trim());
-  const actionLabels = {
-    annotate: "Add local annotation",
-    needs_changes: "Mark needs changes (local)",
-    approve: "Record approve action (local only)",
-    reject: "Record reject action (local only)",
-  };
-  const actionOptions = Object.entries(actionLabels).map(([value, label]) => `<option value="${value}" ${reviewer.action === value ? "selected" : ""}>${escapeHtml(label)}</option>`).join("");
-  const sourceOptions = cards.map((card) => `<option value="${escapeHtml(card.sourceId)}" ${card.sourceId === selectedSourceId ? "selected" : ""}>${escapeHtml(card.sourceFamily)} · ${escapeHtml(card.title)}</option>`).join("");
-  const cardRows = cards.map((card) => {
-    const sourceUrl = safeEvidenceUrl(card.sourceUrl);
-    const latest = card.latestAnnotation;
-    const ingredientNames = Array.isArray(card.ingredientIds) && card.ingredientIds.length ? card.ingredientIds.join(" · ") : "No ingredient mapping";
-    return `<article class="reviewer-source-card"><div class="reviewer-source-head"><div><span class="atlas-state">${escapeHtml(card.sourceFamily || "source")}</span><h3>${escapeHtml(card.title || card.sourceId)}</h3><p>${escapeHtml(card.publisher || "Publisher not recorded")} · ${escapeHtml(String(card.publishedYear || "year not recorded"))}</p></div><span class="reviewer-queue-state ${latest ? "is-annotated" : ""}">${escapeHtml(String(card.queueState || "awaiting_annotation").replaceAll("_", " "))}</span></div><p class="reviewer-source-meta"><strong>Mapped records:</strong> ${escapeHtml(ingredientNames)}<br /><strong>Atlas review status:</strong> ${escapeHtml(String(card.atlasClinicalReviewStatus || "not recorded").replaceAll("_", " "))}</p>${latest ? `<div class="reviewer-latest"><strong>Latest local annotation</strong><span>${escapeHtml(String(latest.action).replaceAll("_", " "))} · ${escapeHtml(latest.reviewerLabel || "local-reviewer")} · ${escapeHtml(new Date(latest.createdAt).toLocaleString())}</span>${latest.note ? `<p>${escapeHtml(latest.note)}</p>` : ""}</div>` : `<p class="reviewer-awaiting">No local annotation recorded.</p>`}${sourceUrl ? `<a class="evidence-link" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">Open attributed source ${icon("arrow", 13)}</a>` : ""}</article>`;
-  }).join("");
-  const latestActions = summary.latestActions || {};
-  const statusTone = reviewer.status === "error" ? "is-danger" : connected ? "" : "is-warning";
-
-  return shell(`<div class="view-heading"><div><h2>Protected reviewer workflow</h2><p>Local, token-protected annotations for a future source-card review. This is an instrument-ready workflow, not completed clinical review or evidence activation.</p></div></div><section class="panel reviewer-boundary"><div><h3>${icon("shield", 17)} Immutable research boundary</h3><p>Every action is append-only in an ignored local file. It cannot modify the Atlas, clinical-review status, Pinecone data, CUE proxy, safety checks, or synthesis path.</p></div><span class="pill is-neutral">Local only · disabled by default</span></section><section class="reviewer-layout"><section class="panel reviewer-connect-panel"><div class="panel-header"><div><h3 class="panel-title">${icon("shield", 17)} Session access</h3><p class="panel-note">Token stays in memory for this browser session only</p></div><span class="pill ${statusTone}">${connected ? "Connected locally" : reviewer.status === "loading" ? "Connecting…" : "Not connected"}</span></div><label for="reviewer-token">Local reviewer token</label><input id="reviewer-token" type="password" autocomplete="off" spellcheck="false" value="${escapeHtml(reviewer.token)}" data-action="reviewer-token" placeholder="Configured REVIEWER_QUEUE_TOKEN" /><p class="field-help">Enable the queue locally with <code>REVIEWER_QUEUE_ENABLED=true</code> and a 24+ character token. The server refuses this workflow in production.</p><div class="reviewer-access-actions"><button class="primary-button" type="button" data-action="reviewer-connect" ${reviewer.status === "loading" ? "disabled" : ""}>${icon("shield", 14)} ${connected ? "Refresh local queue" : "Connect local queue"}</button>${reviewer.token || queue ? `<button class="ghost-button" type="button" data-action="reviewer-disconnect">Disconnect</button>` : ""}</div><p class="reviewer-status" role="status">${escapeHtml(reviewer.notice)}</p></section><section class="panel reviewer-summary-panel"><div class="panel-header"><div><h3 class="panel-title">${icon("layers", 17)} Review queue state</h3><p class="panel-note">Source-card annotations only</p></div></div>${connected ? `<div class="reviewer-summary-grid"><div><span>Source cards</span><strong>${escapeHtml(String(summary.sourceCards || 0))}</strong></div><div><span>Awaiting note</span><strong>${escapeHtml(String(summary.awaitingAnnotation || 0))}</strong></div><div><span>Latest annotations</span><strong>${escapeHtml(String(Object.values(latestActions).reduce((total, value) => total + Number(value || 0), 0)))}</strong></div></div><p>Latest local actions: ${Object.entries(latestActions).map(([action, count]) => `${String(action).replaceAll("_", " ")} ${Number(count || 0)}`).join(" · ")}</p>` : `<div class="evidence-empty"><strong>Connect a local review session to load source cards.</strong><span>No reviewer credential or source annotation is stored by the standard dashboard.</span></div>`}</section></section>${connected ? `<section class="panel reviewer-annotation-panel"><div class="panel-header"><div><h3 class="panel-title">${icon("file", 17)} Record a local source-card annotation</h3><p class="panel-note">It does not approve an ingredient, clinical claim, corpus upload, or routine.</p></div></div><div class="reviewer-form-grid"><label for="reviewer-source">Source card<select id="reviewer-source" data-action="reviewer-source">${sourceOptions}</select></label><label for="reviewer-action">Local action<select id="reviewer-action" data-action="reviewer-action">${actionOptions}</select></label><label for="reviewer-label">Pseudonymous reviewer label<input id="reviewer-label" maxlength="80" autocomplete="off" value="${escapeHtml(reviewer.reviewerLabel)}" data-action="reviewer-label" placeholder="e.g. reviewer-01" /></label><label class="reviewer-note-field" for="reviewer-note">Bounded review note<textarea id="reviewer-note" maxlength="1800" data-action="reviewer-note" placeholder="Do not enter patient data, identifiers, symptoms, or treatment instructions.">${escapeHtml(reviewer.note)}</textarea></label></div>${selectedCard ? `<p class="reviewer-selection">Selected: <strong>${escapeHtml(selectedCard.title)}</strong> · ${escapeHtml(selectedCard.sourceFamily)} · Atlas status ${escapeHtml(String(selectedCard.atlasClinicalReviewStatus || "not recorded").replaceAll("_", " "))}</p>` : ""}<div class="reviewer-submit-row"><p>Actions remain local annotations and are never used by automated eligibility or safety gates.</p><button class="primary-button" type="button" data-action="reviewer-submit" ${canSubmit ? "" : "disabled"}>${icon("check", 14)} Record local annotation</button></div></section><section class="reviewer-card-section"><div class="view-heading reviewer-card-heading"><div><h3>Source cards</h3><p>${escapeHtml(String(cards.length))} records available to this local session. The list is for inspection; its status labels do not alter Atlas records.</p></div></div><div class="reviewer-card-grid">${cardRows}</div></section>` : ""}`);
-}
-
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 }
 
 function render() {
-  const views = { dashboard: dashboardView, monitor: monitorView, simulator: simulatorView, bulk: bulkView, knowledge: knowledgeExplorerView, evaluation: evaluationView, reviewer: reviewerView };
+  const views = { dashboard: dashboardView, monitor: monitorView, simulator: simulatorView, knowledge: knowledgeExplorerView };
   app.innerHTML = views[state.activeView]();
   document.title = `DermaSynth | ${(VIEW_META[state.activeView] || VIEW_META.dashboard).title}`;
 }
@@ -1408,7 +1313,6 @@ function navigateView(view, { source = "user", history = source === "presentatio
   if (view === "knowledge") {
     loadKnowledgeExplorer();
   }
-  if (view === "evaluation") loadEvaluation();
 }
 
 function applyRoute() {
@@ -1472,21 +1376,6 @@ async function loadResearchSearch({ background = false } = {}) {
     state.knowledgeNotice = "Research search is unavailable right now; the local atlas remains browseable.";
   }
   if (state.activeView === "knowledge") render();
-}
-
-async function loadEvaluation({ force = false } = {}) {
-  if (state.evaluationStatus === "loading" && !force) return;
-  state.evaluationStatus = "loading";
-  if (state.activeView === "evaluation") render();
-  try {
-    const response = await fetch("/api/evaluation");
-    if (!response.ok) throw new Error("Evaluation report unavailable");
-    state.evaluation = await response.json();
-    state.evaluationStatus = "ready";
-  } catch {
-    state.evaluationStatus = "error";
-  }
-  if (state.activeView === "evaluation") render();
 }
 
 async function reviewerErrorMessage(response, fallback) {
@@ -1961,8 +1850,6 @@ document.addEventListener("click", (event) => {
   if (action === "presentation-next") { advancePresentation(); return; }
   if (action === "presentation-skip") { advancePresentation({ skipProof: true }); return; }
   if (action === "presentation-run") { generateRoutine(); return; }
-  if (action === "mobile-more") { state.mobileMoreOpen = !state.mobileMoreOpen; render(); return; }
-  if (action === "mobile-more-close") { state.mobileMoreOpen = false; render(); return; }
   if (action === "navigate") { navigateView(target.dataset.view); return; }
   if (action === "stage") { state.selectedStage = state.selectedStage === target.dataset.stage ? null : target.dataset.stage; render(); return; }
   if (action === "refresh") {
@@ -2000,7 +1887,6 @@ document.addEventListener("click", (event) => {
     loadKnowledgeExplorer({ force: true });
     return;
   }
-  if (action === "coverage-atlas") { navigateView("knowledge"); return; }
   if (action === "coverage-context") {
     state.knowledgeConcern = target.dataset.concern || "all";
     state.relationshipFocus = state.knowledgeConcern;
@@ -2028,7 +1914,6 @@ document.addEventListener("click", (event) => {
     }
     return;
   }
-  if (action === "evaluation-refresh") { loadEvaluation({ force: true }); }
 });
 
 document.addEventListener("change", (event) => {
@@ -2609,4 +2494,3 @@ void refreshEnvironment(defaultLocation, { announce: false });
 void refreshComparisonContext(state.comparison.selectedLocation, { announce: false });
 void loadKnowledgeExplorer();
 void loadCorpusSummary();
-void loadEvaluation();
