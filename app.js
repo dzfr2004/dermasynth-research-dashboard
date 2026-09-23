@@ -358,6 +358,8 @@ function environmentModeLabel() {
   const mode = activeEnvironment().mode;
   if (mode === "live") return "Live environment";
   if (mode === "degraded") return "Degraded environment";
+  if (mode === "unavailable") return "Readings unavailable";
+  if (mode === "user_reported") return "Your reported conditions";
   return "Demo environment";
 }
 
@@ -365,6 +367,7 @@ function environmentSourceLabel() {
   const sources = activeEnvironment().sources || {};
   const weather = sources.weather?.status || "demo";
   const air = sources.airQuality?.status || "demo";
+  if (weather === "user_reported" && air === "user_reported") return "Conditions reported by you";
   return `Weather ${weather} · Air ${air}`;
 }
 
@@ -576,7 +579,7 @@ function shell(view) {
   const ingredientCount = Number(state.knowledgeExplorer?.overview?.ingredientCount) || incorporatedIngredientRecords().length;
   const currentMeta = VIEW_META[state.activeView] || VIEW_META.dashboard;
   const title = currentMeta.title;
-  const modeClass = activeEnvironment().mode === "live" ? "" : activeEnvironment().mode === "degraded" ? "is-warning" : "is-neutral";
+  const modeClass = activeEnvironment().mode === "live" ? "" : ["degraded", "unavailable"].includes(activeEnvironment().mode) ? "is-warning" : "is-neutral";
   const cueClass = state.routineMeta?.status === "cleared" ? "" : "is-warning";
   const locationUpdating = isLocationUpdating();
   return `<div class="app-shell">
@@ -1163,6 +1166,15 @@ function profilePreferenceFields() {
     <div class="field"><label for="exposure-context">Today’s exposure</label><select id="exposure-context" data-action="exposure-context" ${disabled ? "disabled" : ""}><option value="indoors" ${state.exposureContext === "indoors" ? "selected" : ""}>Mostly indoors</option><option value="mixed" ${state.exposureContext === "mixed" ? "selected" : ""}>Mixed</option><option value="outdoors" ${state.exposureContext === "outdoors" ? "selected" : ""}>Mostly outdoors</option></select><p class="field-help">Adjusts the UV activation threshold.</p></div></div>`;
 }
 
+function conditionsCard(meta) {
+  const options = meta?.conditionOptions || {};
+  const labels = { sky: "Sun right now", air: "How the air feels", haze: "Air quality", temperature: "Temperature" };
+  const chosen = state.reportedConditions || {};
+  const groups = Object.entries(labels).map(([key, label]) => `<fieldset class="conditions-group"><legend>${escapeHtml(label)}</legend><div class="conditions-options">${(options[key] || []).map((option) => `<button type="button" class="condition-chip ${chosen[key] === option.id ? "is-selected" : ""}" data-action="report-condition" data-key="${escapeHtml(key)}" data-value="${escapeHtml(option.id)}" aria-pressed="${chosen[key] === option.id}">${escapeHtml(option.label)}</button>`).join("")}</div></fieldset>`).join("");
+  const complete = Object.keys(labels).every((key) => chosen[key]);
+  return `<section class="synthesized-routine-card is-review conditions-card" aria-live="polite"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("info", 14)} Live readings unavailable</p><h3>Tell us today's conditions</h3><p>We couldn't get live weather and air-quality readings for ${escapeHtml(locationLabel())}. Rather than guess, the routine will use what you choose below.</p></div></div>${groups}<div class="form-actions"><button class="primary-button" type="button" data-action="submit-conditions" ${complete ? "" : "disabled"}>${icon("sparkles", 15)} Build routine with these conditions</button></div></section>`;
+}
+
 function synthesizedRoutineCard(routine, meta) {
   const redirect = meta?.status === "medical_redirect";
   const cleared = meta?.status === "cleared";
@@ -1170,8 +1182,9 @@ function synthesizedRoutineCard(routine, meta) {
   if (!meta && !running) {
     return `<section class="synthesized-routine-card is-ready" aria-live="polite"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Ready to run</p><h3>Your category preview will appear here</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status is-review">Awaiting run</span></div><div class="synth-ready-content"><span>${icon("flask", 24)}</span><div><strong>One gated request, then an inspectable result.</strong><p>Choose a research context and run the preview to see the category output, evidence grounding, safety trace, and environmental explanation together.</p></div></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>No routine categories are shown before a gated research run.</span></p></div></section>`;
   }
-  const notices = "";
+  const notices = Array.isArray(meta?.safety?.flags) && meta.safety.flags.length ? meta.safety.flags.join(" ") : "";
   const variant = redirect ? "is-redirect" : cleared ? "is-cleared" : "is-review";
+  if (meta?.status === "needs_conditions" && !running) return conditionsCard(meta);
   if (redirect) {
     return `<section class="clinical-redirect" role="alert"><span class="clinical-redirect-icon">${icon("shield", 23)}</span><div><p class="routine-eyebrow">Safety redirect</p><h3>Routine generation stopped</h3><p>${escapeHtml(notices)}</p><small>This research interface cannot assess symptoms or replace in-person care. Seek an appropriate healthcare professional for urgent, worsening, or concerning symptoms.</small></div></section>`;
   }
@@ -1942,6 +1955,8 @@ document.addEventListener("click", (event) => {
   if (action === "profile") { if (state.runStatus === "running") return; state.profile = target.dataset.profile; resetPreviewForInputChange(); render(); return; }
   if (action === "concern-choice") { if (state.runStatus === "running") return; state.concern = target.dataset.concern; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); return; }
   if (action === "simulate") { generateRoutine(); return; }
+  if (action === "report-condition") { state.reportedConditions = { ...(state.reportedConditions || {}), [target.dataset.key]: target.dataset.value }; render(); return; }
+  if (action === "submit-conditions") { generateRoutine({ reportedConditions: state.reportedConditions }); return; }
   if (action === "reason") { state.reasonOpen = !state.reasonOpen; render(); return; }
   if (action === "batch") { runBatch(); return; }
   if (action === "export") { downloadCsv(); return; }
@@ -2397,7 +2412,7 @@ async function selectComparisonLocation(index) {
   }
 }
 
-async function generateRoutine() {
+async function generateRoutine({ reportedConditions = null } = {}) {
   if (isLocationUpdating()) {
     showToast("Wait for the selected location's readings to finish updating.");
     return;
@@ -2405,7 +2420,7 @@ async function generateRoutine() {
   if (state.runStatus === "running") return;
   state.reasonOpen = false;
   const location = locationPayload();
-  const symptoms = state.symptoms.trim().slice(0, 280);
+  const symptoms = (state.symptoms || state.pendingSymptoms || "").trim().slice(0, 280);
   const locationVersion = state.locationVersion;
   const requestVersion = ++state.routineRequestVersion;
   state.runStatus = "running";
@@ -2417,6 +2432,7 @@ async function generateRoutine() {
     if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
     if (state.exposureContext) body.exposureContext = state.exposureContext;
     if (symptoms) body.symptoms = symptoms;
+    if (reportedConditions) body.reportedConditions = reportedConditions;
     const response = await fetch("/api/routine", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -2428,6 +2444,10 @@ async function generateRoutine() {
     state.generatedRoutine = payload.routine || null;
     state.routineMeta = payload;
     state.runStatus = "complete";
+    // Keep the safety text only while we wait for the user's conditions, so
+    // the resubmitted request is triaged again with the same text.
+    state.pendingSymptoms = payload.status === "needs_conditions" ? symptoms : "";
+    if (payload.status !== "needs_conditions") state.reportedConditions = null;
     state.symptoms = "";
     if (payload.environment) {
       state.environment = payload.environment;
@@ -2439,7 +2459,9 @@ async function generateRoutine() {
     recordRunSummary(payload, location);
     render();
     refreshRoutineContext();
-    if (payload.status === "cleared") {
+    if (payload.status === "needs_conditions") {
+      showToast("Live readings are unavailable. Choose today's conditions to continue.");
+    } else if (payload.status === "cleared") {
       showToast("Grounded research preview cleared the configured gates.");
     } else if (payload.status === "medical_redirect") {
       showToast("The request was redirected for clinical assessment.");

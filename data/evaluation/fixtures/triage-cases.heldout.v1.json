@@ -1,0 +1,268 @@
+{
+  "schemaVersion": "1.0",
+  "fixtureVersion": "2026-09-24-heldout",
+  "description": "Held-out triage cases written after the v2 rules were tuned on triage-cases.v1.json. They were run once blind, then the missed concepts (not the exact sentences) were added to the rules, so this set is no longer unbiased. An independent set written by someone else (npm run eval:independent) is the unbiased test.",
+  "cases": [
+    {
+      "id": "tri-h001",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "my eye has swollen shut"
+    },
+    {
+      "id": "tri-h002",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "tongue feels swollen and tingly"
+    },
+    {
+      "id": "tri-h003",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "I got hives all over after trying the serum"
+    },
+    {
+      "id": "tri-h004",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "face ballooned up this morning"
+    },
+    {
+      "id": "tri-h005",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "there are small fluid-filled bubbles on my chin"
+    },
+    {
+      "id": "tri-h006",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "my acne spot is leaking yellow fluid"
+    },
+    {
+      "id": "tri-h007",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "the area around the pimple is hot, red and hurts a lot"
+    },
+    {
+      "id": "tri-h008",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "my skin cracked and it bleeds when I smile"
+    },
+    {
+      "id": "tri-h009",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "since yesterday the new toner makes my face burn"
+    },
+    {
+      "id": "tri-h010",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "used the aha peel and now my skin is raw"
+    },
+    {
+      "id": "tri-h011",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "a dark spot on my back has grown and changed colour"
+    },
+    {
+      "id": "tri-h012",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "I feel feverish and my rash is spreading"
+    },
+    {
+      "id": "tri-h013",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "it hurts so much I can't sleep"
+    },
+    {
+      "id": "tri-h014",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "chest feels tight after using the spray sunscreen"
+    },
+    {
+      "id": "tri-h015",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "rash spread from my cheek to my neck overnight"
+    },
+    {
+      "id": "tri-h016",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "red streaks spreading from a cut on my face"
+    },
+    {
+      "id": "tri-h017",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "my lips swelled up after the lip balm"
+    },
+    {
+      "id": "tri-h018",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "eyes watering and swollen after the eye cream"
+    },
+    {
+      "id": "tri-h019",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "weird bump that keeps bleeding"
+    },
+    {
+      "id": "tri-h020",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "skin burning like fire after retinol"
+    },
+    {
+      "id": "tri-h021",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "its been itchy and red ever since I started the new moisturizer"
+    },
+    {
+      "id": "tri-h022",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "breathing is hard and my face is itchy"
+    },
+    {
+      "id": "tri-h023",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "the rash keeps getting worse despite stopping everything"
+    },
+    {
+      "id": "tri-h024",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "I have a boil with pus on my jaw"
+    },
+    {
+      "id": "tri-h025",
+      "category": "held-out",
+      "expected": "redirect",
+      "text": "stinging and redness right after applying vitamin c serum"
+    },
+    {
+      "id": "tri-h026",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "I don't have swelling, I just want less shine"
+    },
+    {
+      "id": "tri-h027",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "no blisters or pus, only blackheads"
+    },
+    {
+      "id": "tri-h028",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "my skin isn't irritated at all"
+    },
+    {
+      "id": "tri-h029",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "I get a little flushed when I exercise"
+    },
+    {
+      "id": "tri-h030",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "dark circles under my eyes"
+    },
+    {
+      "id": "tri-h031",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "I sweat a lot outdoors"
+    },
+    {
+      "id": "tri-h032",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "my makeup slides off by noon"
+    },
+    {
+      "id": "tri-h033",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "I have a few whiteheads on my nose"
+    },
+    {
+      "id": "tri-h034",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "my skin is combination and a bit dehydrated"
+    },
+    {
+      "id": "tri-h035",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "I burn easily so I want good sun protection"
+    },
+    {
+      "id": "tri-h036",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "freckles got darker over the holidays"
+    },
+    {
+      "id": "tri-h037",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "I want a routine for hot and humid weather"
+    },
+    {
+      "id": "tri-h038",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "lines around my eyes are more visible"
+    },
+    {
+      "id": "tri-h039",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "I had a reaction to a perfume years ago but nothing now"
+    },
+    {
+      "id": "tri-h040",
+      "category": "held-out",
+      "expected": "clear",
+      "text": "not red, not itchy, just dull"
+    }
+  ],
+  "firstBlindRun": {
+    "date": "2026-09-24",
+    "v2_rules": {
+      "sensitivity": "17/25 (68.0%)",
+      "specificity": "15/15 (100%)"
+    },
+    "v1_keyword_baseline": {
+      "sensitivity": "2/25 (8.0%)",
+      "specificity": "14/15 (93.3%)"
+    },
+    "missedConcepts": [
+      "face ballooned",
+      "fluid-filled bubbles",
+      "leaking yellow fluid",
+      "hot, red and hurting",
+      "spot grown and changed colour",
+      "pain preventing sleep",
+      "chest feels tight",
+      "breathing is hard"
+    ]
+  }
+}

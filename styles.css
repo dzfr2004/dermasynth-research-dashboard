@@ -1211,3 +1211,9 @@ textarea:focus-visible {
 .atlas-reference-line { margin: 6px 0 0; font-size: 0.74rem; opacity: 0.85; }
 .routine-step-gpt { display: block; }
 .ingredient-gpt-status { margin: 6px 0 10px; padding: 8px 10px; border-radius: 8px; background: rgb(255 255 255 / 8%); font-size: 0.74rem; display: flex; gap: 6px; align-items: flex-start; }
+.conditions-group { border: 0; margin: 12px 0 0; padding: 0; }
+.conditions-group legend { font-weight: 700; font-size: 0.82rem; margin-bottom: 6px; }
+.conditions-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.condition-chip { border: 1px solid rgb(255 255 255 / 30%); background: transparent; color: inherit; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.8rem; cursor: pointer; }
+.condition-chip.is-selected { background: #6fe3c0; color: #06231a; border-color: #6fe3c0; }
+.conditions-card .form-actions { margin-top: 14px; }

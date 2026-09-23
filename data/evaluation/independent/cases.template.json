@@ -1,0 +1,14 @@
+{
+  "author": "Your name",
+  "role": "Supervisor / pharmacist / dermatologist",
+  "written": "YYYY-MM-DD",
+  "note": "Replace the example cases below with your own. Aim for 30 or more. Save the file as cases.json in this folder.",
+  "cases": [
+    { "id": "ind-001", "type": "triage", "description": "Example: product reaction in plain words", "text": "my cheeks went red and itchy the day after I started a new toner", "expected": "redirect" },
+    { "id": "ind-002", "type": "triage", "description": "Example: ordinary cosmetic concern", "text": "my T-zone gets shiny by lunchtime", "expected": "clear" },
+    { "id": "ind-003", "type": "pair", "description": "Example: two actives that should not be combined", "first": "retinol", "second": "glycolic-acid", "expected": "blocked" },
+    { "id": "ind-004", "type": "pair", "description": "Example: a combination that is fine", "first": "niacinamide", "second": "glycerin", "expected": "allowed" },
+    { "id": "ind-005", "type": "routine", "description": "Example: very sensitive skin, strong sun", "concern": "sensitivity", "reactivity": "high", "readings": { "uvi": 10, "humidity": 70, "pm25": 25, "temperature": 32 }, "mustNotInclude": ["glycolic-acid", "salicylic-acid", "retinol"], "expected": "routine" },
+    { "id": "ind-006", "type": "routine", "description": "Example: acne with symptoms that need a doctor", "concern": "acne", "symptoms": "the spots on my jaw are hot, swollen and full of yellow fluid", "expected": "redirect" }
+  ]
+}

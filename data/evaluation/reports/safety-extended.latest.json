@@ -1,0 +1,539 @@
+{
+  "generatedAt": "2026-09-23T16:28:58.051Z",
+  "total": 88,
+  "passed": 88,
+  "results": [
+    {
+      "id": "ext-001",
+      "group": "A. incompatible pair",
+      "title": "retinol then benzoyl-peroxide in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-002",
+      "group": "A. incompatible pair",
+      "title": "benzoyl-peroxide then retinol in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-003",
+      "group": "A. incompatible pair",
+      "title": "retinol then glycolic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-004",
+      "group": "A. incompatible pair",
+      "title": "glycolic-acid then retinol in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-005",
+      "group": "A. incompatible pair",
+      "title": "retinol then mandelic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-006",
+      "group": "A. incompatible pair",
+      "title": "mandelic-acid then retinol in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-007",
+      "group": "A. incompatible pair",
+      "title": "retinol then salicylic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-008",
+      "group": "A. incompatible pair",
+      "title": "salicylic-acid then retinol in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-009",
+      "group": "A. incompatible pair",
+      "title": "benzoyl-peroxide then glycolic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-010",
+      "group": "A. incompatible pair",
+      "title": "glycolic-acid then benzoyl-peroxide in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-011",
+      "group": "A. incompatible pair",
+      "title": "benzoyl-peroxide then mandelic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-012",
+      "group": "A. incompatible pair",
+      "title": "mandelic-acid then benzoyl-peroxide in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-013",
+      "group": "A. incompatible pair",
+      "title": "benzoyl-peroxide then salicylic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-014",
+      "group": "A. incompatible pair",
+      "title": "salicylic-acid then benzoyl-peroxide in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-015",
+      "group": "A. incompatible pair",
+      "title": "glycolic-acid then salicylic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-016",
+      "group": "A. incompatible pair",
+      "title": "salicylic-acid then glycolic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-017",
+      "group": "A. incompatible pair",
+      "title": "glycolic-acid then mandelic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-018",
+      "group": "A. incompatible pair",
+      "title": "mandelic-acid then glycolic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-019",
+      "group": "A. incompatible pair",
+      "title": "mandelic-acid then salicylic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-020",
+      "group": "A. incompatible pair",
+      "title": "salicylic-acid then mandelic-acid in the same routine",
+      "status": "passed"
+    },
+    {
+      "id": "ext-021",
+      "group": "B. photosensitiser placement",
+      "title": "glycolic-acid in a morning step is removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-022",
+      "group": "B. photosensitiser placement",
+      "title": "glycolic-acid in an evening step is not removed for placement",
+      "status": "passed"
+    },
+    {
+      "id": "ext-023",
+      "group": "B. photosensitiser placement",
+      "title": "lactic-acid in a morning step is removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-024",
+      "group": "B. photosensitiser placement",
+      "title": "lactic-acid in an evening step is not removed for placement",
+      "status": "passed"
+    },
+    {
+      "id": "ext-025",
+      "group": "B. photosensitiser placement",
+      "title": "mandelic-acid in a morning step is removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-026",
+      "group": "B. photosensitiser placement",
+      "title": "mandelic-acid in an evening step is not removed for placement",
+      "status": "passed"
+    },
+    {
+      "id": "ext-027",
+      "group": "B. photosensitiser placement",
+      "title": "citric-acid in a morning step is removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-028",
+      "group": "B. photosensitiser placement",
+      "title": "citric-acid in an evening step is not removed for placement",
+      "status": "passed"
+    },
+    {
+      "id": "ext-029",
+      "group": "B. photosensitiser placement",
+      "title": "salicylic-acid in a morning step is removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-030",
+      "group": "B. photosensitiser placement",
+      "title": "salicylic-acid in an evening step is not removed for placement",
+      "status": "passed"
+    },
+    {
+      "id": "ext-031",
+      "group": "B. photosensitiser placement",
+      "title": "retinol in a morning step is removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-032",
+      "group": "B. photosensitiser placement",
+      "title": "retinol in an evening step is not removed for placement",
+      "status": "passed"
+    },
+    {
+      "id": "ext-033",
+      "group": "B. photosensitiser placement",
+      "title": "retinal in a morning step is removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-034",
+      "group": "B. photosensitiser placement",
+      "title": "retinal in an evening step is not removed for placement",
+      "status": "passed"
+    },
+    {
+      "id": "ext-035",
+      "group": "B. photosensitiser placement",
+      "title": "retinyl-palmitate in a morning step is removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-036",
+      "group": "B. photosensitiser placement",
+      "title": "retinyl-palmitate in an evening step is not removed for placement",
+      "status": "passed"
+    },
+    {
+      "id": "ext-037",
+      "group": "C. barrier guardrail",
+      "title": "glycolic-acid removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-038",
+      "group": "C. barrier guardrail",
+      "title": "glycolic-acid removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-039",
+      "group": "C. barrier guardrail",
+      "title": "glycolic-acid not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-040",
+      "group": "C. barrier guardrail",
+      "title": "lactic-acid removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-041",
+      "group": "C. barrier guardrail",
+      "title": "lactic-acid removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-042",
+      "group": "C. barrier guardrail",
+      "title": "lactic-acid not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-043",
+      "group": "C. barrier guardrail",
+      "title": "mandelic-acid removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-044",
+      "group": "C. barrier guardrail",
+      "title": "mandelic-acid removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-045",
+      "group": "C. barrier guardrail",
+      "title": "mandelic-acid not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-046",
+      "group": "C. barrier guardrail",
+      "title": "citric-acid removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-047",
+      "group": "C. barrier guardrail",
+      "title": "citric-acid removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-048",
+      "group": "C. barrier guardrail",
+      "title": "citric-acid not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-049",
+      "group": "C. barrier guardrail",
+      "title": "salicylic-acid removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-050",
+      "group": "C. barrier guardrail",
+      "title": "salicylic-acid removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-051",
+      "group": "C. barrier guardrail",
+      "title": "salicylic-acid not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-052",
+      "group": "C. barrier guardrail",
+      "title": "gluconolactone removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-053",
+      "group": "C. barrier guardrail",
+      "title": "gluconolactone removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-054",
+      "group": "C. barrier guardrail",
+      "title": "gluconolactone not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-055",
+      "group": "C. barrier guardrail",
+      "title": "retinol removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-056",
+      "group": "C. barrier guardrail",
+      "title": "retinol removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-057",
+      "group": "C. barrier guardrail",
+      "title": "retinol not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-058",
+      "group": "C. barrier guardrail",
+      "title": "retinal removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-059",
+      "group": "C. barrier guardrail",
+      "title": "retinal removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-060",
+      "group": "C. barrier guardrail",
+      "title": "retinal not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-061",
+      "group": "C. barrier guardrail",
+      "title": "retinyl-palmitate removed for the barrier concern",
+      "status": "passed"
+    },
+    {
+      "id": "ext-062",
+      "group": "C. barrier guardrail",
+      "title": "retinyl-palmitate removed for high self-reported reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-063",
+      "group": "C. barrier guardrail",
+      "title": "retinyl-palmitate not removed by the guardrail for acne with low reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-064",
+      "group": "D. excluded ingredient",
+      "title": "retinal removed (am)",
+      "status": "passed"
+    },
+    {
+      "id": "ext-065",
+      "group": "D. excluded ingredient",
+      "title": "retinal removed (pm)",
+      "status": "passed"
+    },
+    {
+      "id": "ext-066",
+      "group": "D. prescription-only",
+      "title": "tretinoin removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-067",
+      "group": "D. prescription-only",
+      "title": "adapalene removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-068",
+      "group": "D. prescription-only",
+      "title": "isotretinoin removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-069",
+      "group": "D. prescription-only",
+      "title": "tazarotene removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-070",
+      "group": "D. prescription-only",
+      "title": "trifarotene removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-071",
+      "group": "D. prescription-only",
+      "title": "clindamycin removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-072",
+      "group": "D. prescription-only",
+      "title": "hydroquinone removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-073",
+      "group": "D. prescription-only",
+      "title": "hydrocortisone removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-074",
+      "group": "D. prescription-only",
+      "title": "betamethasone-valerate removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-075",
+      "group": "D. prescription-only",
+      "title": "clobetasol-propionate removed",
+      "status": "passed"
+    },
+    {
+      "id": "ext-076",
+      "group": "E. restricted claims",
+      "title": "Blocks: \"This will treat your acne.\"",
+      "status": "passed"
+    },
+    {
+      "id": "ext-077",
+      "group": "E. restricted claims",
+      "title": "Blocks: \"It cures redness quickly.\"",
+      "status": "passed"
+    },
+    {
+      "id": "ext-078",
+      "group": "E. restricted claims",
+      "title": "Blocks: \"Guaranteed to clear your skin.\"",
+      "status": "passed"
+    },
+    {
+      "id": "ext-079",
+      "group": "E. restricted claims",
+      "title": "Blocks: \"Use a dose of two drops.\"",
+      "status": "passed"
+    },
+    {
+      "id": "ext-080",
+      "group": "E. restricted claims",
+      "title": "Blocks: \"This diagnosis suggests eczema.\"",
+      "status": "passed"
+    },
+    {
+      "id": "ext-081",
+      "group": "E. restricted claims",
+      "title": "Allows: \"Glycerin is a humectant with a verified CIR safety conclusion.\"",
+      "status": "passed"
+    },
+    {
+      "id": "ext-082",
+      "group": "E. restricted claims",
+      "title": "Allows: \"Chosen because humidity is low today.\"",
+      "status": "passed"
+    },
+    {
+      "id": "ext-083",
+      "group": "E. restricted claims",
+      "title": "Allows: \"It ranked first among the retrieved candidates.\"",
+      "status": "passed"
+    },
+    {
+      "id": "ext-084",
+      "group": "F. model pick validation",
+      "title": "Rejects a model pick of an invented ingredient id",
+      "status": "passed"
+    },
+    {
+      "id": "ext-085",
+      "group": "F. model pick validation",
+      "title": "Rejects a model pick of retinal (excluded)",
+      "status": "passed"
+    },
+    {
+      "id": "ext-086",
+      "group": "F. model pick validation",
+      "title": "Rejects a model pick of benzoyl peroxide (not in the knowledge base)",
+      "status": "passed"
+    },
+    {
+      "id": "ext-087",
+      "group": "F. model pick validation",
+      "title": "Rejects a model pick of an ingredient from another step's pool",
+      "status": "passed"
+    },
+    {
+      "id": "ext-088",
+      "group": "G. pipeline property check",
+      "title": "No unsafe final output across 210 real pipeline runs",
+      "status": "passed"
+    }
+  ],
+  "propertyCheck": {
+    "runs": 210,
+    "violations": []
+  }
+}

@@ -147,6 +147,21 @@ npm run eval:safety-50
 
 The retrieval pack contains 30 source-discovery queries over the local registry and reports Recall@5, MRR, source coverage, and latency. The safety pack contains 50 deterministic routing and output-contract cases. Their current exports are [retrieval-evaluation.latest.md](data/evaluation/reports/retrieval-evaluation.latest.md) and [safety-50-case.latest.md](data/evaluation/reports/safety-50-case.latest.md).
 
+## Run the triage, extended safety and independent sets
+
+```sh
+npm run eval:triage              # 117 labelled symptom texts, v1 keywords vs v2 rules
+npm run eval:triage -- --llm     # also v2 rules + GPT second opinion (needs .env keys)
+npm run eval:safety-extended     # 88 cases incl. all incompatible pairs and 210 pipeline runs
+npm run eval:independent         # cases written by the supervisor or a dermatologist
+```
+
+The triage report gives sensitivity and specificity per method and records the honest first blind run of the held-out set. The independent set lives in [data/evaluation/independent](data/evaluation/independent/README.md) and is reported separately. `npm test` runs the triage and extended suites.
+
+## When live weather is unavailable
+
+With `LIVE_SERVICES_ENABLED=true`, the app never falls back to demo weather. If the weather or air-quality lookup fails, the routine request returns `status: "needs_conditions"` and the app asks the user four quick questions (sun, air, haze, temperature). The routine is then built from those answers and labelled "Your reported conditions". Demo readings are used only when live services are switched off.
+
 ## Verify and populate the Pinecone index
 
 After creating the index, run this read-only verification:

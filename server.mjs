@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { resolve } from "node:path";
 import { createConfig, loadDotEnv, publicConfigStatus } from "./lib/config.mjs";
-import { DEFAULT_LOCATION, getEnvironment, getEnvironmentForecast, providerReliabilitySnapshot, searchLocations } from "./lib/environment.mjs";
+import { DEFAULT_LOCATION, getEnvironment, getEnvironmentForecast, parseReportedConditions, providerReliabilitySnapshot, REPORTED_CONDITION_OPTIONS, reportedConditionsEnvironment, searchLocations } from "./lib/environment.mjs";
+import { llmTriageSecondOpinion } from "./lib/triage-llm.mjs";
 import { ExternalServiceError } from "./lib/http-client.mjs";
 import { retrieveEvidence, retrieveResearchEvidence } from "./lib/retrieval.mjs";
 import {
@@ -1167,8 +1168,32 @@ async function handleRoutine(input, requestId) {
   const symptoms = optionalText(input.symptoms, "symptoms");
   const stages = [];
   const triageStarted = Date.now();
-  const triage = triageRoutineRequest({ symptoms });
-  stages.push(stage("triage", triage.status, triageStarted, { ruleIds: (triage.rules || []).map((rule) => rule.id) }));
+  let triage = triageRoutineRequest({ symptoms });
+  // Layer 2: a model second opinion that can only escalate a cleared result.
+  if (triage.status === "cleared" && symptoms && config.triage.llmEnabled && config.liveServicesEnabled && config.openai?.apiKey) {
+    try {
+      const opinion = await llmTriageSecondOpinion({ config, symptoms });
+      triage = { ...triage, triage: { ...triage.triage, secondOpinion: opinion } };
+      if (opinion.escalate) {
+        const flag = `The AI second check flagged these symptoms for clinical assessment (${opinion.category}).`;
+        triage = {
+          ...triage,
+          status: "medical_redirect",
+          rules: [...(triage.rules || []), { id: "clinical-symptom-triage-second-opinion", label: "AI second-opinion symptom check", status: "redirected", detail: flag }],
+          flags: [flag],
+          notices: ["This research prototype cannot assess urgent or clinical skin symptoms. Please seek appropriate professional care."],
+        };
+      }
+    } catch (error) {
+      triage = { ...triage, triage: { ...triage.triage, secondOpinion: { status: "failed", code: error?.code || "error" } } };
+    }
+  }
+  stages.push(stage("triage", triage.status, triageStarted, {
+    ruleIds: (triage.rules || []).map((rule) => rule.id),
+    matched: (triage.triage?.matched || []).map((item) => item.rule),
+    negated: (triage.triage?.negated || []).map((item) => item.rule),
+    secondOpinion: triage.triage?.secondOpinion?.status || "not_run",
+  }));
 
   if (triage.status === "medical_redirect") {
     return routineResult({
@@ -1194,7 +1219,28 @@ async function handleRoutine(input, requestId) {
 
   const requestedLocation = routineLocation(input);
   const environmentStarted = Date.now();
-  const environment = await getEnvironment(config, requestedLocation);
+  let environment = await getEnvironment(config, requestedLocation);
+  // Never build a routine from invented readings: if live data is missing,
+  // use conditions the user reported, or ask for them.
+  const reportedConditions = input.reportedConditions === undefined ? null : parseReportedConditions(input.reportedConditions);
+  if (input.reportedConditions !== undefined && !reportedConditions) throw new HttpError(400, "Invalid reported conditions.");
+  if (environment.mode !== "live" && reportedConditions) {
+    environment = reportedConditionsEnvironment(requestedLocation, reportedConditions);
+  } else if (environment.mode === "unavailable") {
+    stages.push(stage("environment", "awaiting_user_conditions", environmentStarted));
+    return {
+      mode: "awaiting_conditions",
+      status: "needs_conditions",
+      synthesisStatus: "not_requested",
+      profile,
+      concern,
+      routine: null,
+      environment,
+      conditionOptions: Object.fromEntries(Object.entries(REPORTED_CONDITION_OPTIONS).map(([key, options]) => [key, Object.entries(options).map(([id, option]) => ({ id, label: option.label }))])),
+      notices: environment.notices,
+      trace: { runId: requestId, stages },
+    };
+  }
   stages.push(stage("environment", environment.mode, environmentStarted, {
     providerStates: Object.fromEntries(Object.entries(environment.sources || {}).map(([key, value]) => [key, value?.status || "unknown"])),
   }));

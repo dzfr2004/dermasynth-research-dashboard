@@ -1,0 +1,469 @@
+{
+  "schemaVersion": "1.0",
+  "fixtureVersion": "2026-09-24",
+  "description": "Labelled symptom-triage cases. redirect = needs professional care before any routine; clear = cosmetic or negated. Categories: direct clinical wording, everyday paraphrase, typos, mixed clauses, negation, cosmetic concerns.",
+  "cases": [
+    {
+      "id": "tri-001",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "I have facial swelling after a product."
+    },
+    {
+      "id": "tri-002",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "Difficulty breathing since I applied the mask."
+    },
+    {
+      "id": "tri-003",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "There are blisters on my cheek."
+    },
+    {
+      "id": "tri-004",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "There is pus in the affected area."
+    },
+    {
+      "id": "tri-005",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "The area looks infected."
+    },
+    {
+      "id": "tri-006",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "I have a fever and a rash."
+    },
+    {
+      "id": "tri-007",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "A mole on my arm has been changing shape."
+    },
+    {
+      "id": "tri-008",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "I think this could be skin cancer."
+    },
+    {
+      "id": "tri-009",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "The rash is spreading rapidly."
+    },
+    {
+      "id": "tri-010",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "I have severe pain on my face."
+    },
+    {
+      "id": "tri-011",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "I have an open wound on my chin."
+    },
+    {
+      "id": "tri-012",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "My skin is bleeding where I picked it."
+    },
+    {
+      "id": "tri-013",
+      "category": "direct",
+      "expected": "redirect",
+      "text": "I broke out in hives."
+    },
+    {
+      "id": "tri-014",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "My face is swollen."
+    },
+    {
+      "id": "tri-015",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "my lips puffed up after the new lip mask"
+    },
+    {
+      "id": "tri-016",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "Eyes puffy and itchy after new cream."
+    },
+    {
+      "id": "tri-017",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "Burning after new product."
+    },
+    {
+      "id": "tri-018",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "It stings a lot since I started using the retinol serum."
+    },
+    {
+      "id": "tri-019",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "My cheeks went really red after using the toner."
+    },
+    {
+      "id": "tri-020",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "There's yellow stuff oozing from a spot."
+    },
+    {
+      "id": "tri-021",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "My throat feels tight and my skin is itchy."
+    },
+    {
+      "id": "tri-022",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "I can't breathe properly and my face is hot."
+    },
+    {
+      "id": "tri-023",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "Big welts appeared on my neck."
+    },
+    {
+      "id": "tri-024",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "The redness keeps getting worse every day."
+    },
+    {
+      "id": "tri-025",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "This sore won't heal."
+    },
+    {
+      "id": "tri-026",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "My eyelids are swelling up."
+    },
+    {
+      "id": "tri-027",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "Skin peeling badly after the acid peel."
+    },
+    {
+      "id": "tri-028",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "I got a reaction from the sunscreen."
+    },
+    {
+      "id": "tri-029",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "There's a new lump under my skin."
+    },
+    {
+      "id": "tri-030",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "The rash is all over my body."
+    },
+    {
+      "id": "tri-031",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "It has been itchy and red since applying the new moisturiser."
+    },
+    {
+      "id": "tri-032",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "Really painful bumps on my jaw."
+    },
+    {
+      "id": "tri-033",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "My mole started bleeding."
+    },
+    {
+      "id": "tri-034",
+      "category": "paraphrase",
+      "expected": "redirect",
+      "text": "The patch is raw and weeping."
+    },
+    {
+      "id": "tri-035",
+      "category": "typo",
+      "expected": "redirect",
+      "text": "blistr on cheek"
+    },
+    {
+      "id": "tri-036",
+      "category": "typo",
+      "expected": "redirect",
+      "text": "my face is swolen"
+    },
+    {
+      "id": "tri-037",
+      "category": "typo",
+      "expected": "redirect",
+      "text": "lips are sweling"
+    },
+    {
+      "id": "tri-038",
+      "category": "typo",
+      "expected": "redirect",
+      "text": "burnnig after new serum"
+    },
+    {
+      "id": "tri-039",
+      "category": "typo",
+      "expected": "redirect",
+      "text": "i have a fevr and rash"
+    },
+    {
+      "id": "tri-040",
+      "category": "typo",
+      "expected": "redirect",
+      "text": "infeccted spot on my nose"
+    },
+    {
+      "id": "tri-041",
+      "category": "typo",
+      "expected": "redirect",
+      "text": "blisterz on my forehead"
+    },
+    {
+      "id": "tri-042",
+      "category": "typo",
+      "expected": "redirect",
+      "text": "skin is bleding"
+    },
+    {
+      "id": "tri-043",
+      "category": "mixed",
+      "expected": "redirect",
+      "text": "No fever, but my lips are swollen."
+    },
+    {
+      "id": "tri-044",
+      "category": "mixed",
+      "expected": "redirect",
+      "text": "I don't have a rash however my eyes are puffy."
+    },
+    {
+      "id": "tri-045",
+      "category": "mixed",
+      "expected": "redirect",
+      "text": "Not sure if it's infected, it's hot and has pus."
+    },
+    {
+      "id": "tri-046",
+      "category": "mixed",
+      "expected": "redirect",
+      "text": "I'm not sure whether my face is swelling."
+    },
+    {
+      "id": "tri-047",
+      "category": "negation",
+      "expected": "clear",
+      "text": "I do not have a fever."
+    },
+    {
+      "id": "tri-048",
+      "category": "negation",
+      "expected": "clear",
+      "text": "No swelling at all, just curious."
+    },
+    {
+      "id": "tri-049",
+      "category": "negation",
+      "expected": "clear",
+      "text": "No blisters, no bleeding, just dry patches."
+    },
+    {
+      "id": "tri-050",
+      "category": "negation",
+      "expected": "clear",
+      "text": "I don't have any rash or hives."
+    },
+    {
+      "id": "tri-051",
+      "category": "negation",
+      "expected": "clear",
+      "text": "Never had a reaction to sunscreen."
+    },
+    {
+      "id": "tri-052",
+      "category": "negation",
+      "expected": "clear",
+      "text": "My skin isn't swollen or infected."
+    },
+    {
+      "id": "tri-053",
+      "category": "negation",
+      "expected": "clear",
+      "text": "Without any burning, it just feels tight in the morning."
+    },
+    {
+      "id": "tri-054",
+      "category": "negation",
+      "expected": "clear",
+      "text": "There is no pus and nothing is spreading."
+    },
+    {
+      "id": "tri-055",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "My skin feels dry and flaky in the air-conditioned office."
+    },
+    {
+      "id": "tri-056",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I get oily by lunchtime."
+    },
+    {
+      "id": "tri-057",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I have some dark spots from old acne."
+    },
+    {
+      "id": "tri-058",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "My cheeks look a bit red in the sun."
+    },
+    {
+      "id": "tri-059",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "Mild breakouts on my chin before my period."
+    },
+    {
+      "id": "tri-060",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "My pores look big on my nose."
+    },
+    {
+      "id": "tri-061",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "My skin looks dull and tired."
+    },
+    {
+      "id": "tri-062",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "Uneven skin tone and some old acne marks."
+    },
+    {
+      "id": "tri-063",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I have fewer breakouts than last month."
+    },
+    {
+      "id": "tri-064",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "My skin feels tight after cleansing."
+    },
+    {
+      "id": "tri-065",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "Slight redness around my nose."
+    },
+    {
+      "id": "tri-066",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I spend most of the day outdoors in strong sun."
+    },
+    {
+      "id": "tri-067",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I want something lightweight because it is humid."
+    },
+    {
+      "id": "tri-068",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "Rough texture on my forehead."
+    },
+    {
+      "id": "tri-069",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "Sometimes itchy when the weather is dry."
+    },
+    {
+      "id": "tri-070",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I have sensitive skin that reacts to fragrance."
+    },
+    {
+      "id": "tri-071",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I never know which sunscreen to use."
+    },
+    {
+      "id": "tri-072",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "My foundation looks patchy by the afternoon."
+    },
+    {
+      "id": "tri-073",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "Blackheads on my nose."
+    },
+    {
+      "id": "tri-074",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I'm turning 30 and want a simple routine."
+    },
+    {
+      "id": "tri-075",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I use a spreadsheet to track my routine."
+    },
+    {
+      "id": "tri-076",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I live in a very humid city."
+    },
+    {
+      "id": "tri-077",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": ""
+    }
+  ]
+}
