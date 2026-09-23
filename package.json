@@ -46,7 +46,8 @@
     "report:selection-log": "node scripts/report-selection-log.mjs",
     "report:corpus-inventory": "node scripts/corpus-inventory.mjs",
     "db:apply-kb-update": "node scripts/apply-kb-update-2026-09.mjs",
-    "sync:evidence-pinecone": "node scripts/sync-ingredient-evidence-pinecone.mjs"
+    "sync:evidence-pinecone": "node scripts/sync-ingredient-evidence-pinecone.mjs",
+    "eval:input-sensitivity": "node scripts/evaluate-input-sensitivity.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1"

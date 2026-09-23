@@ -1,0 +1,589 @@
+{
+  "generatedAt": "2026-09-23T12:16:54.088Z",
+  "runs": 7560,
+  "ofat": {
+    "environment": {
+      "levels": 7,
+      "pairs": 22680,
+      "routineChangedShare": 0.7712522045855379,
+      "ingredientsChangedShare": 0.5807760141093474,
+      "driverChangedShare": 0.7619047619047619,
+      "meanRoutineDistance": 0.18715881414294278,
+      "meanIngredientDistance": 0.23025363231712662,
+      "meanTextDistance": 0.2795553663768631,
+      "meanShapDistance": 0.24991522387769863
+    },
+    "concern": {
+      "levels": 10,
+      "pairs": 34020,
+      "routineChangedShare": 0.2021164021164021,
+      "ingredientsChangedShare": 0.7033509700176367,
+      "driverChangedShare": 0.326984126984127,
+      "meanRoutineDistance": 0.07364855407183313,
+      "meanIngredientDistance": 0.37775538198814057,
+      "meanTextDistance": 0.23844626931008134,
+      "meanShapDistance": 0.0961536875801118
+    },
+    "profile": {
+      "levels": 4,
+      "pairs": 11340,
+      "routineChangedShare": 0,
+      "ingredientsChangedShare": 0,
+      "driverChangedShare": 0,
+      "meanRoutineDistance": 0,
+      "meanIngredientDistance": 0,
+      "meanTextDistance": 0,
+      "meanShapDistance": 0
+    },
+    "reactivity": {
+      "levels": 3,
+      "pairs": 7560,
+      "routineChangedShare": 0.45396825396825397,
+      "ingredientsChangedShare": 0.5153439153439153,
+      "driverChangedShare": 0,
+      "meanRoutineDistance": 0.18829680020156458,
+      "meanIngredientDistance": 0.3112219702695881,
+      "meanTextDistance": 0.19918831635048773,
+      "meanShapDistance": 0
+    },
+    "finish": {
+      "levels": 3,
+      "pairs": 7560,
+      "routineChangedShare": 0.05396825396825397,
+      "ingredientsChangedShare": 0.05396825396825397,
+      "driverChangedShare": 0,
+      "meanRoutineDistance": 0.020212899974804743,
+      "meanIngredientDistance": 0.029135802469135892,
+      "meanTextDistance": 0.0077087922652122635,
+      "meanShapDistance": 0
+    },
+    "exposure": {
+      "levels": 3,
+      "pairs": 7560,
+      "routineChangedShare": 0.38095238095238093,
+      "ingredientsChangedShare": 0.38095238095238093,
+      "driverChangedShare": 0,
+      "meanRoutineDistance": 0.07210884353741702,
+      "meanIngredientDistance": 0.11645502645502499,
+      "meanTextDistance": 0.07661661167811497,
+      "meanShapDistance": 0
+    }
+  },
+  "correlation": {
+    "pairs": 5000,
+    "combined": 0.21514629725151146,
+    "routine": 0.17250829085347288,
+    "ingredients": 0.1768432706843123,
+    "text": 0.2545296671964077
+  },
+  "bands": [
+    {
+      "band": "0.00–0.10",
+      "pairs": 6,
+      "routine": 0.15079365079365079,
+      "ingredients": 0.21666666666666667,
+      "text": 0.27684880535738937
+    },
+    {
+      "band": "0.10–0.20",
+      "pairs": 22,
+      "routine": 0.10335497835497835,
+      "ingredients": 0.26666666666666666,
+      "text": 0.2098041255814097
+    },
+    {
+      "band": "0.20–0.30",
+      "pairs": 63,
+      "routine": 0.2217498110355253,
+      "ingredients": 0.38567649281934996,
+      "text": 0.3493084847404752
+    },
+    {
+      "band": "0.30–0.45",
+      "pairs": 531,
+      "routine": 0.22770678265028624,
+      "ingredients": 0.44474934983409575,
+      "text": 0.3742773350399449
+    },
+    {
+      "band": "0.45–1.00",
+      "pairs": 4378,
+      "routine": 0.28361060352266443,
+      "ingredients": 0.5578003654636791,
+      "text": 0.4320831126038429
+    }
+  ],
+  "diversity": {
+    "runs": 7560,
+    "distinctRoutines": 22,
+    "distinctIngredientSets": 40,
+    "distinctExplanations": 236,
+    "runsWithRemovals": 0,
+    "safetyReviewRequired": 0
+  },
+  "slotPicks": {
+    "am:antioxidant-context": {
+      "resveratrol": 720
+    },
+    "am:daytime-photoprotection": {
+      "titanium-dioxide": 4320
+    },
+    "pm:lightweight-moisturising": {
+      "niacinamide": 228,
+      "glycerin": 768
+    },
+    "pm:texture-renewal": {
+      "gluconolactone": 1512
+    },
+    "am:comfort-hydration": {
+      "sodium-hyaluronate": 5304,
+      "glycerin": 756
+    },
+    "pm:barrier-support-moisturising": {
+      "ceramide-eop": 1224,
+      "dimethicone": 5268
+    },
+    "pm:overnight-comfort": {
+      "madecassoside": 6276,
+      "allantoin": 708
+    },
+    "am:light-hydration": {
+      "niacinamide": 144,
+      "beta-glucan": 252,
+      "glycerin": 60
+    },
+    "am:supportive-hydration": {
+      "beta-glucan": 36
+    },
+    "pm:supportive-moisturising": {
+      "squalane": 72
+    }
+  },
+  "sweeps": {
+    "uvi": [
+      {
+        "value": 0,
+        "steps": "low-irritation-cleansing, light-hydration, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "niacinamide, glycerin, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.398,
+        "changed": null
+      },
+      {
+        "value": 1,
+        "steps": "low-irritation-cleansing, light-hydration, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "niacinamide, glycerin, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.409,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 2,
+        "steps": "low-irritation-cleansing, light-hydration, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "niacinamide, glycerin, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.42,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 3,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.431,
+        "changed": {
+          "steps": true,
+          "ingredients": true
+        }
+      },
+      {
+        "value": 4,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.441,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 5,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.452,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 6,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.463,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 7,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.474,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 8,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.484,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 9,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.495,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 10,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "uvi",
+        "contextScore": 0.506,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 11,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "uvi",
+        "contextScore": 0.517,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      }
+    ],
+    "humidity": [
+      {
+        "value": 20,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, barrier-support-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, ceramide-eop, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.573,
+        "changed": null
+      },
+      {
+        "value": 30,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, barrier-support-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, ceramide-eop, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.543,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 40,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, barrier-support-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, ceramide-eop, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.512,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 50,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, barrier-support-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, ceramide-eop, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.482,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 51,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.479,
+        "changed": {
+          "steps": true,
+          "ingredients": true
+        }
+      },
+      {
+        "value": 60,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.452,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 70,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.421,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 74,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.409,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 75,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.406,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 85,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.375,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 95,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.345,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      }
+    ],
+    "pm25": [
+      {
+        "value": 5,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.377,
+        "changed": null
+      },
+      {
+        "value": 15,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.427,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 30,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "pm25",
+        "contextScore": 0.501,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 45,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "pm25",
+        "contextScore": 0.576,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 54,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "pm25",
+        "contextScore": 0.62,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 55,
+        "steps": "low-irritation-cleansing, antioxidant-context, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "resveratrol, titanium-dioxide, niacinamide, gluconolactone",
+        "driver": "pm25",
+        "contextScore": 0.625,
+        "changed": {
+          "steps": true,
+          "ingredients": true
+        }
+      },
+      {
+        "value": 70,
+        "steps": "low-irritation-cleansing, antioxidant-context, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "resveratrol, titanium-dioxide, niacinamide, gluconolactone",
+        "driver": "pm25",
+        "contextScore": 0.7,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 100,
+        "steps": "low-irritation-cleansing, antioxidant-context, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "resveratrol, titanium-dioxide, niacinamide, gluconolactone",
+        "driver": "pm25",
+        "contextScore": 0.724,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 150,
+        "steps": "low-irritation-cleansing, antioxidant-context, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "resveratrol, titanium-dioxide, niacinamide, gluconolactone",
+        "driver": "pm25",
+        "contextScore": 0.724,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      }
+    ],
+    "temperature": [
+      {
+        "value": 0,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.687,
+        "changed": null
+      },
+      {
+        "value": 10,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.658,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 18,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.54,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 24,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.452,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 30,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "humidity",
+        "contextScore": 0.54,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 36,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.628,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      },
+      {
+        "value": 42,
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "driver": "temperature",
+        "contextScore": 0.687,
+        "changed": {
+          "steps": false,
+          "ingredients": false
+        }
+      }
+    ]
+  }
+}

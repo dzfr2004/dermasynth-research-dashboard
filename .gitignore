@@ -14,7 +14,7 @@ data/governance/*.local.json
 data/db/
 
 # Local documents and archive (not part of the code)
-reports/
-_archive/
+/reports/
+/_archive/
 ~$*
 data/logs/
