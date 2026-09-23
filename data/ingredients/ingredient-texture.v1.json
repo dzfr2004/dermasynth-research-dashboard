@@ -1,0 +1,173 @@
+{
+  "schemaVersion": "1.0",
+  "source": "Project-authored texture and gentleness labels derived from the functional classes in functional-classes.v1.json (FYP1 interim report, Appendix B).",
+  "status": "developer_authored_pending_expert_review",
+  "scope": "Richness is a 0 (very light, water-like) to 1 (heavy occlusive) research label used only to rank candidates within an already safe, approved pool. 'gentle' marks soothing, protective, humectant or barrier classes preferred for reactive skin. These are not efficacy or safety claims.",
+  "ingredients": {
+    "glycerin": {
+      "richness": 0.25,
+      "gentle": true,
+      "basis": "humectant"
+    },
+    "sodium-hyaluronate": {
+      "richness": 0.2,
+      "gentle": true,
+      "basis": "humectant"
+    },
+    "beta-glucan": {
+      "richness": 0.3,
+      "gentle": true,
+      "basis": "humectant, soothing"
+    },
+    "ectoin": {
+      "richness": 0.35,
+      "gentle": true,
+      "basis": "protectant, hydration"
+    },
+    "urea": {
+      "richness": 0.3,
+      "gentle": true,
+      "basis": "humectant"
+    },
+    "propylene-glycol": {
+      "richness": 0.2,
+      "gentle": false,
+      "basis": "humectant, solvent"
+    },
+    "niacinamide": {
+      "richness": 0.2,
+      "gentle": true,
+      "basis": "water-soluble barrier ingredient"
+    },
+    "allantoin": {
+      "richness": 0.3,
+      "gentle": true,
+      "basis": "soothing"
+    },
+    "madecassoside": {
+      "richness": 0.35,
+      "gentle": true,
+      "basis": "soothing"
+    },
+    "centella-asiatica-extract": {
+      "richness": 0.35,
+      "gentle": true,
+      "basis": "soothing"
+    },
+    "asiaticoside": {
+      "richness": 0.35,
+      "gentle": true,
+      "basis": "soothing"
+    },
+    "bisabolol": {
+      "richness": 0.4,
+      "gentle": true,
+      "basis": "soothing"
+    },
+    "colloidal-oatmeal": {
+      "richness": 0.5,
+      "gentle": true,
+      "basis": "soothing, film-forming"
+    },
+    "dexpanthenol": {
+      "richness": 0.4,
+      "gentle": true,
+      "basis": "soothing, barrier"
+    },
+    "squalane": {
+      "richness": 0.55,
+      "gentle": true,
+      "basis": "light emollient oil"
+    },
+    "caprylic-capric-triglyceride": {
+      "richness": 0.6,
+      "gentle": true,
+      "basis": "emollient oil"
+    },
+    "linoleic-acid": {
+      "richness": 0.6,
+      "gentle": true,
+      "basis": "emollient lipid"
+    },
+    "ceramide-1": {
+      "richness": 0.75,
+      "gentle": true,
+      "basis": "barrier lipid"
+    },
+    "ceramide-3": {
+      "richness": 0.75,
+      "gentle": true,
+      "basis": "barrier lipid"
+    },
+    "ceramide-6-ii": {
+      "richness": 0.75,
+      "gentle": true,
+      "basis": "barrier lipid"
+    },
+    "ceramide-ap": {
+      "richness": 0.75,
+      "gentle": true,
+      "basis": "barrier lipid"
+    },
+    "ceramide-eop": {
+      "richness": 0.8,
+      "gentle": true,
+      "basis": "barrier lipid"
+    },
+    "ceramide-np": {
+      "richness": 0.75,
+      "gentle": true,
+      "basis": "barrier lipid"
+    },
+    "cholesterol": {
+      "richness": 0.75,
+      "gentle": true,
+      "basis": "barrier lipid"
+    },
+    "phytosphingosine": {
+      "richness": 0.7,
+      "gentle": true,
+      "basis": "barrier lipid"
+    },
+    "dimethicone": {
+      "richness": 0.6,
+      "gentle": true,
+      "basis": "silicone emollient, film-forming"
+    },
+    "petrolatum": {
+      "richness": 1.0,
+      "gentle": true,
+      "basis": "occlusive"
+    },
+    "mineral-oil": {
+      "richness": 0.9,
+      "gentle": true,
+      "basis": "occlusive"
+    },
+    "lanolin": {
+      "richness": 0.95,
+      "gentle": false,
+      "basis": "occlusive, known contact allergen for some people"
+    },
+    "titanium-dioxide": {
+      "gentle": true,
+      "basis": "mineral UV filter"
+    },
+    "zinc-oxide": {
+      "gentle": true,
+      "basis": "mineral UV filter"
+    },
+    "tocopherol": {
+      "gentle": true,
+      "basis": "oil-soluble antioxidant"
+    },
+    "resveratrol": {
+      "gentle": false,
+      "basis": "antioxidant"
+    },
+    "ascorbic-acid": {
+      "gentle": false,
+      "basis": "low-pH antioxidant"
+    }
+  }
+}

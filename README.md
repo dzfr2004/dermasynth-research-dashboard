@@ -158,6 +158,15 @@ npm run eval:independent         # cases written by the supervisor or a dermatol
 
 The triage report gives sensitivity and specificity per method and records the honest first blind run of the held-out set. The independent set lives in [data/evaluation/independent](data/evaluation/independent/README.md) and is reported separately. `npm test` runs the triage and extended suites.
 
+## How the user's inputs shape the routine
+
+- **Sensitive skin profile**: raises a low or missing reactivity level to moderate, so the barrier guardrail applies (no texture-renewal step, conservative variants). It never lowers a stated level.
+- **Texture vote**: skin profile (dry +1, oily -1), finish preference (dewy +1, matte -1), concern (dryness, barrier, sensitivity, redness +1; oil, acne, pores -1), humidity (50% or less +1, 75% or more -1) and temperature (15 °C or less +1, 30 °C or more -1) each vote. A positive sum picks the comfort and barrier-support variants, a negative sum the lightweight variants, zero the supportive variants. A dry profile or a sum of +2 or more also adds the morning hydration step.
+- **User fit**: a fifth factor in the candidate score (weight 0.25) rates each candidate on its recorded concern contexts, its texture against the vote, and gentleness for reactive skin. Texture and gentleness labels are in [ingredient-texture.v1.json](data/ingredients/ingredient-texture.v1.json) and are developer-authored, pending expert review.
+- The GPT ingredient picker receives the same user context and fit scores, and the explanation names the texture vote and the fit reasons.
+
+`npm run eval:input-sensitivity` measures how much each input changes the output (full grid, about 2 minutes). `npm test` runs a 720-run quick version and fails if any input stops mattering.
+
 ## When live weather is unavailable
 
 With `LIVE_SERVICES_ENABLED=true`, the app never falls back to demo weather. If the weather or air-quality lookup fails, the routine request returns `status: "needs_conditions"` and the app asks the user four quick questions (sun, air, haze, temperature). The routine is then built from those answers and labelled "Your reported conditions". Demo readings are used only when live services are switched off.

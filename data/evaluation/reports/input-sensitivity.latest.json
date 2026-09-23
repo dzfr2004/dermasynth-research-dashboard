@@ -1,60 +1,60 @@
 {
-  "generatedAt": "2026-09-23T12:16:54.088Z",
+  "generatedAt": "2026-09-23T17:07:53.185Z",
   "runs": 7560,
   "ofat": {
     "environment": {
       "levels": 7,
       "pairs": 22680,
-      "routineChangedShare": 0.7712522045855379,
-      "ingredientsChangedShare": 0.5807760141093474,
+      "routineChangedShare": 0.7550705467372134,
+      "ingredientsChangedShare": 0.8218253968253968,
       "driverChangedShare": 0.7619047619047619,
-      "meanRoutineDistance": 0.18715881414294278,
-      "meanIngredientDistance": 0.23025363231712662,
-      "meanTextDistance": 0.2795553663768631,
+      "meanRoutineDistance": 0.17119791229248593,
+      "meanIngredientDistance": 0.4685359452422836,
+      "meanTextDistance": 0.320498209781455,
       "meanShapDistance": 0.24991522387769863
     },
     "concern": {
       "levels": 10,
       "pairs": 34020,
-      "routineChangedShare": 0.2021164021164021,
-      "ingredientsChangedShare": 0.7033509700176367,
+      "routineChangedShare": 0.1626984126984127,
+      "ingredientsChangedShare": 0.7864785420340976,
       "driverChangedShare": 0.326984126984127,
-      "meanRoutineDistance": 0.07364855407183313,
-      "meanIngredientDistance": 0.37775538198814057,
-      "meanTextDistance": 0.23844626931008134,
+      "meanRoutineDistance": 0.06960978835978847,
+      "meanIngredientDistance": 0.49619376557200473,
+      "meanTextDistance": 0.2993971718073086,
       "meanShapDistance": 0.0961536875801118
     },
     "profile": {
       "levels": 4,
       "pairs": 11340,
-      "routineChangedShare": 0,
-      "ingredientsChangedShare": 0,
+      "routineChangedShare": 0.18474426807760141,
+      "ingredientsChangedShare": 0.6210758377425044,
       "driverChangedShare": 0,
-      "meanRoutineDistance": 0,
-      "meanIngredientDistance": 0,
-      "meanTextDistance": 0,
+      "meanRoutineDistance": 0.07537530444276487,
+      "meanIngredientDistance": 0.3672713529856453,
+      "meanTextDistance": 0.19669727950477475,
       "meanShapDistance": 0
     },
     "reactivity": {
       "levels": 3,
       "pairs": 7560,
-      "routineChangedShare": 0.45396825396825397,
-      "ingredientsChangedShare": 0.5153439153439153,
+      "routineChangedShare": 0.326984126984127,
+      "ingredientsChangedShare": 0.39920634920634923,
       "driverChangedShare": 0,
-      "meanRoutineDistance": 0.18829680020156458,
-      "meanIngredientDistance": 0.3112219702695881,
-      "meanTextDistance": 0.19918831635048773,
+      "meanRoutineDistance": 0.14853867472915097,
+      "meanIngredientDistance": 0.2749086671705703,
+      "meanTextDistance": 0.22157746775509843,
       "meanShapDistance": 0
     },
     "finish": {
       "levels": 3,
       "pairs": 7560,
-      "routineChangedShare": 0.05396825396825397,
-      "ingredientsChangedShare": 0.05396825396825397,
+      "routineChangedShare": 0.08637566137566137,
+      "ingredientsChangedShare": 0.6834656084656084,
       "driverChangedShare": 0,
-      "meanRoutineDistance": 0.020212899974804743,
-      "meanIngredientDistance": 0.029135802469135892,
-      "meanTextDistance": 0.0077087922652122635,
+      "meanRoutineDistance": 0.03522974930713046,
+      "meanIngredientDistance": 0.37386180398086477,
+      "meanTextDistance": 0.17071001158853905,
       "meanShapDistance": 0
     },
     "exposure": {
@@ -63,100 +63,209 @@
       "routineChangedShare": 0.38095238095238093,
       "ingredientsChangedShare": 0.38095238095238093,
       "driverChangedShare": 0,
-      "meanRoutineDistance": 0.07210884353741702,
-      "meanIngredientDistance": 0.11645502645502499,
-      "meanTextDistance": 0.07661661167811497,
+      "meanRoutineDistance": 0.06548563869992712,
+      "meanIngredientDistance": 0.1092063492063482,
+      "meanTextDistance": 0.06522964760200971,
       "meanShapDistance": 0
     }
   },
   "correlation": {
     "pairs": 5000,
-    "combined": 0.21514629725151146,
-    "routine": 0.17250829085347288,
-    "ingredients": 0.1768432706843123,
-    "text": 0.2545296671964077
+    "combined": 0.17197376161838845,
+    "routine": 0.1383154665064045,
+    "ingredients": 0.13350813161987704,
+    "text": 0.2183642322488169
   },
   "bands": [
     {
       "band": "0.00–0.10",
       "pairs": 6,
-      "routine": 0.15079365079365079,
-      "ingredients": 0.21666666666666667,
-      "text": 0.27684880535738937
+      "routine": 0.10317460317460315,
+      "ingredients": 0.4138888888888889,
+      "text": 0.3198009160715346
     },
     {
       "band": "0.10–0.20",
       "pairs": 22,
-      "routine": 0.10335497835497835,
-      "ingredients": 0.26666666666666666,
-      "text": 0.2098041255814097
+      "routine": 0.15322871572871571,
+      "ingredients": 0.4829004329004329,
+      "text": 0.27995602652234486
     },
     {
       "band": "0.20–0.30",
       "pairs": 63,
-      "routine": 0.2217498110355253,
-      "ingredients": 0.38567649281934996,
-      "text": 0.3493084847404752
+      "routine": 0.19905517762660616,
+      "ingredients": 0.5787226001511717,
+      "text": 0.39855050186479596
     },
     {
       "band": "0.30–0.45",
       "pairs": 531,
-      "routine": 0.22770678265028624,
-      "ingredients": 0.44474934983409575,
-      "text": 0.3742773350399449
+      "routine": 0.21820090873763265,
+      "ingredients": 0.6449376737512326,
+      "text": 0.4284022610753334
     },
     {
       "band": "0.45–1.00",
       "pairs": 4378,
-      "routine": 0.28361060352266443,
-      "ingredients": 0.5578003654636791,
-      "text": 0.4320831126038429
+      "routine": 0.25832581014741746,
+      "ingredients": 0.7148409797907229,
+      "text": 0.47813244074239514
+    }
+  ],
+  "strata": [
+    {
+      "k": 1,
+      "pairs": 600,
+      "output": 0.22291067555685842,
+      "routine": 0.09707605820105816,
+      "ingredients": 0.3569960317460326,
+      "text": 0.2146599367234854,
+      "identical": 0.18
+    },
+    {
+      "k": 2,
+      "pairs": 600,
+      "output": 0.32677948597277995,
+      "routine": 0.14938624338624362,
+      "ingredients": 0.5072103174603174,
+      "text": 0.32374189707177936,
+      "identical": 0.03333333333333333
+    },
+    {
+      "k": 3,
+      "pairs": 600,
+      "output": 0.3989462106938616,
+      "routine": 0.1978525132275138,
+      "ingredients": 0.6090476190476192,
+      "text": 0.3899384998064529,
+      "identical": 0.01
+    },
+    {
+      "k": 4,
+      "pairs": 600,
+      "output": 0.44505079096643946,
+      "routine": 0.22718650793650833,
+      "ingredients": 0.6663214285714282,
+      "text": 0.44164443639138135,
+      "identical": 0.0033333333333333335
+    },
+    {
+      "k": 5,
+      "pairs": 600,
+      "output": 0.4840650052148872,
+      "routine": 0.2619583333333329,
+      "ingredients": 0.7082063492063484,
+      "text": 0.48203033310497984,
+      "identical": 0
+    },
+    {
+      "k": 6,
+      "pairs": 600,
+      "output": 0.5169584933171067,
+      "routine": 0.2885932539682532,
+      "ingredients": 0.751742063492062,
+      "text": 0.5105401624910048,
+      "identical": 0
+    }
+  ],
+  "stratifiedSpearman": 0.45563891365022463,
+  "targets": [
+    {
+      "id": "profile-changes-ingredients",
+      "label": "Skin profile changes the ingredients in at least 30% of pairs",
+      "value": 0.6210758377425044,
+      "passed": true
+    },
+    {
+      "id": "finish-changes-ingredients",
+      "label": "Finish preference changes the ingredients in at least 30% of pairs",
+      "value": 0.6834656084656084,
+      "passed": true
+    },
+    {
+      "id": "profile-changes-routine",
+      "label": "Skin profile changes the routine steps in some pairs",
+      "value": 0.18474426807760141,
+      "passed": true
+    },
+    {
+      "id": "temperature-changes-routine",
+      "label": "Moving from cold to hot changes the routine steps",
+      "value": 1,
+      "passed": true
+    },
+    {
+      "id": "more-inputs-more-change",
+      "label": "Mean output distance rises with every extra changed input",
+      "value": "0.223 < 0.327 < 0.399 < 0.445 < 0.484 < 0.517",
+      "passed": true
+    },
+    {
+      "id": "single-change-responds",
+      "label": "Changing one input leaves the output identical in at most 30% of pairs",
+      "value": 0.18,
+      "passed": true
+    },
+    {
+      "id": "stratified-spearman",
+      "label": "Spearman(changed inputs, output distance) is at least 0.30",
+      "value": 0.45563891365022463,
+      "passed": true
     }
   ],
   "diversity": {
     "runs": 7560,
-    "distinctRoutines": 22,
-    "distinctIngredientSets": 40,
-    "distinctExplanations": 236,
+    "distinctRoutines": 35,
+    "distinctIngredientSets": 122,
+    "distinctExplanations": 1675,
     "runsWithRemovals": 0,
     "safetyReviewRequired": 0
   },
   "slotPicks": {
+    "am:light-hydration": {
+      "niacinamide": 183,
+      "beta-glucan": 90,
+      "sodium-hyaluronate": 81
+    },
     "am:antioxidant-context": {
-      "resveratrol": 720
+      "resveratrol": 486,
+      "tocopherol": 54
     },
     "am:daytime-photoprotection": {
       "titanium-dioxide": 4320
     },
     "pm:lightweight-moisturising": {
-      "niacinamide": 228,
-      "glycerin": 768
-    },
-    "pm:texture-renewal": {
-      "gluconolactone": 1512
+      "glycerin": 534,
+      "niacinamide": 168
     },
     "am:comfort-hydration": {
-      "sodium-hyaluronate": 5304,
+      "sodium-hyaluronate": 2584,
+      "beta-glucan": 3206,
       "glycerin": 756
     },
     "pm:barrier-support-moisturising": {
-      "ceramide-eop": 1224,
-      "dimethicone": 5268
+      "squalane": 3867,
+      "ceramide-eop": 1437,
+      "dimethicone": 909,
+      "ceramide-np": 378
     },
     "pm:overnight-comfort": {
-      "madecassoside": 6276,
-      "allantoin": 708
+      "madecassoside": 5127,
+      "allantoin": 480,
+      "squalane": 332,
+      "ceramide-np": 1020
     },
-    "am:light-hydration": {
-      "niacinamide": 144,
-      "beta-glucan": 252,
-      "glycerin": 60
+    "pm:texture-renewal": {
+      "salicylic-acid": 177,
+      "gluconolactone": 885
     },
     "am:supportive-hydration": {
-      "beta-glucan": 36
+      "niacinamide": 74,
+      "beta-glucan": 105
     },
     "pm:supportive-moisturising": {
-      "squalane": 72
+      "squalane": 267
     }
   },
   "sweeps": {
@@ -164,7 +273,7 @@
       {
         "value": 0,
         "steps": "low-irritation-cleansing, light-hydration, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "niacinamide, glycerin, gluconolactone, madecassoside",
+        "ingredients": "niacinamide, glycerin, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.398,
         "changed": null
@@ -172,7 +281,7 @@
       {
         "value": 1,
         "steps": "low-irritation-cleansing, light-hydration, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "niacinamide, glycerin, gluconolactone, madecassoside",
+        "ingredients": "niacinamide, glycerin, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.409,
         "changed": {
@@ -183,7 +292,7 @@
       {
         "value": 2,
         "steps": "low-irritation-cleansing, light-hydration, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "niacinamide, glycerin, gluconolactone, madecassoside",
+        "ingredients": "niacinamide, glycerin, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.42,
         "changed": {
@@ -194,7 +303,7 @@
       {
         "value": 3,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.431,
         "changed": {
@@ -205,7 +314,7 @@
       {
         "value": 4,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.441,
         "changed": {
@@ -216,7 +325,7 @@
       {
         "value": 5,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.452,
         "changed": {
@@ -227,7 +336,7 @@
       {
         "value": 6,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.463,
         "changed": {
@@ -238,7 +347,7 @@
       {
         "value": 7,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.474,
         "changed": {
@@ -249,7 +358,7 @@
       {
         "value": 8,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.484,
         "changed": {
@@ -260,7 +369,7 @@
       {
         "value": 9,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.495,
         "changed": {
@@ -271,7 +380,7 @@
       {
         "value": 10,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "uvi",
         "contextScore": 0.506,
         "changed": {
@@ -282,7 +391,7 @@
       {
         "value": 11,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "uvi",
         "contextScore": 0.517,
         "changed": {
@@ -294,16 +403,16 @@
     "humidity": [
       {
         "value": 20,
-        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, barrier-support-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, ceramide-eop, gluconolactone, madecassoside",
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, supportive-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, squalane, salicylic-acid, madecassoside",
         "driver": "humidity",
         "contextScore": 0.573,
         "changed": null
       },
       {
         "value": 30,
-        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, barrier-support-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, ceramide-eop, gluconolactone, madecassoside",
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, supportive-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, squalane, salicylic-acid, madecassoside",
         "driver": "humidity",
         "contextScore": 0.543,
         "changed": {
@@ -313,8 +422,8 @@
       },
       {
         "value": 40,
-        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, barrier-support-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, ceramide-eop, gluconolactone, madecassoside",
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, supportive-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, squalane, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.512,
         "changed": {
@@ -324,8 +433,8 @@
       },
       {
         "value": 50,
-        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, barrier-support-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, ceramide-eop, gluconolactone, madecassoside",
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, supportive-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, squalane, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.482,
         "changed": {
@@ -336,7 +445,7 @@
       {
         "value": 51,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.479,
         "changed": {
@@ -347,7 +456,7 @@
       {
         "value": 60,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.452,
         "changed": {
@@ -358,7 +467,7 @@
       {
         "value": 70,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "humidity",
         "contextScore": 0.421,
         "changed": {
@@ -369,7 +478,7 @@
       {
         "value": 74,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "humidity",
         "contextScore": 0.409,
         "changed": {
@@ -380,18 +489,18 @@
       {
         "value": 75,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, allantoin",
         "driver": "humidity",
         "contextScore": 0.406,
         "changed": {
           "steps": false,
-          "ingredients": false
+          "ingredients": true
         }
       },
       {
         "value": 85,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, allantoin",
         "driver": "humidity",
         "contextScore": 0.375,
         "changed": {
@@ -402,7 +511,7 @@
       {
         "value": 95,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, allantoin",
         "driver": "humidity",
         "contextScore": 0.345,
         "changed": {
@@ -415,7 +524,7 @@
       {
         "value": 5,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.377,
         "changed": null
@@ -423,7 +532,7 @@
       {
         "value": 15,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.427,
         "changed": {
@@ -434,7 +543,7 @@
       {
         "value": 30,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "pm25",
         "contextScore": 0.501,
         "changed": {
@@ -445,7 +554,7 @@
       {
         "value": 45,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "pm25",
         "contextScore": 0.576,
         "changed": {
@@ -456,7 +565,7 @@
       {
         "value": 54,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "pm25",
         "contextScore": 0.62,
         "changed": {
@@ -467,7 +576,7 @@
       {
         "value": 55,
         "steps": "low-irritation-cleansing, antioxidant-context, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "resveratrol, titanium-dioxide, niacinamide, gluconolactone",
+        "ingredients": "resveratrol, titanium-dioxide, niacinamide, salicylic-acid",
         "driver": "pm25",
         "contextScore": 0.625,
         "changed": {
@@ -478,7 +587,7 @@
       {
         "value": 70,
         "steps": "low-irritation-cleansing, antioxidant-context, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "resveratrol, titanium-dioxide, niacinamide, gluconolactone",
+        "ingredients": "resveratrol, titanium-dioxide, niacinamide, salicylic-acid",
         "driver": "pm25",
         "contextScore": 0.7,
         "changed": {
@@ -489,7 +598,7 @@
       {
         "value": 100,
         "steps": "low-irritation-cleansing, antioxidant-context, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "resveratrol, titanium-dioxide, niacinamide, gluconolactone",
+        "ingredients": "resveratrol, titanium-dioxide, niacinamide, salicylic-acid",
         "driver": "pm25",
         "contextScore": 0.724,
         "changed": {
@@ -500,7 +609,7 @@
       {
         "value": 150,
         "steps": "low-irritation-cleansing, antioxidant-context, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "resveratrol, titanium-dioxide, niacinamide, gluconolactone",
+        "ingredients": "resveratrol, titanium-dioxide, niacinamide, salicylic-acid",
         "driver": "pm25",
         "contextScore": 0.724,
         "changed": {
@@ -512,16 +621,16 @@
     "temperature": [
       {
         "value": 0,
-        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, supportive-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, squalane, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.687,
         "changed": null
       },
       {
         "value": 10,
-        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, supportive-moisturising, texture-renewal, overnight-comfort",
+        "ingredients": "titanium-dioxide, squalane, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.658,
         "changed": {
@@ -532,18 +641,18 @@
       {
         "value": 18,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "humidity",
         "contextScore": 0.54,
         "changed": {
-          "steps": false,
-          "ingredients": false
+          "steps": true,
+          "ingredients": true
         }
       },
       {
         "value": 24,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, madecassoside",
         "driver": "temperature",
         "contextScore": 0.452,
         "changed": {
@@ -554,18 +663,18 @@
       {
         "value": 30,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, allantoin",
         "driver": "humidity",
         "contextScore": 0.54,
         "changed": {
           "steps": false,
-          "ingredients": false
+          "ingredients": true
         }
       },
       {
         "value": 36,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, allantoin",
         "driver": "temperature",
         "contextScore": 0.628,
         "changed": {
@@ -576,7 +685,7 @@
       {
         "value": 42,
         "steps": "low-irritation-cleansing, daytime-photoprotection, low-irritation-cleansing, lightweight-moisturising, texture-renewal, overnight-comfort",
-        "ingredients": "titanium-dioxide, niacinamide, gluconolactone, madecassoside",
+        "ingredients": "titanium-dioxide, niacinamide, salicylic-acid, allantoin",
         "driver": "temperature",
         "contextScore": 0.687,
         "changed": {

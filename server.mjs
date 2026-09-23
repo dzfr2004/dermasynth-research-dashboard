@@ -43,6 +43,7 @@ import { getEwgReference } from "./lib/kb-reference.mjs";
 import { retrieveSlotCandidates } from "./lib/candidate-retrieval.mjs";
 import { buildIngredientEvidenceCorpus } from "./lib/ingredient-evidence-corpus.mjs";
 import { postSelectionSafetyPass } from "./lib/post-selection-safety.mjs";
+import { effectiveReactivity } from "./lib/personalisation.mjs";
 import { buildTwoLevelExplanation, slotReasonText } from "./lib/peg.mjs";
 import { appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
 import { getRuntimePolicy } from "./lib/policy-store.mjs";
@@ -802,6 +803,7 @@ const FACTOR_WORDS = {
   retrieval_relevance: "how closely its evidence matched this step",
   evidence_strength: "the strength of its verified safety evidence",
   ewg_reference: "its EWG reference score",
+  user_fit: "how well it fits this user's profile, finish preference, concern and weather",
 };
 
 function routineContextPayload({ concern, profile, environment, routine, entries }) {
@@ -836,6 +838,7 @@ function routineContextPayload({ concern, profile, environment, routine, entries
         selected_rank: attr.poolRank ? `${attr.poolRank} of ${attr.poolSize}` : "only candidate",
         runner_up: attr.contrast?.runnerUp?.displayName || null,
         deciding_factor_versus_runner_up: attr.contrast?.decisive ? FACTOR_WORDS[attr.contrast.decisive.id] || attr.contrast.decisive.label : null,
+        fit_to_user: (entry.userFit?.components || []).map((c) => c.reason),
         chosen_by: entry.selectedBy === "llm_from_rag_pool" ? "the language model, from the retrieved approved pool" : "the highest transparent candidate score",
         ewg_reference: ewg?.status === "listed" ? `EWG Skin Deep hazard score ${ewg.hazardScore} on a 1 to 10 scale (1 = lowest), ${ewg.dataAvailability} data, checked ${ewg.checkedAt || "2026-09-23"}` : "not listed on EWG Skin Deep",
       },
@@ -855,7 +858,7 @@ function selectionUnavailable(status, notice) {
  * the final output. Returns the selection plus everything the run report and
  * selection log need.
  */
-async function selectNamedIngredients({ routine, concern, environment, reactivityLevel, allowLlmSelection, stages }) {
+async function selectNamedIngredients({ routine, profile, finishPreference, concern, environment, reactivityLevel, allowLlmSelection, stages }) {
   const repo = knowledgeRepo();
   const selectionStarted = Date.now();
   const policy = getRuntimePolicy();
@@ -872,7 +875,7 @@ async function selectNamedIngredients({ routine, concern, environment, reactivit
     modes: [...new Set([...slotRetrieval.values()].map((item) => item.mode))],
   }));
 
-  const base = { enabled: true, repository: repo, routine, concern, environment, reactivityLevel, slotRetrieval };
+  const base = { enabled: true, repository: repo, routine, profile, finishPreference, concern, environment, reactivityLevel, slotRetrieval };
   const pre = selectApprovedIngredientCandidates(base);
   const llm = { requested: false, status: "not_requested", raw: [], rejected: [] };
   let selectionMap = null;
@@ -881,7 +884,9 @@ async function selectNamedIngredients({ routine, concern, environment, reactivit
     llm.requested = true;
     const llmStarted = Date.now();
     try {
-      const result = await synthesizeIngredientSelection({ config, concern, environment, pool: pre.pool });
+      const vote = routine?.generation?.textureVote;
+      const userContext = { skin_profile: profile || null, finish_preference: finishPreference || "no-preference", reactivity: routine?.generation?.reactivityLevel || reactivityLevel || "low", routine_texture: vote ? vote.direction : "balanced", texture_reasons: vote ? vote.votes.map((v) => v.reason) : [] };
+      const result = await synthesizeIngredientSelection({ config, concern, environment, pool: pre.pool, userContext });
       selectionMap = result.map;
       llm.status = "completed";
       llm.raw = result.raw;
@@ -960,7 +965,7 @@ async function routineResult({
     ingredientCandidates = selectApprovedIngredientCandidates({ enabled: false });
   } else {
     try {
-      ({ selection: ingredientCandidates, postSafety, llm } = await selectNamedIngredients({ routine, concern, environment, reactivityLevel, allowLlmSelection, stages }));
+      ({ selection: ingredientCandidates, postSafety, llm } = await selectNamedIngredients({ routine, profile, finishPreference, concern, environment, reactivityLevel, allowLlmSelection, stages }));
     } catch {
       ingredientCandidates = selectionUnavailable("knowledge_base_unavailable", "The approved knowledge base could not be read, so no named ingredient is shown.");
     }
@@ -1163,7 +1168,11 @@ async function handleRoutine(input, requestId) {
   const profile = requiredChoice(input.profile, ALLOWED_PROFILES, "profile", "combination");
   const concern = requiredConcern(input.concern);
   const finishPreference = optionalChoice(input.finishPreference, ALLOWED_FINISH_PREFERENCES, "finish preference");
-  const reactivityLevel = optionalChoice(input.reactivityLevel, ALLOWED_REACTIVITY_LEVELS, "reactivity level");
+  const statedReactivityLevel = optionalChoice(input.reactivityLevel, ALLOWED_REACTIVITY_LEVELS, "reactivity level");
+  // B1: a sensitive skin profile raises low or missing reactivity to moderate,
+  // so every safety pass and the ingredient selector apply the barrier guardrail.
+  const reactivityRaise = effectiveReactivity({ profile, reactivityLevel: statedReactivityLevel });
+  const reactivityLevel = reactivityRaise.raisedByProfile ? reactivityRaise.level : statedReactivityLevel;
   const exposureContext = optionalChoice(input.exposureContext, ALLOWED_EXPOSURE_CONTEXTS, "exposure context");
   const symptoms = optionalText(input.symptoms, "symptoms");
   const stages = [];
@@ -1273,8 +1282,11 @@ async function handleRoutine(input, requestId) {
   const genericRoutine = templateRoutine(concern, {
     environment,
     evidence: [],
+    profile,
     finishPreference,
-    reactivityLevel,
+    // The routine applies the same sensitive-profile raise itself and records
+    // that it did, so it gets the stated level.
+    reactivityLevel: statedReactivityLevel,
     exposureContext,
   });
   const genericSecondPass = secondSafetyPass(genericRoutine, {
@@ -1320,7 +1332,8 @@ async function handleRoutine(input, requestId) {
       environment,
       evidence: retrieval.eligibleEvidence,
       finishPreference,
-      reactivityLevel,
+      reactivityLevel: statedReactivityLevel,
+      exposureContext,
     });
     stages.push(stage("synthesis", "completed", synthesisStarted, {
       mode: routine.generation?.mode || "allowlisted-category-selection",

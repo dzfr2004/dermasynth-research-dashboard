@@ -7,6 +7,7 @@ import { retrieveSlotCandidates } from "../lib/candidate-retrieval.mjs";
 import { selectApprovedIngredientCandidates } from "../lib/ingredient-selection.mjs";
 import { templateRoutine, CONCERN_CATALOG } from "../lib/safety.mjs";
 import { getRuntimePolicy } from "../lib/policy-store.mjs";
+import { effectiveReactivity } from "../lib/personalisation.mjs";
 
 /**
  * Extended safety suite (complements Safety-50):
@@ -17,7 +18,8 @@ import { getRuntimePolicy } from "../lib/policy-store.mjs";
  *   D. excluded ingredients (retinal) and prescription-only actives;
  *   E. restricted medical claims in model-written ingredient text;
  *   F. the selector rejects model picks that are invented or outside the pool;
- *   G. property check over 210 real pipeline runs: no final output ever
+ *   H. a sensitive skin profile raises reactivity and never weakens a guardrail;
+ *   G. property check over 840 real pipeline runs: no final output ever
  *      contains an incompatible pair, a morning photosensitiser, a barrier
  *      exfoliant or an excluded ingredient.
  */
@@ -111,12 +113,13 @@ const repo = createRepository({});
 const policy = getRuntimePolicy();
 const corpus = buildIngredientEvidenceCorpus({ ingredients: repo.listIngredients(), sources: repo.listSources() });
 const config = { liveServicesEnabled: false, pinecone: {}, openai: {} };
-async function select({ concern, readings, reactivity = "low", selectionMap = null, llmRejected = [] }) {
+async function select({ concern, readings, reactivity: statedReactivity = "low", profile = undefined, finish = undefined, selectionMap = null, llmRejected = [] }) {
   const environment = { readings };
-  const routine = templateRoutine(concern, { environment, evidence: [], reactivityLevel: reactivity });
+  const reactivity = effectiveReactivity({ profile, reactivityLevel: statedReactivity }).level;
+  const routine = templateRoutine(concern, { environment, evidence: [], profile, finishPreference: finish, reactivityLevel: statedReactivity });
   const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds: [...routine.am, ...routine.pm].map((s) => s.id), concern, environment, policy });
-  const selection = selectApprovedIngredientCandidates({ enabled: true, repository: repo, routine, concern, environment, reactivityLevel: reactivity, slotRetrieval, selectionMap, llmRequested: Boolean(selectionMap), llmRejected });
-  return { selection, post: postSelectionSafetyPass({ entries: selection.entries, concern, reactivityLevel: reactivity, environment }) };
+  const selection = selectApprovedIngredientCandidates({ enabled: true, repository: repo, routine, concern, environment, reactivityLevel: reactivity, profile, finishPreference: finish, slotRetrieval, selectionMap, llmRequested: Boolean(selectionMap), llmRejected });
+  return { routine, selection, post: postSelectionSafetyPass({ entries: selection.entries, concern, reactivityLevel: reactivity, environment }) };
 }
 
 const fCases = [
@@ -143,8 +146,10 @@ const ENVIRONMENTS = [
 ];
 let runs = 0;
 const violations = [];
-for (const readings of ENVIRONMENTS) for (const { id: concern } of CONCERN_CATALOG) for (const reactivity of ["low", "moderate", "high"]) {
-  const { post } = await select({ concern, readings, reactivity });
+const PROFILES = ["dry", "combination", "oily", "sensitive"];
+for (const readings of ENVIRONMENTS) for (const { id: concern } of CONCERN_CATALOG) for (const statedReactivity of ["low", "moderate", "high"]) for (const profile of PROFILES) {
+  const { post } = await select({ concern, readings, reactivity: statedReactivity, profile, finish: ["matte", "dewy", "no-preference"][runs % 3] });
+  const reactivity = effectiveReactivity({ profile, reactivityLevel: statedReactivity }).level;
   runs += 1;
   const ids = post.entries.map((e) => e.ingredientId);
   for (let i = 0; i < ids.length; i += 1) for (let j = i + 1; j < ids.length; j += 1) if (matrix.pairs.has(`${ids[i]}|${ids[j]}`)) violations.push(`${concern}/${reactivity}: pair ${ids[i]}+${ids[j]}`);
@@ -154,6 +159,22 @@ for (const readings of ENVIRONMENTS) for (const { id: concern } of CONCERN_CATAL
     if (flags.excludedFromSelection.some((x) => x.ingredientId === e.ingredientId)) violations.push(`${concern}/${reactivity}: excluded ${e.ingredientId}`);
   }
 }
+// H. personalisation must never weaken a guardrail (B1)
+for (const concern of ["acne", "oil", "texture", "pores"]) {
+  const { routine, post } = await select({ concern, readings: { uvi: 9, humidity: 80, pm25: 20, temperature: 33 }, reactivity: "low", profile: "sensitive", finish: "matte" });
+  test(next(), "H. sensitive profile", `Sensitive profile with low reactivity (${concern}): guardrail on, no exfoliant`, () => {
+    expect(routine.generation.reactivityLevel === "moderate" && routine.generation.reactivityRaisedByProfile, "Reactivity should be raised to moderate by the sensitive profile.");
+    expect(![...routine.am, ...routine.pm].some((step) => step.id === "texture-renewal"), "Texture renewal must not be included.");
+    expect(!post.entries.some((e) => flags.highIntensityExfoliants.ids.includes(e.ingredientId)), "No high-intensity exfoliant may be selected.");
+  });
+}
+{
+  const { routine } = await select({ concern: "acne", readings: { uvi: 9, humidity: 80, pm25: 20, temperature: 33 }, reactivity: "high", profile: "sensitive" });
+  test(next(), "H. sensitive profile", "A sensitive profile never lowers a stated high reactivity", () => {
+    expect(routine.generation.reactivityLevel === "high", "Stated high reactivity must be kept.");
+  });
+}
+
 test(next(), "G. pipeline property check", `No unsafe final output across ${runs} real pipeline runs`, () => {
   expect(violations.length === 0, `Violations: ${violations.slice(0, 5).join("; ")}`);
 });
@@ -170,7 +191,7 @@ const md = [
   "| --- | ---: | ---: |",
   ...groups.map((g) => `| ${g} | ${results.filter((r) => r.group === g && r.status === "passed").length} | ${results.filter((r) => r.group === g).length} |`),
   "",
-  `Incompatibility matrix ${matrix.version}: ${pairs.length / 2} pairs, all tested in both orders (${pairs.length} cases). Property check: ${runs} pipeline runs (7 environments × 10 concerns × 3 reactivity levels), ${violations.length} violations.`,
+  `Incompatibility matrix ${matrix.version}: ${pairs.length / 2} pairs, all tested in both orders (${pairs.length} cases). Property check: ${runs} pipeline runs (7 environments × 10 concerns × 3 reactivity levels × 4 skin profiles, finish preference rotating), ${violations.length} violations.`,
   "",
   "## Cases",
   "",

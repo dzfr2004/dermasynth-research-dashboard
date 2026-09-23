@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "node --watch server.mjs",
     "start": "node server.mjs",
-    "check": "node --check app.js && node --check server.mjs && node --check lib/environment.mjs && node --check lib/explainability.mjs && node --check lib/ingredient-selection.mjs && node --check scripts/promote-signedoff-corpus.mjs && node --check scripts/reindex-approved-knowledge-base.mjs && node --check scripts/fit-environmental-surrogate.mjs && node --check lib/candidate-retrieval.mjs && node --check lib/cue.mjs && node --check lib/post-selection-safety.mjs && node --check lib/peg.mjs && node --check labelling.js && node --check lib/triage.mjs && node --check lib/triage-llm.mjs",
-    "test": "npm run check && npm run verify:ingredient-kb && npm run verify:demo-kb && npm run eval:study && npm run eval:retrieval && npm run eval:safety-50 && npm run eval:ingredient-selection && npm run eval:category-coverage && npm run eval:triage && npm run eval:safety-extended",
+    "check": "node --check app.js && node --check server.mjs && node --check lib/environment.mjs && node --check lib/explainability.mjs && node --check lib/ingredient-selection.mjs && node --check scripts/promote-signedoff-corpus.mjs && node --check scripts/reindex-approved-knowledge-base.mjs && node --check scripts/fit-environmental-surrogate.mjs && node --check lib/candidate-retrieval.mjs && node --check lib/cue.mjs && node --check lib/post-selection-safety.mjs && node --check lib/peg.mjs && node --check labelling.js && node --check lib/triage.mjs && node --check lib/triage-llm.mjs && node --check lib/personalisation.mjs",
+    "test": "npm run check && npm run verify:ingredient-kb && npm run verify:demo-kb && npm run eval:study && npm run eval:retrieval && npm run eval:safety-50 && npm run eval:ingredient-selection && npm run eval:category-coverage && npm run eval:triage && npm run eval:safety-extended && npm run eval:input-sensitivity:quick",
     "db:migrate": "node scripts/migrate-db.mjs",
     "db:seed": "node scripts/seed-ingredient-db.mjs --fresh",
     "db:seed-approved": "node scripts/seed-ingredient-db.mjs --fresh --state approved",
@@ -50,7 +50,8 @@
     "eval:input-sensitivity": "node scripts/evaluate-input-sensitivity.mjs",
     "eval:triage": "node scripts/evaluate-triage.mjs",
     "eval:safety-extended": "node scripts/evaluate-safety-extended.mjs",
-    "eval:independent": "node scripts/evaluate-independent-safety.mjs"
+    "eval:independent": "node scripts/evaluate-independent-safety.mjs",
+    "eval:input-sensitivity:quick": "node scripts/evaluate-input-sensitivity.mjs --quick"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1"

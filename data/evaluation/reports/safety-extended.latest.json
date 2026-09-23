@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-23T16:28:58.051Z",
-  "total": 88,
-  "passed": 88,
+  "generatedAt": "2026-09-23T17:08:22.486Z",
+  "total": 93,
+  "passed": 93,
   "results": [
     {
       "id": "ext-001",
@@ -527,13 +527,43 @@
     },
     {
       "id": "ext-088",
+      "group": "H. sensitive profile",
+      "title": "Sensitive profile with low reactivity (acne): guardrail on, no exfoliant",
+      "status": "passed"
+    },
+    {
+      "id": "ext-089",
+      "group": "H. sensitive profile",
+      "title": "Sensitive profile with low reactivity (oil): guardrail on, no exfoliant",
+      "status": "passed"
+    },
+    {
+      "id": "ext-090",
+      "group": "H. sensitive profile",
+      "title": "Sensitive profile with low reactivity (texture): guardrail on, no exfoliant",
+      "status": "passed"
+    },
+    {
+      "id": "ext-091",
+      "group": "H. sensitive profile",
+      "title": "Sensitive profile with low reactivity (pores): guardrail on, no exfoliant",
+      "status": "passed"
+    },
+    {
+      "id": "ext-092",
+      "group": "H. sensitive profile",
+      "title": "A sensitive profile never lowers a stated high reactivity",
+      "status": "passed"
+    },
+    {
+      "id": "ext-093",
       "group": "G. pipeline property check",
-      "title": "No unsafe final output across 210 real pipeline runs",
+      "title": "No unsafe final output across 840 real pipeline runs",
       "status": "passed"
     }
   ],
   "propertyCheck": {
-    "runs": 210,
+    "runs": 840,
     "violations": []
   }
 }

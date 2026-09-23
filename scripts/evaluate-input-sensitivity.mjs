@@ -9,6 +9,7 @@ import { buildTwoLevelExplanation } from "../lib/peg.mjs";
 import { firstSafetyPass, secondSafetyPass, templateRoutine, CONCERN_CATALOG } from "../lib/safety.mjs";
 import { getRuntimePolicy } from "../lib/policy-store.mjs";
 import { tokenise } from "../lib/bm25.mjs";
+import { effectiveReactivity } from "../lib/personalisation.mjs";
 
 /**
  * Input-sensitivity evaluation: does the output change when the input changes,
@@ -29,7 +30,24 @@ import { tokenise } from "../lib/bm25.mjs";
  * selection log report).
  *
  * Output: data/evaluation/reports/input-sensitivity.latest.{md,json,csv}
+ *
+ * B5 targets (checked in both modes, exit code 1 on failure):
+ *   - changing the skin profile changes the ingredients in >= 30% of pairs;
+ *   - changing the finish preference changes the ingredients in >= 30% of pairs;
+ *   - changing the skin profile changes the routine steps in some pairs;
+ *   - moving temperature from cold to hot changes the routine steps;
+ *   - changing any one input leaves the output identical in <= 30% of pairs;
+ *   - stratified check: pairs that differ in more inputs differ more in output
+ *     (mean output distance rises with every extra changed input, and the
+ *     Spearman correlation between changed-input count and output distance is
+ *     >= 0.30).
+ *
+ * `--quick` runs a reduced grid (3 environments × 10 concerns × 4 profiles ×
+ * 2 reactivity levels × 3 finishes, 720 runs, about 15 s), checks the targets
+ * and writes no report. `npm test` uses it.
  */
+
+const QUICK = process.argv.includes("--quick");
 
 const ENVIRONMENTS = [
   { id: "E1", label: "Tropical noon, haze", readings: { uvi: 11, humidity: 85, pm25: 70, temperature: 33 } },
@@ -42,24 +60,27 @@ const ENVIRONMENTS = [
 ];
 const CONCERNS = CONCERN_CATALOG.map((item) => item.id);
 const PROFILES = ["dry", "combination", "oily", "sensitive"];
-const REACTIVITY = ["low", "moderate", "high"];
+const REACTIVITY = QUICK ? ["low", "high"] : ["low", "moderate", "high"];
 const FINISH = ["no-preference", "matte", "dewy"];
-const EXPOSURE = ["indoors", "mixed", "outdoors"];
-const FACTORS = { environment: ENVIRONMENTS.map((e) => e.id), concern: CONCERNS, profile: PROFILES, reactivity: REACTIVITY, finish: FINISH, exposure: EXPOSURE };
+const EXPOSURE = QUICK ? ["mixed"] : ["indoors", "mixed", "outdoors"];
+const GRID_ENVIRONMENTS = QUICK ? ENVIRONMENTS.filter((e) => ["E1", "E3", "E7"].includes(e.id)) : ENVIRONMENTS;
+const FACTORS = { environment: GRID_ENVIRONMENTS.map((e) => e.id), concern: CONCERNS, profile: PROFILES, reactivity: REACTIVITY, finish: FINISH, exposure: EXPOSURE };
 
 const repo = createRepository({});
 const policy = getRuntimePolicy();
 const corpus = buildIngredientEvidenceCorpus({ ingredients: repo.listIngredients(), sources: repo.listSources() });
 const config = { liveServicesEnabled: false, pinecone: {}, openai: {} };
 
-async function runPipeline({ readings, concern, profile, reactivity, finish, exposure }) {
+async function runPipeline({ readings, concern, profile, reactivity: statedReactivity, finish, exposure }) {
   const environment = { mode: "evaluation", readings };
-  const routine = templateRoutine(concern, { environment, evidence: [], finishPreference: finish, reactivityLevel: reactivity, exposureContext: exposure });
+  // Same rule as server.mjs: a sensitive profile raises low reactivity to moderate.
+  const reactivity = effectiveReactivity({ profile, reactivityLevel: statedReactivity }).level;
+  const routine = templateRoutine(concern, { environment, evidence: [], profile, finishPreference: finish, reactivityLevel: statedReactivity, exposureContext: exposure });
   const first = firstSafetyPass({ concern, environment, reactivityLevel: reactivity });
   const second = secondSafetyPass(routine, { concern, environment, reactivityLevel: reactivity, allowedEvidenceIds: [] });
   const categoryIds = [...routine.am, ...routine.pm].map((step) => step.id);
   const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds, concern, environment, policy });
-  const selection = selectApprovedIngredientCandidates({ enabled: true, repository: repo, routine, concern, environment, reactivityLevel: reactivity, slotRetrieval });
+  const selection = selectApprovedIngredientCandidates({ enabled: true, repository: repo, routine, profile, finishPreference: finish, concern, environment, reactivityLevel: reactivity, slotRetrieval });
   const post = postSelectionSafetyPass({ entries: selection.entries, concern, reactivityLevel: reactivity, environment });
   const explainability = buildEnvironmentalExplainability({ concern, environment });
   const explanation = buildTwoLevelExplanation({ explainability, routine, entries: post.entries, environment, concern });
@@ -142,7 +163,7 @@ function spearman(xs, ys) {
 // ---- 1. Full factorial grid --------------------------------------------------
 const started = Date.now();
 const runs = [];
-for (const env of ENVIRONMENTS) for (const concern of CONCERNS) for (const profile of PROFILES) for (const reactivity of REACTIVITY) for (const finish of FINISH) for (const exposure of EXPOSURE) {
+for (const env of GRID_ENVIRONMENTS) for (const concern of CONCERNS) for (const profile of PROFILES) for (const reactivity of REACTIVITY) for (const finish of FINISH) for (const exposure of EXPOSURE) {
   const input = { environment: env.id, concern, profile, reactivity, finish, exposure };
   runs.push({ input, output: await runPipeline({ readings: env.readings, concern, profile, reactivity, finish, exposure }) });
 }
@@ -156,6 +177,7 @@ for (const factor of Object.keys(FACTORS)) {
     const k = key(run.input, factor);
     groups.set(k, [...(groups.get(k) || []), run]);
   }
+  if (FACTORS[factor].length < 2) continue;
   const acc = { pairs: 0, stepsChanged: 0, ingredientsChanged: 0, driverChanged: 0, steps: 0, ingredients: 0, text: 0, shap: 0 };
   for (const members of groups.values()) {
     for (let i = 0; i < members.length; i += 1) for (let j = i + 1; j < members.length; j += 1) {
@@ -207,6 +229,34 @@ const bands = [[0, 0.1], [0.1, 0.2], [0.2, 0.3], [0.3, 0.45], [0.45, 1.01]].map(
   return { band: `${lo.toFixed(2)}–${Math.min(hi, 1).toFixed(2)}`, pairs: inBand.length, routine: mean("steps"), ingredients: mean("ingredients"), text: mean("text") };
 });
 
+// ---- 3b. Stratified: pairs that differ in exactly k inputs ----------------------
+const runByKey = new Map(runs.map((run) => [Object.keys(FACTORS).map((f) => run.input[f]).join("|"), run]));
+const varying = Object.keys(FACTORS).filter((f) => FACTORS[f].length > 1);
+const stratRand = rng(20260924);
+const stratified = [];
+for (let k = 1; k <= varying.length; k += 1) {
+  for (let n = 0; n < 600; n += 1) {
+    const a = runs[Math.floor(stratRand() * runs.length)];
+    const pool = [...varying];
+    const changed = [];
+    while (changed.length < k) changed.push(pool.splice(Math.floor(stratRand() * pool.length), 1)[0]);
+    const input = { ...a.input };
+    for (const factor of changed) {
+      const others = FACTORS[factor].filter((level) => level !== a.input[factor]);
+      input[factor] = others[Math.floor(stratRand() * others.length)];
+    }
+    const b = runByKey.get(Object.keys(FACTORS).map((f) => input[f]).join("|"));
+    const d = outputDistance(a.output, b.output);
+    stratified.push({ k, output: (d.steps + d.ingredients + d.text) / 3, ...d });
+  }
+}
+const strata = varying.map((_, i) => {
+  const rows = stratified.filter((row) => row.k === i + 1);
+  const mean = (key) => rows.reduce((s, row) => s + row[key], 0) / rows.length;
+  return { k: i + 1, pairs: rows.length, output: mean("output"), routine: mean("steps"), ingredients: mean("ingredients"), text: mean("text"), identical: rows.filter((row) => row.output === 0).length / rows.length };
+});
+const stratifiedSpearman = spearman(stratified.map((row) => row.k), stratified.map((row) => row.output));
+
 // ---- 4. Threshold sweeps ---------------------------------------------------------
 const BASE = { uvi: 5, humidity: 60, pm25: 20, temperature: 24 };
 const SWEEPS = { uvi: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], humidity: [20, 30, 40, 50, 51, 60, 70, 74, 75, 85, 95], pm25: [5, 15, 30, 45, 54, 55, 70, 100, 150], temperature: [0, 10, 18, 24, 30, 36, 42] };
@@ -240,6 +290,25 @@ const diversity = {
   safetyReviewRequired: runs.filter((r) => r.output.safetyStatus !== "cleared").length,
 };
 
+// ---- B5 targets -------------------------------------------------------------------
+const tempRows = sweeps.temperature;
+const increasing = strata.every((row, i) => i === 0 || row.output > strata[i - 1].output);
+const targets = [
+  { id: "profile-changes-ingredients", label: "Skin profile changes the ingredients in at least 30% of pairs", value: ofat.profile.ingredientsChangedShare, passed: ofat.profile.ingredientsChangedShare >= 0.3 },
+  { id: "finish-changes-ingredients", label: "Finish preference changes the ingredients in at least 30% of pairs", value: ofat.finish.ingredientsChangedShare, passed: ofat.finish.ingredientsChangedShare >= 0.3 },
+  { id: "profile-changes-routine", label: "Skin profile changes the routine steps in some pairs", value: ofat.profile.routineChangedShare, passed: ofat.profile.routineChangedShare > 0 },
+  { id: "temperature-changes-routine", label: "Moving from cold to hot changes the routine steps", value: tempRows.filter((row) => row.changed?.steps).length, passed: tempRows.some((row) => row.changed?.steps) },
+  { id: "more-inputs-more-change", label: "Mean output distance rises with every extra changed input", value: strata.map((row) => Number(row.output.toFixed(3))).join(" < "), passed: increasing },
+  { id: "single-change-responds", label: "Changing one input leaves the output identical in at most 30% of pairs", value: strata[0].identical, passed: strata[0].identical <= 0.3 },
+  { id: "stratified-spearman", label: "Spearman(changed inputs, output distance) is at least 0.30", value: stratifiedSpearman, passed: stratifiedSpearman >= 0.3 },
+];
+const failedTargets = targets.filter((item) => !item.passed);
+if (QUICK) {
+  console.log(JSON.stringify({ mode: "quick", runs: runs.length, seconds: (Date.now() - started) / 1000, targets: targets.map((item) => ({ id: item.id, value: typeof item.value === "number" ? Number(item.value.toFixed(3)) : item.value, passed: item.passed })) }, null, 2));
+  if (failedTargets.length) { console.error(`Input-sensitivity targets failed: ${failedTargets.map((item) => item.id).join(", ")}`); process.exitCode = 1; }
+  process.exit();
+}
+
 // ---- Report -----------------------------------------------------------------------
 const pct = (v) => `${(100 * v).toFixed(1)}%`;
 const f2 = (v) => (v === null || v === undefined ? "n/a" : Number(v).toFixed(2));
@@ -267,6 +336,16 @@ const md = [
   "| --- | ---: | ---: | ---: | ---: |",
   ...bands.map((b) => `| ${b.band} | ${b.pairs} | ${f2(b.routine)} | ${f2(b.ingredients)} | ${f2(b.text)} |`),
   "",
+  "### Stratified by how many inputs differ",
+  "",
+  "Random pairs dominate the far end of the input range (most random pairs differ in almost every input), so the check above says little about small changes. This check samples 600 pairs for each number of changed inputs.",
+  "",
+  "| Inputs changed | Pairs | Identical output | Mean routine distance | Mean ingredient distance | Mean text distance | Mean combined |",
+  "| ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+  ...strata.map((row) => `| ${row.k} | ${row.pairs} | ${pct(row.identical)} | ${f2(row.routine)} | ${f2(row.ingredients)} | ${f2(row.text)} | ${f2(row.output)} |`),
+  "",
+  `Spearman rank correlation between the number of changed inputs and the combined output distance: **${f2(stratifiedSpearman)}**.`,
+  "",
   "## 3. Output diversity",
   "",
   `Distinct routines: ${diversity.distinctRoutines}; distinct ingredient sets: ${diversity.distinctIngredientSets}; distinct explanations: ${diversity.distinctExplanations} (out of ${diversity.runs} runs). Runs where the final safety rescan removed an ingredient: ${diversity.runsWithRemovals}. Runs flagged for review by the safety passes: ${diversity.safetyReviewRequired}.`,
@@ -288,6 +367,14 @@ const md = [
     ...rows.map((r) => `| ${r.value} | ${r.steps} | ${r.ingredients} | ${r.driver} | ${f2(r.contextScore)} | ${r.changed ? [r.changed.steps ? "steps" : "", r.changed.ingredients ? "ingredients" : ""].filter(Boolean).join(" + ") || "no" : "—"} |`),
     "",
   ]),
+  "## B5 regression targets",
+  "",
+  "`npm test` checks these on a reduced grid (`npm run eval:input-sensitivity -- --quick`).",
+  "",
+  "| Target | Value | Result |",
+  "| --- | --- | --- |",
+  ...targets.map((item) => `| ${item.label} | ${typeof item.value === "number" ? (item.value <= 1 && !Number.isInteger(item.value) ? f2(item.value) : item.value) : item.value} | ${item.passed ? "passed" : "failed"} |`),
+  "",
   "## Scope",
   "",
   "This measures the deterministic pipeline that bounds the language model. It shows which inputs the system responds to and where it does not; it does not measure clinical appropriateness.",
@@ -297,8 +384,9 @@ const md = [
 const outDir = new URL("../data/evaluation/reports/", import.meta.url);
 await mkdir(outDir, { recursive: true });
 await writeFile(new URL("input-sensitivity.latest.md", outDir), `${md.join("\n")}\n`);
-await writeFile(new URL("input-sensitivity.latest.json", outDir), `${JSON.stringify({ generatedAt: new Date().toISOString(), runs: runs.length, ofat, correlation, bands, diversity, slotPicks: Object.fromEntries([...slotPicks].map(([k, v]) => [k, Object.fromEntries(v)])), sweeps }, null, 2)}\n`);
+await writeFile(new URL("input-sensitivity.latest.json", outDir), `${JSON.stringify({ generatedAt: new Date().toISOString(), runs: runs.length, ofat, correlation, bands, strata, stratifiedSpearman, targets, diversity, slotPicks: Object.fromEntries([...slotPicks].map(([k, v]) => [k, Object.fromEntries(v)])), sweeps }, null, 2)}\n`);
 const csv = ["environment,concern,profile,reactivity,finish,exposure,steps,ingredients,dominant_driver,context_score,removed"]
   .concat(runs.map((r) => [r.input.environment, r.input.concern, r.input.profile, r.input.reactivity, r.input.finish, r.input.exposure, r.output.steps.join(" "), r.output.ingredients.join(" "), r.output.dominantDriver, r.output.contextScore, r.output.removed.join(" ")].map((v) => `"${String(v).replaceAll('"', '""')}"`).join(",")));
 await writeFile(new URL("input-sensitivity.latest.csv", outDir), `${csv.join("\n")}\n`);
 console.log(JSON.stringify({ runs: runs.length, seconds: (Date.now() - started) / 1000, ofat, correlation, diversity }, null, 2));
+if (failedTargets.length) { console.error(`Input-sensitivity targets failed: ${failedTargets.map((item) => item.id).join(", ")}`); process.exitCode = 1; }
