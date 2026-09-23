@@ -1173,7 +1173,9 @@ function stage(id, status, startedAt, detail = {}) {
  */
 async function handleRoutine(input, requestId) {
   const gptActive = Boolean(config.liveServicesEnabled && config.openai?.apiKey);
-  const budget = gptActive ? createGptBudget(config.openai.routineBudgetMs) : null;
+  // The budget object is always kept (it records GPT time and calls); it only
+  // limits anything when GPT_ROUTINE_BUDGET_MS is set above 0.
+  const budget = gptActive ? createGptBudget(config.openai.routineBudgetMs || Number.POSITIVE_INFINITY) : null;
   const result = budget ? await runWithGptBudget(budget, () => handleRoutineRun(input, requestId)) : await handleRoutineRun(input, requestId);
   return { ...result, gpt: { active: gptActive, budget: budgetSummary(budget) }, degraded: degradedStatus(result, { gptActive, budget }) };
 }
@@ -1489,7 +1491,7 @@ async function routeApi(request, response, url, requestId) {
         openai: openAiStatus(config),
         postSelectionSafetyPass: true,
         selectionLog: Boolean(config.selectionLog.enabled),
-        gptBudgetMs: { routine: config.openai.routineBudgetMs, explanations: config.openai.contextBudgetMs },
+        gptBudgetMs: { routine: config.openai.routineBudgetMs || "off", explanations: config.openai.contextBudgetMs || "off" },
       },
       requestId,
     }, requestId);
@@ -1640,7 +1642,7 @@ async function routeApi(request, response, url, requestId) {
       if (!cached.result) {
         if (!cached.pending) {
           const contextStarted = Date.now();
-          const budget = createGptBudget(config.openai.contextBudgetMs);
+          const budget = createGptBudget(config.openai.contextBudgetMs || Number.POSITIVE_INFINITY);
           cached.budget = budget;
           cached.pending = runWithGptBudget(budget, () => composeRoutineContext({ config, ...cached.payload })).then(async (result) => {
             await appendContextLog(config, { runId, latencyMs: Date.now() - contextStarted, model: result.model, retry: result.retry, budget: budgetSummary(budget), accepted: { steps: Object.keys(result.steps).length, ingredients: Object.keys(result.ingredients).length }, withheld: result.withheld, drafts: result.audit });
