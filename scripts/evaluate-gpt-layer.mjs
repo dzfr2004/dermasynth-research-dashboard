@@ -14,7 +14,9 @@ import { templateRoutine } from "../lib/safety.mjs";
  *       alphabetical;
  *   C4  the shared time budget caps and skips calls, and a failed explanation
  *       rewrite keeps the drafts that already passed;
- *   C5  every routine step has a rule-based reason without GPT.
+ *   C5  every routine step has a rule-based reason without GPT;
+ *   the consumer "Why?" panel fields come back separately and the model is
+ *   given the plain-language facts it must stay within.
  */
 
 const seen = [];
@@ -35,7 +37,7 @@ const server = http.createServer(async (req, res) => {
     const retry = seen.filter((s) => s.name === "routine_context").length > 1;
     out = {
       steps: (input.steps || []).map((s) => ({ key: s.key, text: `${s.step} is part of the ${s.phase} routine today because ${s.rule}` })),
-      ingredients: (input.ingredients || []).map((i) => ({ key: i.key, why_step: `${i.step} is in the ${i.phase} routine today.`, why_ingredient: retry ? "x" : `${i.ingredient} was chosen for ${i.step} from the approved retrieved candidates.` })),
+      ingredients: (input.ingredients || []).map((i) => ({ key: i.key, why_step: `${i.step} is in the ${i.phase} routine today.`, what_it_is: retry ? "x" : `${i.ingredient} is ${i.what_it_is_plain || "an approved ingredient"}.`, why_today: `${i.step} suits you today because ${i.step_rule}`, safety: i.safety_plain || "No safety summary is recorded for it yet." })),
     };
   }
   if (name === "cue_batch_verdicts") out = { items: input.items.map((it) => ({ id: it.id, verdicts: it.statements.map((s) => ({ index: s.index, supported: !String(it.id).startsWith("ing:") || !behaviour.rejectIngredients, reason: "mock" })) })) };
@@ -125,6 +127,17 @@ await test("gpt-05", "Every routine step has a rule-based reason without GPT", a
       expect(reason.length > 30 && !/^(Comfort-focused|Lightweight|Balanced) .* context\.$/.test(reason), `${concern} ${key} has no rule-based reason.`);
     }
   }
+});
+
+await test("gpt-06", "Ingredient explanations come back as what it is / why today / safety, grounded in the plain facts", async () => {
+  behaviour = {};
+  seen.length = 0;
+  const entries = [{ key: "am:comfort-hydration", name: "Glycerin", phase: "am", stepTitle: "Comfort hydration", stepRule: "Humidity is low.", facts: { functional_class: "Humectant", what_it_is_plain: "A humectant: an ingredient that attracts water.", why_today_plain: "A richer texture today because of dry air.", safety_plain: "An independent US expert panel concluded it is safe as used in cosmetics." } }];
+  const result = await composeRoutineContext({ config, concernLabel: "Dryness", profile: "dry", environment: { readings: { humidity: 40 } }, steps: [], entries });
+  const item = result.ingredients["am:comfort-hydration"];
+  expect(item && item.whatItIs && item.whyToday && item.safety, "Missing one of the three fields.");
+  const sent = seen.find((s) => s.name === "routine_context").input.ingredients[0];
+  expect(sent.what_it_is_plain && sent.why_today_plain && sent.safety_plain, "Plain facts were not sent to the model.");
 });
 
 server.close();

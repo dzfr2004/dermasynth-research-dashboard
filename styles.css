@@ -1302,3 +1302,106 @@ textarea:focus-visible {
   .corpus-digest-tags > *, .corpus-digest-tags span { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
 }
 #page-title:focus { outline: none; }
+
+/* ---- Motion: springy, Apple-style ------------------------------------------
+   One spring curve for movement (slight overshoot, quick settle) and one soft
+   ease for fades. linear() springs need a current browser; older ones use the
+   cubic-bezier line above each, which still overshoots a little. */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --spring-fallback: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* View transitions (state changes, page switches, "Why?" panels, GPT text) */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-group(*) {
+  animation-duration: 520ms;
+  animation-timing-function: var(--spring-fallback);
+  animation-timing-function: linear(0, 0.013 0.6%, 0.05 1.2%, 0.2 2.6%, 0.44 4.3%, 0.84 7.3%, 0.99 9%, 1.06 10.6%, 1.09 12.3%, 1.08 14.1%, 1.04 16.8%, 1.01 19.6%, 0.995 23.4%, 1.001 31%, 1);
+}
+::view-transition-image-pair(*) { overflow: clip; }
+::view-transition-old(*) { animation: vt-fade-out 180ms var(--ease-out) both; }
+::view-transition-new(*) { animation: vt-fade-in 300ms var(--ease-out) both; }
+::view-transition-new(page-view) { animation: vt-page-in 460ms var(--spring-fallback) both; animation-timing-function: linear(0, 0.2 2.6%, 0.84 7.3%, 1.06 10.6%, 1.08 14.1%, 1.01 19.6%, 1); }
+@keyframes vt-fade-out { to { opacity: 0; } }
+@keyframes vt-fade-in { from { opacity: 0; } }
+@keyframes vt-page-in { from { opacity: 0; transform: translateY(10px) scale(0.99); } }
+
+/* New routine: cards rise in, steps follow one after another */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.975); }
+  60% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+.consumer-result.is-entering .today-card,
+.consumer-result.is-entering .consumer-card,
+.consumer-result.is-entering .consumer-step,
+.consumer-result.is-entering .tomorrow-card {
+  animation: rise-in 640ms var(--spring-fallback) both;
+  animation-timing-function: linear(0, 0.2 2.6%, 0.44 4.3%, 0.84 7.3%, 0.99 9%, 1.06 10.6%, 1.08 13%, 1.03 17%, 0.995 23%, 1);
+}
+.consumer-result.is-entering .consumer-card { animation-delay: 70ms; }
+.consumer-result.is-entering .consumer-step { animation-delay: calc(120ms + var(--i, 0) * 45ms); }
+.consumer-result.is-entering .tomorrow-card { animation-delay: 380ms; }
+
+/* "Why?" panel opens with a small drop and settle */
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.consumer-why.is-opening { animation: panel-in 420ms var(--spring-fallback) both; transform-origin: top center; }
+
+/* GPT text arrives: soft focus-in instead of a hard swap */
+@keyframes text-in { from { opacity: 0; filter: blur(3px); transform: translateY(2px); } }
+.step-line.is-arriving, .why-grid.is-arriving { animation: text-in 520ms var(--ease-out) both; }
+
+/* Press feedback and gentle lift */
+.primary-button, .ghost-button, .why-button, .expert-toggle-top, .profile-choice, .concern-choice, .condition-chip, .nav-item, .mobile-nav-item, .location-search-button {
+  transition: transform 420ms var(--spring-fallback), background-color 200ms var(--ease-out), color 200ms var(--ease-out), border-color 200ms var(--ease-out), box-shadow 260ms var(--ease-out);
+}
+.primary-button:active, .ghost-button:active, .why-button:active, .expert-toggle-top:active, .profile-choice:active, .concern-choice:active, .condition-chip:active, .nav-item:active, .mobile-nav-item:active, .location-search-button:active {
+  transform: scale(0.955);
+  transition-duration: 120ms;
+}
+.consumer-step { transition: transform 460ms var(--spring-fallback), box-shadow 300ms var(--ease-out), border-color 300ms var(--ease-out); }
+@media (hover: hover) {
+  .consumer-step:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgb(17 54 48 / 8%); border-color: var(--line-strong); }
+}
+
+/* Toast springs up */
+.toast { transition: opacity 240ms var(--ease-out), transform 560ms var(--spring-fallback) !important; }
+
+/* Loading text shimmer */
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.shimmer-text { color: transparent; background: linear-gradient(90deg, #5f706b 0%, #5f706b 40%, #b7c9c3 50%, #5f706b 60%, #5f706b 100%); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; animation: shimmer 1.6s linear infinite; }
+
+/* New Why panel layout, timing lines, tomorrow card */
+.why-grid { display: grid; gap: 10px; margin: 0; }
+.why-row { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; }
+.why-row dt { color: var(--accent-dark); font-size: 0.76rem; font-weight: 800; letter-spacing: 0.01em; }
+.why-row dd { margin: 0; color: #22362f; }
+.why-row dd a { color: var(--accent-dark); font-weight: 700; margin-left: 4px; }
+.why-foot { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; color: #4d5f59; font-size: 0.74rem; }
+.why-foot:empty { display: none; }
+.step-timing { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0 0; color: #7a4710; font-size: 0.8rem; line-height: 1.45; }
+.today-timing { display: flex; align-items: flex-start; gap: 6px; margin: 12px 0 0; padding: 9px 11px; color: #5a3b0c; border-radius: 10px; background: #fff6e3; font-size: 0.82rem; line-height: 1.45; }
+.tomorrow-card { margin-top: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(160deg, #f3f8ff, #fff 60%); box-shadow: var(--shadow); }
+.tomorrow-card h3 { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 1rem; }
+.tomorrow-summary { margin: 6px 0 0; color: #29403b; font-size: 0.86rem; line-height: 1.5; }
+.tomorrow-changes { display: grid; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.tomorrow-changes li { position: relative; padding: 8px 10px 8px 30px; border-radius: 10px; background: var(--surface-soft); font-size: 0.84rem; line-height: 1.45; }
+.tomorrow-changes li::before { position: absolute; left: 10px; top: 8px; font-weight: 800; content: "•"; color: var(--accent); }
+.tomorrow-changes li.is-added::before { content: "+"; }
+.tomorrow-changes li.is-removed::before { content: "−"; color: #8a5214; }
+.tomorrow-changes li.is-swapped::before { content: "⇄"; }
+.tomorrow-same, .tomorrow-kept { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; color: #29403b; font-size: 0.84rem; }
+.tomorrow-source { margin: 10px 0 0; color: #5f706b; font-size: 0.7rem; }
+@media (max-width: 700px) {
+  .why-row { grid-template-columns: 1fr; gap: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consumer-result.is-entering *, .consumer-why.is-opening, .step-line.is-arriving, .why-grid.is-arriving, .shimmer-text { animation: none !important; }
+  .shimmer-text { color: #5f706b; background: none; }
+  .primary-button:active, .ghost-button:active, .why-button:active { transform: none; }
+}

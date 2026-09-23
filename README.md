@@ -175,6 +175,15 @@ Technical failures are shown to consumers in plain words; configuration details 
 
 `npm run test:browser` (part of `npm test`) opens the app in headless Chromium at phone and desktop widths and checks for JavaScript errors, sideways scrolling, serious accessibility violations (axe-core, WCAG 2.1 AA), the safety question, the Why? buttons, the check-up redirect and Expert view. First time only: `npm install` then `npx playwright install chromium`. Without them the test reports that it was skipped.
 
+## Consumer explanations, timing and tomorrow
+
+- **Why? panel:** each ingredient shows *What it is*, *Why today*, *Is it safe?* and *On labels*. The rule-based version is built from fixed plain-language facts (`lib/plain-language.mjs`: class definitions, the verified safety card, INCI names). With GPT on, GPT rewrites the first three fields in friendlier words using only those facts, and CUE checks the result against them; anything below the threshold falls back to the rule-based text.
+- **Timing:** the Today card and the sunscreen step show when UV is at or above the level that adds sun protection today, and the peak.
+- **Tomorrow:** the forecast in plain words and how tomorrow's routine differs from today's (same routine rules run on tomorrow's forecast).
+- **Location:** on a first visit the browser asks for the current location (rounded to about 1 km, remembered in the browser); Kuala Lumpur is used if the user declines. With an OpenWeather key the place is named; otherwise it shows as "Your location".
+- **Keyless data:** in live mode, Open-Meteo (open-meteo.com, CC BY 4.0) fills any reading OpenWeather or IQAir cannot supply and provides the hourly UV and next-day forecast. `OPEN_METEO_ENABLED=false` turns it off.
+- **Motion:** state changes morph with the View Transitions API and spring easing; a new routine plays a staggered entrance; everything is instant for users who ask for reduced motion.
+
 ## GPT layer: live evidence, budget and fallbacks
 
 - `npm run eval:live` (with `npm start` running and live keys in `.env`) sends 20 routine requests across 10 cities and 4 profiles, asks for the GPT explanations of each, and reports GPT success, invented or out-of-pool picks, agreement with the candidate score, degraded runs, CUE results and latency (`data/evaluation/reports/live-gpt-evaluation.latest.md`). `npm run report:selection-log` summarises everything logged, including explanation drafts from `data/logs/context-log.jsonl`.

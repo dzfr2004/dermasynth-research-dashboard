@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { resolve } from "node:path";
 import { createConfig, loadDotEnv, publicConfigStatus } from "./lib/config.mjs";
-import { DEFAULT_LOCATION, getEnvironment, getEnvironmentForecast, parseReportedConditions, providerReliabilitySnapshot, REPORTED_CONDITION_OPTIONS, reportedConditionsEnvironment, searchLocations } from "./lib/environment.mjs";
+import { buildOutlook } from "./lib/outlook.mjs";
+import { CONCERN_WORDS } from "./lib/plain-language.mjs";
+import { DEFAULT_LOCATION, getEnvironment, reverseLocation, getEnvironmentForecast, parseReportedConditions, providerReliabilitySnapshot, REPORTED_CONDITION_OPTIONS, reportedConditionsEnvironment, searchLocations } from "./lib/environment.mjs";
 import { llmTriageSecondOpinion } from "./lib/triage-llm.mjs";
 import { ExternalServiceError } from "./lib/http-client.mjs";
 import { retrieveEvidence, retrieveResearchEvidence } from "./lib/retrieval.mjs";
@@ -145,7 +147,7 @@ function securityHeaders(requestId) {
     "x-content-type-options": "nosniff",
     "x-frame-options": "DENY",
     "referrer-policy": "no-referrer",
-    "permissions-policy": "geolocation=(), camera=(), microphone=()",
+    "permissions-policy": "geolocation=(self), camera=(), microphone=()",
     "cross-origin-opener-policy": "same-origin",
     // The dashboard uses one deliberate inline width style for a visual-only
     // environmental bar. Scripts remain restricted to the local static file.
@@ -806,7 +808,7 @@ const FACTOR_WORDS = {
   user_fit: "how well it fits this user's profile, finish preference, concern and weather",
 };
 
-function routineContextPayload({ concern, profile, environment, routine, entries }) {
+function routineContextPayload({ concern, profile, environment, routine, entries, explanation = null }) {
   const concernLabel = CONCERN_CATALOG.find((item) => item.id === concern)?.label || concern;
   const steps = [
     ...(routine?.am || []).map((step) => ({ ...step, phase: "am" })),
@@ -817,6 +819,7 @@ function routineContextPayload({ concern, profile, environment, routine, entries
     title: step.title,
     purpose: step.note,
     rule: slotReasonText({ step, environment, routine, concern }),
+    plain: (explanation?.steps || []).find((item) => item.phase === step.phase && item.categoryId === step.id)?.plain || "",
   }));
   const contextEntries = (entries || []).map((entry) => {
     const attr = entry.attribution || {};
@@ -839,6 +842,11 @@ function routineContextPayload({ concern, profile, environment, routine, entries
         runner_up: attr.contrast?.runnerUp?.displayName || null,
         deciding_factor_versus_runner_up: attr.contrast?.decisive ? FACTOR_WORDS[attr.contrast.decisive.id] || attr.contrast.decisive.label : null,
         fit_to_user: (entry.userFit?.components || []).map((c) => c.reason),
+        // Plain-language facts for the consumer panel (lib/plain-language.mjs).
+        what_it_is_plain: entry.explanation?.consumer?.whatItIs || null,
+        why_today_plain: entry.explanation?.consumer?.whyToday || null,
+        safety_plain: entry.explanation?.consumer?.safety || null,
+        user_concern: CONCERN_WORDS[concern] || concern,
         chosen_by: entry.selectedBy === "llm_from_rag_pool" ? "the language model, from the retrieved approved pool" : "the highest transparent candidate score",
         ewg_reference: ewg?.status === "listed" ? `EWG Skin Deep hazard score ${ewg.hazardScore} on a 1 to 10 scale (1 = lowest), ${ewg.dataAvailability} data, checked ${ewg.checkedAt || "2026-09-23"}` : "not listed on EWG Skin Deep",
       },
@@ -983,12 +991,12 @@ async function routineResult({
   if (explanation) {
     for (const entry of ingredientCandidates.entries || []) {
       const level2 = explanation.level2.find((item) => item.ingredientId === entry.ingredientId && item.phase === entry.phase);
-      if (level2) entry.explanation = { whyThisStep: level2.whyThisStep, whyThisIngredient: level2.whyThisIngredient };
+      if (level2) entry.explanation = { whyThisStep: level2.whyThisStep, whyThisIngredient: level2.whyThisIngredient, consumer: level2.consumer };
     }
   }
   const contextAvailable = Boolean(routine && status !== "medical_redirect" && config.liveServicesEnabled && config.openai?.apiKey);
   if (routine && status !== "medical_redirect") {
-    rememberRoutineContext(requestId, routineContextPayload({ concern, profile, environment, routine, entries: ingredientCandidates.entries || [] }));
+    rememberRoutineContext(requestId, routineContextPayload({ concern, profile, environment, routine, entries: ingredientCandidates.entries || [], explanation }));
   }
   const runReport = buildRunReport({
     requestId,
@@ -1778,6 +1786,32 @@ async function routeApi(request, response, url, requestId) {
       providerReliability: providerReliabilitySnapshot(),
       requestId,
     }, requestId, { "cache-control": "private, max-age=60" });
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/locations/reverse") {
+    enforceLocationSearchRateLimit(request);
+    const lat = Number(url.searchParams.get("lat"));
+    const lon = Number(url.searchParams.get("lon"));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) throw new HttpError(400, "Invalid latitude or longitude.");
+    // Rounded to ~1 km before leaving the server.
+    const name = await reverseLocation(config, Math.round(lat * 100) / 100, Math.round(lon * 100) / 100);
+    return sendJson(response, 200, { name, requestId }, requestId);
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/outlook") {
+    const input = await readJson(request);
+    const profile = requiredChoice(input.profile, ALLOWED_PROFILES, "profile", "combination");
+    const concern = requiredConcern(input.concern);
+    const finishPreference = optionalChoice(input.finishPreference, ALLOWED_FINISH_PREFERENCES, "finish preference");
+    const reactivityLevel = optionalChoice(input.reactivityLevel, ALLOWED_REACTIVITY_LEVELS, "reactivity level");
+    const exposureContext = optionalChoice(input.exposureContext, ALLOWED_EXPOSURE_CONTEXTS, "exposure context") || "mixed";
+    const todaySteps = (Array.isArray(input.todaySteps) ? input.todaySteps : []).slice(0, 16).map((s) => String(s)).filter((s) => /^(am|pm):[a-z-]{3,40}$/.test(s));
+    try {
+      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, finishPreference, reactivityLevel, exposureContext, todaySteps });
+      return sendJson(response, 200, { ...outlook, requestId }, requestId, { "cache-control": "private, max-age=300" });
+    } catch {
+      return sendJson(response, 200, { available: false, reason: "forecast_unavailable", requestId }, requestId);
+    }
   }
 
   if (request.method === "GET" && url.pathname === "/api/locations") {

@@ -1,6 +1,6 @@
 # Browser smoke test
 
-Generated 2026-09-23 by `npm run test:browser` (Chromium, 375 px and 1280 px, axe-core WCAG 2.1 A/AA, serious and critical only). Result: **34/34 passed**.
+Generated 2026-09-23 by `npm run test:browser` (Chromium, 375 px and 1280 px, axe-core WCAG 2.1 A/AA, serious and critical only). Result: **38/38 passed**.
 
 | Check | Result |
 | --- | --- |
@@ -16,6 +16,8 @@ Generated 2026-09-23 by `npm run test:browser` (Chromium, 375 px and 1280 px, ax
 | phone: the skin question is shown in plain words before the build button | passed |
 | phone: a routine builds and every step has a reason | passed |
 | phone: "Why?" opens, closes and keeps focus | passed |
+| phone: the Why? panel explains what it is, why today, safety and label names | passed |
+| phone: the routine page shows the disclaimer once | passed |
 | phone: no configuration text is shown to a consumer | passed |
 | phone: the routine result has no serious accessibility violations | passed |
 | phone: symptoms that need care show the check-up screen and no routine | passed |
@@ -33,6 +35,8 @@ Generated 2026-09-23 by `npm run test:browser` (Chromium, 375 px and 1280 px, ax
 | desktop: the skin question is shown in plain words before the build button | passed |
 | desktop: a routine builds and every step has a reason | passed |
 | desktop: "Why?" opens, closes and keeps focus | passed |
+| desktop: the Why? panel explains what it is, why today, safety and label names | passed |
+| desktop: the routine page shows the disclaimer once | passed |
 | desktop: no configuration text is shown to a consumer | passed |
 | desktop: the routine result has no serious accessibility violations | passed |
 | desktop: symptoms that need care show the check-up screen and no routine | passed |

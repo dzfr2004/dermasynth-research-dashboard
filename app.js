@@ -275,6 +275,8 @@ const state = {
   routineContext: { runId: "", status: "idle", steps: {}, ingredients: {}, error: "", model: "" },
   expertView: loadExpertView(),
   openWhy: {},
+  whyJustOpened: "",
+  outlook: { status: "idle" },
   selectedLocation: { ...defaultLocation },
   locationQuery: "",
   locationResults: [],
@@ -502,7 +504,7 @@ function stepRuleReason(phase, categoryId) {
 function degradedBanner(meta) {
   const reasons = meta?.degraded?.status === "degraded" ? meta.degraded.reasons || [] : [];
   if (!reasons.length) return "";
-  return `<div class="degraded-banner" role="status">${icon("info", 14)}<div><strong>${state.expertView ? "Reduced mode for this run" : "Some parts are simpler today"}</strong><ul>${reasons.map((reason) => `<li>${escapeHtml(reason.text)}</li>`).join("")}</ul><small>Every step still passed the rule-based safety checks. Rule-based reasons are shown wherever GPT text is missing.</small></div></div>`;
+  return `<div class="degraded-banner" role="status">${icon("info", 14)}<div><strong>${state.expertView ? "Reduced mode for this run" : "Some parts are simpler today"}</strong><ul>${reasons.map((reason) => `<li>${escapeHtml(reason.text)}</li>`).join("")}</ul></div></div>`;
 }
 
 function ingredientAttributionMarkup(attr) {
@@ -657,8 +659,8 @@ function shell(view) {
           <button class="refresh-button" type="button" data-action="refresh" aria-label="Refresh environment readings" ${locationUpdating ? "disabled" : ""}>${icon("refresh", 16)} <span>Refresh environment</span></button>
         </div>
       </header>
-      <div class="scope-banner" role="note">${icon("shield", 14)}<span><strong>Research prototype.</strong> Skincare suggestions based on today's weather. Not medical advice.</span></div>
-      <div class="content"><div class="view">${view}</div></div>
+      <div class="scope-banner" role="note">${icon("shield", 14)}<span><strong>Research prototype, not medical advice.</strong> Patch-test new products and stop if your skin reacts.</span></div>
+      <div class="content"><div class="view" style="view-transition-name: page-view">${view}</div></div>
     </main>
     <div class="toast" role="status" aria-live="polite" id="toast"></div>
     ${presentationGuide()}
@@ -982,9 +984,9 @@ function locationPicker({ label = "Weather location", compact = false } = {}) {
   const busy = searching || updating || state.runStatus === "running";
   const notice = searching
     ? "Searching OpenWeather locations…"
-    : state.locationSearchNotice || `Active demonstrator location: ${locationLabel()} · change it if needed.`;
+    : state.locationSearchNotice || `Weather for ${locationLabel()}.`;
 
-  return `<div class="field location-picker ${compact ? "is-compact" : ""}"><label for="location-search">${escapeHtml(label)}</label><div class="location-input-row"><input id="location-search" type="search" value="${escapeHtml(state.locationQuery)}" placeholder="Search city or area" autocomplete="off" data-action="location-query" role="combobox" aria-autocomplete="list" aria-controls="location-results" aria-expanded="${expanded}" aria-busy="${busy}" ${busy ? "disabled" : ""} /><button class="location-search-button" type="button" data-action="location-search" ${busy ? "disabled" : ""}>${icon("pin", 14)} Search</button></div>${expanded ? `<div class="location-results" id="location-results" role="listbox" aria-label="Matching locations">${results.map((location, index) => `<button type="button" class="location-option" role="option" aria-selected="false" data-action="select-location" data-location-index="${index}" ${busy ? "disabled" : ""}><span>${escapeHtml(locationResultLabel(location))}</span><small>${Number(location.lat).toFixed(4)}, ${Number(location.lon).toFixed(4)}</small></button>`).join("")}</div>` : ""}<div class="location-status" role="status" aria-live="polite"><span>${escapeHtml(notice)}</span><button type="button" data-action="reset-location" ${busy ? "disabled" : ""}>Use demo Kuala Lumpur</button></div>${compact ? "" : `<p class="location-privacy">Kuala Lumpur is preselected for the demonstrator. Search text goes to OpenWeather; after selection, chosen coordinates go to the enabled OpenWeather and IQAir services for labelled readings.</p>`}</div>`;
+  return `<div class="field location-picker ${compact ? "is-compact" : ""}"><label for="location-search">${escapeHtml(label)}</label><div class="location-input-row"><input id="location-search" type="search" value="${escapeHtml(state.locationQuery)}" placeholder="Search city or area" autocomplete="off" data-action="location-query" role="combobox" aria-autocomplete="list" aria-controls="location-results" aria-expanded="${expanded}" aria-busy="${busy}" ${busy ? "disabled" : ""} /><button class="location-search-button" type="button" data-action="location-search" ${busy ? "disabled" : ""}>${icon("pin", 14)} Search</button></div>${expanded ? `<div class="location-results" id="location-results" role="listbox" aria-label="Matching locations">${results.map((location, index) => `<button type="button" class="location-option" role="option" aria-selected="false" data-action="select-location" data-location-index="${index}" ${busy ? "disabled" : ""}><span>${escapeHtml(locationResultLabel(location))}</span><small>${Number(location.lat).toFixed(4)}, ${Number(location.lon).toFixed(4)}</small></button>`).join("")}</div>` : ""}<div class="location-status" role="status" aria-live="polite"><span>${escapeHtml(notice)}</span><button type="button" data-action="use-my-location" ${busy ? "disabled" : ""}>${icon("pin", 12)} Use my location</button></div>${compact ? "" : `<p class="location-privacy">Your location is only used to look up the weather. It is rounded to about 1 km and remembered in this browser.</p>`}</div>`;
 }
 
 function comparisonLocationLabel() {
@@ -1198,7 +1200,7 @@ function monitorView() {
 
 function concernPicker() {
   const disabled = state.runStatus === "running";
-  return `<div class="field concern-field"><label id="concern-label">Main skin concern</label><div class="concern-grid" role="group" aria-labelledby="concern-label">${concernOptions.map((option) => `<button type="button" class="concern-choice ${state.concern === option.id ? "is-selected" : ""}" data-action="concern-choice" data-concern="${option.id}" aria-pressed="${state.concern === option.id}" ${disabled ? "disabled" : ""}><strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(option.description)}</small></button>`).join("")}</div><p class="field-help">These describe how skin looks or feels. They are not diagnoses.</p></div>`;
+  return `<div class="field concern-field"><label id="concern-label">Main skin concern</label><div class="concern-grid" role="group" aria-labelledby="concern-label">${concernOptions.map((option) => `<button type="button" class="concern-choice ${state.concern === option.id ? "is-selected" : ""}" data-action="concern-choice" data-concern="${option.id}" aria-pressed="${state.concern === option.id}" ${disabled ? "disabled" : ""}><strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(option.description)}</small></button>`).join("")}</div></div>`;
 }
 
 function profilePreferenceFields() {
@@ -1283,7 +1285,50 @@ function conditionsSummaryCard(meta) {
     ["Temperature", fmt(r.temperature), "°C", temperatureBand(r.temperature)],
   ];
   const source = environment?.mode === "live" ? "Live readings" : environment?.mode === "user_reported" ? "Conditions you reported" : environment?.mode === "degraded" ? "Some live readings missing" : "Sample weather (not live)";
-  return `<section class="today-card" aria-labelledby="today-title"><div class="today-head"><h3 id="today-title">${icon("pin", 15)} Today in ${escapeHtml(locationLabel())}</h3><span>${escapeHtml(source)}</span></div><dl class="today-grid">${items.map(([label, value, unit, band]) => `<div class="today-item ${band ? `is-${band.tone}` : ""}"><dt>${escapeHtml(label)}</dt><dd><strong>${escapeHtml(value)}</strong>${unit && value !== "—" ? `<small>${escapeHtml(unit)}</small>` : ""}${band ? `<span>${escapeHtml(band.label)}</span>` : ""}</dd></div>`).join("")}</dl></section>`;
+  const outlookToday = state.outlook?.data?.today;
+  const timingLine = outlookToday?.text ? `<p class="today-timing">${icon("sun", 13)} ${escapeHtml(outlookToday.text)}${outlookToday.sunTip ? ` ${escapeHtml(outlookToday.sunTip)}` : ""}</p>` : "";
+  return `<section class="today-card" style="view-transition-name: today-card" aria-labelledby="today-title"><div class="today-head"><h3 id="today-title">${icon("pin", 15)} ${locationLabel() === "Your location" ? "Today near you" : `Today in ${escapeHtml(locationLabel())}`}</h3><span>${escapeHtml(source)}</span></div><dl class="today-grid">${items.map(([label, value, unit, band]) => `<div class="today-item ${band ? `is-${band.tone}` : ""}"><dt>${escapeHtml(label)}</dt><dd><strong>${escapeHtml(value)}</strong>${unit && value !== "—" ? `<small>${escapeHtml(unit)}</small>` : ""}${band ? `<span>${escapeHtml(band.label)}</span>` : ""}</dd></div>`).join("")}</dl>${timingLine}</section>`;
+}
+
+// ---- Timing and tomorrow (forecast, /api/outlook) ----------------------------
+function sunscreenTiming() {
+  const w = state.outlook?.data?.today?.window;
+  if (!w || w.allDayBelow || w.passed || !w.start) return "";
+  const hour = (time) => { const h = Number(String(time).slice(11, 13)); return h === 0 ? "midnight" : h === 12 ? "noon" : h < 12 ? `${h} am` : `${h - 12} pm`; };
+  return `Matters most from ${hour(w.start)} to ${hour(w.end)} today. If you're outside for long, top it up during the day.`;
+}
+
+function tomorrowCard() {
+  const outlook = state.outlook;
+  if (!outlook || outlook.status === "idle") return "";
+  if (outlook.status === "loading") return `<section class="tomorrow-card is-loading" style="view-transition-name: tomorrow-card" aria-live="polite"><h3>${icon("activity", 15)} Tomorrow</h3><p class="shimmer-text">Checking tomorrow's forecast…</p></section>`;
+  const tomorrow = outlook.data?.tomorrow;
+  if (!tomorrow) return "";
+  const changes = (tomorrow.changes || []).filter((c) => c.change !== "kept");
+  const kept = (tomorrow.changes || []).filter((c) => c.change === "kept");
+  return `<section class="tomorrow-card" style="view-transition-name: tomorrow-card" aria-labelledby="tomorrow-title"><h3 id="tomorrow-title">${icon("activity", 15)} Tomorrow</h3><p class="tomorrow-summary">${escapeHtml(tomorrow.summary)}</p>${tomorrow.sameAsToday ? `<p class="tomorrow-same">${icon("check", 14)} Same routine as today.</p>` : `<ul class="tomorrow-changes">${changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`}${kept.length ? `<p class="tomorrow-kept">${kept.map((c) => escapeHtml(c.text)).join(" ")}</p>` : ""}<p class="tomorrow-source">${escapeHtml(outlook.data?.source || "")}</p></section>`;
+}
+
+async function refreshOutlook() {
+  const meta = state.routineMeta;
+  const routine = state.generatedRoutine;
+  if (!meta || meta.status !== "cleared" || !routine) { state.outlook = { status: "idle" }; return; }
+  const runId = meta.routineContext?.runId || meta.requestId || "";
+  state.outlook = { status: "loading", runId };
+  const todaySteps = [...(routine.am || []).map((s) => `am:${s.id}`), ...(routine.pm || []).map((s) => `pm:${s.id}`)];
+  try {
+    const body = { profile: state.profile, concern: state.concern, location: locationPayload(), todaySteps, exposureContext: state.exposureContext || "mixed" };
+    if (state.finishPreference) body.finishPreference = state.finishPreference;
+    if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
+    const response = await fetch("/api/outlook", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const data = await response.json().catch(() => ({}));
+    if (state.outlook.runId !== runId) return;
+    state.outlook = data?.available ? { status: "available", runId, data } : { status: "idle", runId };
+  } catch {
+    if (state.outlook.runId !== runId) return;
+    state.outlook = { status: "idle", runId };
+  }
+  scheduleRender({ animated: true });
 }
 
 // G6: technical failures become one plain sentence; the detail stays in Expert view.
@@ -1294,47 +1339,22 @@ function plainMessage(text, fallback = "This part isn't available right now.") {
   return value;
 }
 
-function consumerWhy(entry, meta) {
+function consumerWhy(entry) {
   const gpt = state.routineContext?.ingredients?.[`${entry.phase}:${entry.categoryId}`] || null;
-  const attr = entry.attribution || {};
-  const parts = [];
-  if (gpt?.whyThisIngredient) parts.push(gpt.whyThisIngredient);
-  else {
-    parts.push(`${entry.displayName} was picked from ${attr.poolSize > 1 ? `${attr.poolSize} approved ingredients` : "the approved ingredient"} for this step.`);
-    const fits = (entry.userFit?.components || []).filter((c) => c.x >= 0.6).map((c) => c.reason);
-    if (fits.length) parts.push(`It suits you because it has ${fits.join(", and ")}.`);
-  }
-  const evidence = (attr.features || []).find((f) => f.id === "evidence_strength");
-  const evidenceText = evidence ? evidence.label.replace(/^Evidence strength \((.*)\)$/, "$1") : "";
+  const rule = entry.explanation?.consumer || {};
+  const useGpt = Boolean(gpt?.whatItIs && gpt?.whyToday && gpt?.safety);
+  const fields = useGpt ? { whatItIs: gpt.whatItIs, whyToday: gpt.whyToday, safety: gpt.safety } : { whatItIs: rule.whatItIs, whyToday: rule.whyToday, safety: rule.safety };
+  const labels = rule.labels || { names: [entry.displayName], note: null };
   const source = Array.isArray(entry.sourceRecords) ? entry.sourceRecords[0] : null;
   const url = safeEvidenceUrl(source?.sourceUrl);
-  return `<p>${escapeHtml(parts.join(" "))}</p>${evidenceText ? `<p class="consumer-evidence">${icon("shield", 12)} Safety source: ${escapeHtml(evidenceText)}${url ? ` · <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">read the source<span class="sr-only"> (opens in a new tab)</span></a>` : ""}</p>` : ""}${gpt ? "" : `<p class="consumer-note">Turn on Expert view for the full scoring.</p>`}`;
-}
-
-// G2: the same computed facts as the rule-based reason, in everyday words.
-function consumerStepLine(step, phase, meta) {
-  const readings = meta?.environment?.readings || {};
-  const generation = state.generatedRoutine?.generation || {};
-  const vote = generation.textureVote;
-  const guarded = (step.ruleIds || []).includes("low-irritation-barrier-guardrail");
-  const words = (item) => (item.signal === "concern" ? `your ${concernOption(item.value).label.toLowerCase()} concern` : item.signal === "profile" ? `your ${item.value} skin` : item.signal === "finish" ? `your ${item.value} finish preference` : item.signal === "humidity" ? (item.vote > 0 ? `dry air (${Math.round(item.value)}% humidity)` : `humid air (${Math.round(item.value)}% humidity)`) : item.vote > 0 ? `the cold (${Math.round(item.value)} °C)` : `the heat (${Math.round(item.value)} °C)`);
-  const list = (items) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : items[0] || "");
-  const id = step.id || "";
-  if (id === "low-irritation-cleansing") return phase === "am" ? `Start the day with a gentle cleanse${guarded ? ", kept extra mild for your skin" : ""}.` : `Gently wash off sunscreen and the day's grime${guarded ? ", kept extra mild for your skin" : ""}.`;
-  if (/hydration|moisturising/.test(id)) {
-    if (guarded) return generation.reactivityRaisedByProfile ? "Kept extra gentle and comforting because your skin is sensitive." : "Kept extra gentle and comforting for your skin today.";
-    if (vote?.direction === "richer") return `A richer texture today because of ${list(vote.votes.filter((v) => v.vote > 0).map(words))}.`;
-    if (vote?.direction === "lighter") return `Kept light today because of ${list(vote.votes.filter((v) => v.vote < 0).map(words))}.`;
-    return "A balanced texture suits today's conditions.";
-  }
-  if (id === "daytime-photoprotection") {
-    const band = uvBand(readings.uvi);
-    return band ? `UV is ${band.label} today (${Number(readings.uvi).toFixed(1)}), so sunscreen ${["very high", "extreme", "high"].includes(band.label) ? "is essential" : "still matters when you go out"}.` : "Sunscreen is kept in because today's UV couldn't be read.";
-  }
-  if (id === "antioxidant-context") return `The air is hazy today (PM2.5 ${Math.round(Number(readings.pm25))} µg/m³), so an antioxidant step is added.`;
-  if (id === "texture-renewal") return "Evenings only, because exfoliants make skin more sensitive to the sun.";
-  if (id === "overnight-comfort") return "The last step of your evening routine.";
-  return "";
+  const rows = [
+    ["What it is", fields.whatItIs],
+    ["Why today", fields.whyToday],
+    ["Is it safe?", fields.safety, url ? ` <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Read the source<span class="sr-only"> (opens in a new tab)</span></a>` : ""],
+    ["On labels", `Look for ${labels.names.map((name) => `“${name}”`).join(" or ")} in the ingredient list.${labels.note ? ` ${labels.note}` : ""}`],
+  ].filter(([, text]) => text);
+  const loading = !useGpt && state.routineContext?.status === "loading";
+  return `<dl class="why-grid ${useGpt ? "is-gpt" : ""} ${useGpt && state.gptJustArrived ? "is-arriving" : ""}">${rows.map(([label, text, extra = ""]) => `<div class="why-row"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(text)}${extra}</dd></div>`).join("")}</dl><p class="why-foot">${useGpt ? `${icon("sparkles", 12)} Written by AI from DermaSynth's checked facts, then checked again against them.` : loading ? `${icon("sparkles", 12)} <span class="shimmer-text">Writing a friendlier version…</span>` : ""}</p>`;
 }
 
 function consumerStepItem(step, phase, entries, meta) {
@@ -1342,10 +1362,13 @@ function consumerStepItem(step, phase, entries, meta) {
   const plain = plainStep(step);
   const entry = entries.find((item) => item.categoryId === step.id && item.phase === phase) || null;
   const gptStep = state.routineContext?.steps?.[key]?.text || "";
-  const line = gptStep || consumerStepLine(step, phase, meta) || plain.what;
+  const serverPlain = (state.routineMeta?.explanation?.steps || []).find((item) => item.phase === phase && item.categoryId === step.id)?.plain || "";
+  const line = gptStep || serverPlain || consumerStepLine(step, phase, meta) || plain.what;
+  const timing = step.id === "daytime-photoprotection" ? sunscreenTiming() : "";
   const open = Boolean(state.openWhy?.[key]);
   const panelId = `why-${phase}-${step.id}`;
-  return `<li class="consumer-step"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : `<span class="consumer-ingredient">${escapeHtml(plain.what)}</span>`}<p>${escapeHtml(line)}</p></div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : "Why?"}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, meta) : ""}</div>` : ""}</li>`;
+  const stepIndex = (state.stepCounter = (state.stepCounter || 0) + 1);
+  return `<li class="consumer-step" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : `<span class="consumer-ingredient">${escapeHtml(plain.what)}</span>`}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing">${icon("sun", 12)} ${escapeHtml(timing)}</p>` : ""}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : "Why?"}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry) : ""}</div>` : ""}</li>`;
 }
 
 function consumerResult(routine, meta, running) {
@@ -1367,7 +1390,8 @@ function consumerResult(routine, meta, running) {
     : contextStatus === "error" ? `<p class="consumer-status">${icon("info", 13)} ${escapeHtml(plainMessage(state.routineContext.error))}</p>` : "";
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
   const reviewNote = meta.status === "cleared" ? "" : `<p class="consumer-status is-warn" role="status">${icon("info", 13)} Some checks asked for review, so treat this routine with extra care.</p>`;
-  return `${conditionsSummaryCard(meta)}<section class="consumer-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}<p class="consumer-safety">${icon("shield", 14)} Every step passed DermaSynth's safety checks. This is a research prototype, not medical advice. Patch-test new products, and stop if your skin reacts.</p></section>`;
+  state.stepCounter = 0;
+  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${conditionsSummaryCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}</section>${tomorrowCard()}</div>`;
 }
 
 function synthesizedRoutineCard(routine, meta) {
@@ -1557,8 +1581,54 @@ function escapeHtml(value) {
 
 function render() {
   const views = { dashboard: dashboardView, monitor: monitorView, simulator: simulatorView, knowledge: knowledgeExplorerView };
+  // Keep keyboard focus on the same button across a re-render (background
+  // updates such as GPT text or the forecast arriving must not drop focus).
+  const active = document.activeElement;
+  let focusSelector = null;
+  if (active && app.contains(active) && (active.tagName === "BUTTON" || active.tagName === "A") && active.dataset?.action) {
+    focusSelector = `[data-action="${CSS.escape(active.dataset.action)}"]`;
+    for (const attr of ["key", "view", "profile", "concern", "value"]) if (active.dataset[attr]) focusSelector += `[data-${attr}="${CSS.escape(active.dataset[attr])}"]`;
+  }
   app.innerHTML = views[state.activeView]();
+  if (focusSelector) app.querySelector(focusSelector)?.focus({ preventScroll: true });
   document.title = `DermaSynth | ${(VIEW_META[state.activeView] || VIEW_META.dashboard).title}`;
+}
+
+// ---- Motion ---------------------------------------------------------------
+// State changes morph with the View Transitions API (spring timing in CSS);
+// a new routine plays a one-off staggered entrance instead. Everything falls
+// back to an instant render when the browser lacks the API or the user asks
+// for reduced motion.
+let viewTransitionBusy = false;
+let deferredRender = null;
+
+function prefersReducedMotion() {
+  try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
+}
+
+function renderAnimated({ entering = false } = {}) {
+  if (entering) {
+    state.animateEnter = true;
+    state.enterUntil = Date.now() + 1100;
+  }
+  const finish = () => { render(); state.animateEnter = false; state.gptJustArrived = false; };
+  if (entering || prefersReducedMotion() || typeof document.startViewTransition !== "function" || viewTransitionBusy) {
+    finish();
+    return Promise.resolve();
+  }
+  viewTransitionBusy = true;
+  const transition = document.startViewTransition(finish);
+  transition.finished.finally(() => { viewTransitionBusy = false; }).catch(() => {});
+  return transition.updateCallbackDone.catch(() => {});
+}
+
+// Background updates wait until a running entrance has finished, so it is not
+// cut short by a re-render.
+function scheduleRender({ animated = false } = {}) {
+  const wait = (state.enterUntil || 0) - Date.now();
+  if (wait <= 0) return animated ? renderAnimated() : (render(), Promise.resolve());
+  clearTimeout(deferredRender);
+  return new Promise((resolve) => { deferredRender = setTimeout(() => { (animated ? renderAnimated() : (render(), Promise.resolve())).then(resolve); }, wait); });
 }
 
 let toastTimer;
@@ -1592,8 +1662,7 @@ function navigateView(view, { source = "user", history = source === "presentatio
   state.reasonOpen = false;
   state.mobileMoreOpen = false;
   writeViewRoute(view, history);
-  render();
-  settleViewNavigation({ focus, scroll });
+  renderAnimated().then(() => settleViewNavigation({ focus, scroll }));
   if (view === "knowledge") {
     loadKnowledgeExplorer();
   }
@@ -2145,6 +2214,7 @@ document.addEventListener("click", (event) => {
   if (action === "location-search") { searchLocations(); return; }
   if (action === "select-location") { selectLocation(Number(target.dataset.locationIndex)); return; }
   if (action === "reset-location") { resetLocation(); return; }
+  if (action === "use-my-location") { useMyLocation(); return; }
   if (action === "comparison-location-search") { searchComparisonLocations(); return; }
   if (action === "comparison-location-select") { selectComparisonLocation(Number(target.dataset.comparisonLocationIndex)); return; }
   if (action === "comparison-refresh") { refreshComparisonContext(); return; }
@@ -2153,7 +2223,7 @@ document.addEventListener("click", (event) => {
   if (action === "simulate") { generateRoutine(); return; }
   if (action === "report-condition") { state.reportedConditions = { ...(state.reportedConditions || {}), [target.dataset.key]: target.dataset.value }; render(); return; }
   if (action === "toggle-expert") { state.expertView = !state.expertView; saveExpertView(state.expertView); render(); showToast(state.expertView ? "Expert view on: scores, traces and the run report are shown." : "Expert view off."); return; }
-  if (action === "toggle-why") { const key = target.dataset.key; state.openWhy = { ...state.openWhy, [key]: !state.openWhy[key] }; render(); window.requestAnimationFrame(() => document.querySelector(`[data-action="toggle-why"][data-key="${CSS.escape(key)}"]`)?.focus()); return; }
+  if (action === "toggle-why") { const key = target.dataset.key; const opening = !state.openWhy[key]; state.openWhy = { ...state.openWhy, [key]: opening }; state.whyJustOpened = opening ? key : ""; renderAnimated().then(() => { state.whyJustOpened = ""; document.querySelector(`[data-action="toggle-why"][data-key="${CSS.escape(key)}"]`)?.focus({ preventScroll: true }); }); return; }
   if (action === "submit-conditions") { generateRoutine({ reportedConditions: state.reportedConditions }); return; }
   if (action === "reason") { state.reasonOpen = !state.reasonOpen; render(); return; }
   if (action === "batch") { runBatch(); return; }
@@ -2466,6 +2536,7 @@ async function applyLocation(location) {
   }
 
   state.locationQuery = state.selectedLocation.name;
+  saveLocation(state.selectedLocation);
   state.locationResults = [];
   state.locationSearchStatus = "selected";
   state.locationSearchNotice = `Weather location: ${selected.name}`;
@@ -2478,6 +2549,43 @@ async function selectLocation(index) {
   const result = state.locationResults[index];
   if (!result) return;
   await applyLocation({ name: locationResultLabel(result), lat: result.lat, lon: result.lon });
+}
+
+const LOCATION_STORAGE_KEY = "dermasynth.location.v1";
+
+function loadSavedLocation() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(LOCATION_STORAGE_KEY) || "null");
+    if (saved && Number.isFinite(Number(saved.lat)) && Number.isFinite(Number(saved.lon))) return { name: String(saved.name || "Your location").slice(0, 80), lat: Number(saved.lat), lon: Number(saved.lon) };
+  } catch { /* storage unavailable */ }
+  return null;
+}
+
+function saveLocation(location) {
+  try { window.localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify({ name: location.name, lat: location.lat, lon: location.lon })); } catch { /* storage unavailable */ }
+}
+
+// Current location from the browser (it asks the user first). Coordinates are
+// rounded to ~1 km; the name comes from the server's reverse lookup.
+async function useMyLocation({ silent = false } = {}) {
+  if (!("geolocation" in navigator)) { if (!silent) showToast("This browser can't share your location. Search for your city instead."); return false; }
+  if (!silent) { state.locationSearchNotice = "Finding your location…"; render(); }
+  try {
+    const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }));
+    const lat = Math.round(position.coords.latitude * 100) / 100;
+    const lon = Math.round(position.coords.longitude * 100) / 100;
+    let name = "Your location";
+    try {
+      const reply = await fetch(`/api/locations/reverse?lat=${lat}&lon=${lon}`).then((r) => r.json());
+      if (reply?.name) name = reply.name;
+    } catch { /* keep the generic name */ }
+    await applyLocation({ name, lat, lon });
+    return true;
+  } catch {
+    try { window.localStorage.setItem(`${LOCATION_STORAGE_KEY}.asked`, "1"); } catch { /* ignore */ }
+    if (!silent) { state.locationSearchNotice = "Location wasn't shared. Search for your city instead."; render(); }
+    return false;
+  }
 }
 
 async function resetLocation() {
@@ -2655,8 +2763,9 @@ async function generateRoutine({ reportedConditions = null } = {}) {
     }
     state.explainability = payload.explainability || state.explainability;
     recordRunSummary(payload, location);
-    render();
+    renderAnimated({ entering: true });
     refreshRoutineContext();
+    refreshOutlook();
     if (payload.status === "needs_conditions") {
       showToast("We couldn't get today's weather. Tell us the conditions to continue.");
     } else if (payload.status === "cleared") {
@@ -2695,12 +2804,12 @@ async function refreshRoutineContext() {
   }
   if (!meta.routineContext.available) {
     state.routineContext = { runId, status: "unavailable", steps: {}, ingredients: {}, error: meta.routineContext.reason || "GPT explanations are not available for this run.", model: "" };
-    render();
+    scheduleRender();
     return;
   }
   if (state.routineContext.runId === runId && ["loading", "available"].includes(state.routineContext.status)) return;
   state.routineContext = { runId, status: "loading", steps: {}, ingredients: {}, error: "", model: "" };
-  render();
+  scheduleRender();
   try {
     const response = await fetch("/api/ai/routine-context", {
       method: "POST",
@@ -2719,11 +2828,12 @@ async function refreshRoutineContext() {
       error: "",
       model: payload.model || "",
     };
+    state.gptJustArrived = true;
   } catch (error) {
     if (state.routineContext.runId !== runId) return;
     state.routineContext = { runId, status: "error", steps: {}, ingredients: {}, error: error instanceof Error ? error.message : "GPT explanations are unavailable.", model: "" };
   }
-  render();
+  scheduleRender({ animated: true });
 }
 
 function gptTag(item) {
@@ -2795,7 +2905,20 @@ window.addEventListener("popstate", applyRoute);
 render();
 // Prime the demonstrator with labelled server data. Every call has a safe
 // local/demo fallback, so the interface remains usable without provider keys.
-void refreshEnvironment(defaultLocation, { announce: false });
+// Start with the last location this browser used; on a first visit, ask for
+// the current location (once) and fall back to Kuala Lumpur.
+{
+  const saved = loadSavedLocation();
+  let askedBefore = false;
+  try { askedBefore = window.localStorage.getItem(`${LOCATION_STORAGE_KEY}.asked`) === "1"; } catch { askedBefore = true; }
+  if (saved) {
+    state.selectedLocation = saved;
+    state.locationQuery = saved.name;
+    void refreshEnvironment(saved, { announce: false });
+  } else {
+    void refreshEnvironment(defaultLocation, { announce: false }).then(() => { if (!askedBefore) void useMyLocation({ silent: true }); });
+  }
+}
 void refreshComparisonContext(state.comparison.selectedLocation, { announce: false });
 void loadKnowledgeExplorer();
 void loadCorpusSummary();

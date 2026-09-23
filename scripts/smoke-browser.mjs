@@ -149,6 +149,7 @@ for (const width of [375, 1280]) {
     const reasons = await page.locator(".consumer-step-main p").evaluateAll((els) => els.map((e) => e.textContent.trim()).filter((text) => text.length > 15).length);
     expect(steps >= 4 && reasons === steps, `${steps} steps, ${reasons} with a reason.`);
     expect(await page.locator(".today-card").count() === 1, "Today's conditions card missing.");
+    await page.waitForTimeout(1400); // let the entrance animation and background updates settle
   });
   await check(`${label}-why`, `${label}: "Why?" opens, closes and keeps focus`, async () => {
     const button = page.locator('[data-action="toggle-why"]').first();
@@ -163,6 +164,21 @@ for (const width of [375, 1280]) {
     await page.keyboard.press("Enter");
     await page.waitForTimeout(300);
     expect(await page.locator('[data-action="toggle-why"]').first().getAttribute("aria-expanded") === "false", "Did not close.");
+  });
+  await check(`${label}-why-panel`, `${label}: the Why? panel explains what it is, why today, safety and label names`, async () => {
+    const button = page.locator('[data-action="toggle-why"]').first();
+    await button.click();
+    await page.waitForTimeout(500);
+    const labels = await page.locator(".consumer-why:not([hidden]) .why-row dt").allInnerTexts();
+    expect(["What it is", "Why today", "Is it safe?", "On labels"].every((l) => labels.includes(l)), `Rows: ${labels.join(", ")}`);
+    const text = await page.locator(".consumer-why:not([hidden])").innerText();
+    expect(!/picked from|approved ingredients|score|rank|retriev/i.test(text), "System wording in the Why? panel.");
+    await page.locator('[data-action="toggle-why"]').first().click();
+    await page.waitForTimeout(400);
+  });
+  await check(`${label}-one-disclaimer`, `${label}: the routine page shows the disclaimer once`, async () => {
+    const count = (await page.locator("body").innerText()).match(/not medical advice/gi)?.length || 0;
+    expect(count === 1, `Disclaimer appears ${count} times.`);
   });
   await check(`${label}-no-config-text`, `${label}: no configuration text is shown to a consumer`, async () => {
     const text = await page.locator("body").innerText();
