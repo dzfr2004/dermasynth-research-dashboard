@@ -1217,3 +1217,15 @@ textarea:focus-visible {
 .condition-chip { border: 1px solid rgb(255 255 255 / 30%); background: transparent; color: inherit; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.8rem; cursor: pointer; }
 .condition-chip.is-selected { background: #6fe3c0; color: #06231a; border-color: #6fe3c0; }
 .conditions-card .form-actions { margin-top: 14px; }
+
+/* C4/C5: reduced-mode banner, expert view */
+.synth-top-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.expert-toggle { font: inherit; font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.45); background: transparent; color: inherit; cursor: pointer; }
+.expert-toggle[aria-pressed="true"] { background: rgba(255, 255, 255, 0.92); color: #0f3d33; }
+.expert-toggle:focus-visible { outline: 2px solid #f4d58d; outline-offset: 2px; }
+.degraded-banner { display: flex; gap: 10px; margin: 12px 0; padding: 12px 14px; border-radius: 12px; background: rgba(244, 213, 141, 0.16); border: 1px solid rgba(244, 213, 141, 0.55); font-size: 13px; line-height: 1.45; }
+.degraded-banner ul { margin: 4px 0; padding-left: 18px; }
+.degraded-banner small { opacity: 0.85; }
+.routine-step-rule { display: block; margin-top: 4px; opacity: 0.8; font-style: italic; }
+.ingredient-rule-version { margin-top: 8px; padding: 8px 10px; border-left: 3px solid #c9b27c; background: rgba(0, 0, 0, 0.04); font-size: 13px; line-height: 1.45; }
+.ingredient-rule-version small { display: block; margin-top: 4px; opacity: 0.8; }

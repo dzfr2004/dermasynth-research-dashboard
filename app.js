@@ -256,6 +256,7 @@ const state = {
   ingredientRationaleStatus: "idle",
   ingredientRationaleKey: "",
   routineContext: { runId: "", status: "idle", steps: {}, ingredients: {}, error: "", model: "" },
+  expertView: false,
   selectedLocation: { ...defaultLocation },
   locationQuery: "",
   locationResults: [],
@@ -457,11 +458,25 @@ function routineStepList(steps, { dark = false, ingredientCandidates = [], phase
       .filter(Boolean);
     const recommendation = names.length ? `<span class="routine-step-ingredients">Recommended: ${escapeHtml(names.join(", "))}</span>` : "";
     const gpt = phase && step?.id ? state.routineContext?.steps?.[`${phase}:${step.id}`] : null;
+    // C5: without GPT text, show the rule-based reason for this step, never the generic category note.
+    const ruleText = stepRuleReason(phase, step?.id) || step.note;
     const note = gpt?.text
-      ? `<small class="routine-step-gpt">${escapeHtml(gpt.text)}</small>`
-      : `<small>${escapeHtml(step.note)}${escapeHtml(sourceText)}${phase && state.routineContext?.status === "loading" ? " · writing context…" : ""}</small>`;
+      ? `<small class="routine-step-gpt">${escapeHtml(gpt.text)}</small>${state.expertView ? `<small class="routine-step-rule"><b>Rule-based version:</b> ${escapeHtml(ruleText)}${gpt.cue && Number.isFinite(Number(gpt.cue.score)) ? ` · GPT text CUE ${Number(gpt.cue.score).toFixed(2)}${gpt.cue.attempt === 2 ? " after one rewrite" : ""}` : ""}</small>` : ""}`
+      : `<small>${escapeHtml(ruleText)}${escapeHtml(sourceText)}${phase && state.routineContext?.status === "loading" ? " · writing context…" : ""}</small>`;
     return `<li><span class="routine-step-title">${escapeHtml(step.title)}</span>${note}${recommendation}${!dark ? "" : `<span class="synth-step-number">${index + 1}</span>`}</li>`;
   }).join("")}</ol>`;
+}
+
+function stepRuleReason(phase, categoryId) {
+  const steps = state.routineMeta?.explanation?.steps;
+  if (!Array.isArray(steps) || !phase || !categoryId) return "";
+  return steps.find((item) => item.phase === phase && item.categoryId === categoryId)?.text || "";
+}
+
+function degradedBanner(meta) {
+  const reasons = meta?.degraded?.status === "degraded" ? meta.degraded.reasons || [] : [];
+  if (!reasons.length) return "";
+  return `<div class="degraded-banner" role="status">${icon("info", 14)}<div><strong>Reduced mode for this run</strong><ul>${reasons.map((reason) => `<li>${escapeHtml(reason.text)}</li>`).join("")}</ul><small>Every step still passed the rule-based safety checks. Rule-based reasons are shown wherever GPT text is missing.</small></div></div>`;
 }
 
 function ingredientAttributionMarkup(attr) {
@@ -513,6 +528,9 @@ function approvedIngredientCandidatePanel(meta = state.routineMeta) {
     const explanation = entry.explanation || {};
     const whyStep = gpt?.whyThisStep || explanation.whyThisStep || "";
     const rationaleText = gpt?.whyThisIngredient || explanation.whyThisIngredient || entry.rationale || "Matched from the approved knowledge base.";
+    const expertBoth = state.expertView && gpt && explanation.whyThisIngredient
+      ? `<div class="ingredient-rule-version"><b>Rule-based version (always computed):</b> ${escapeHtml(explanation.whyThisStep || "")} ${escapeHtml(explanation.whyThisIngredient)}${gpt.cue && Number.isFinite(Number(gpt.cue.score)) ? `<small>GPT version CUE ${Number(gpt.cue.score).toFixed(2)} (threshold ${escapeHtml(String(state.routineMeta?.grounding?.cue?.threshold ?? 0.8))})${gpt.cue.attempt === 2 ? ", passed after one rewrite" : ""}</small>` : ""}</div>`
+      : "";
     const llm = gpt ? { text: gpt.whyThisIngredient } : null;
     const rationaleTag = gpt
       ? gptTag(gpt)
@@ -522,7 +540,7 @@ function approvedIngredientCandidatePanel(meta = state.routineMeta) {
       : '<span class="ingredient-pick-chip is-rule">top-scored</span>';
     const ranking = Array.isArray(attr.ranking) ? attr.ranking.map((item) => `${item.rank}. ${item.displayName} (${Number(item.score).toFixed(3)})`).join(" · ") : "—";
     const retrieval = trace.retrieval ? `${trace.retrieval.mode || "retrieval"} · pool ${trace.poolSource || "—"}` : (trace.poolSource || "not reported");
-    return `<article><div><strong>${escapeHtml(entry.displayName || "Approved ingredient")}</strong><small>${escapeHtml(`${entry.phase === "am" ? "Morning" : "Evening"} · ${entry.categoryTitle || entry.categoryId || "routine category"}`)} ${pickChip}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Evidence ${icon("arrow", 12)}</a>` : ""}${whyStep ? `<p class="ingredient-why-step"><b>Why this step:</b> ${escapeHtml(whyStep)}</p>` : ""}<p class="ingredient-rationale ${llm && llm.text ? "is-grounded" : ""}"><b>Why this ingredient:</b> ${escapeHtml(rationaleText)}</p>${rationaleTag}${ingredientAttributionMarkup(attr)}<details class="selection-trace"><summary>Selection trace</summary><span>Category: ${escapeHtml(trace.category?.title || entry.categoryId || "—")}</span><span>Retrieval: ${escapeHtml(retrieval)}</span><span>Pool ranking: ${escapeHtml(ranking)}</span><span>Language model: ${escapeHtml(String(trace.llmPickStatus || "not requested").replaceAll("_", " "))}</span><span>Record: ${escapeHtml(trace.selectedRecord?.ingredientId || entry.ingredientId || "—")} · v${escapeHtml(String(trace.selectedRecord?.version || "—"))}</span><span>Compatibility: ${escapeHtml(trace.compatibility?.status || "not reported")} · checked against ${escapeHtml(checked)}</span>${explanation.whyThisIngredient ? `<span>Score explanation: ${escapeHtml(explanation.whyThisIngredient)}</span>` : ""}</details></article>`;
+    return `<article><div><strong>${escapeHtml(entry.displayName || "Approved ingredient")}</strong><small>${escapeHtml(`${entry.phase === "am" ? "Morning" : "Evening"} · ${entry.categoryTitle || entry.categoryId || "routine category"}`)} ${pickChip}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Evidence ${icon("arrow", 12)}</a>` : ""}${whyStep ? `<p class="ingredient-why-step"><b>Why this step:</b> ${escapeHtml(whyStep)}</p>` : ""}<p class="ingredient-rationale ${llm && llm.text ? "is-grounded" : ""}"><b>Why this ingredient:</b> ${escapeHtml(rationaleText)}</p>${rationaleTag}${expertBoth}${ingredientAttributionMarkup(attr)}<details class="selection-trace"><summary>Selection trace</summary><span>Category: ${escapeHtml(trace.category?.title || entry.categoryId || "—")}</span><span>Retrieval: ${escapeHtml(retrieval)}</span><span>Pool ranking: ${escapeHtml(ranking)}</span><span>Language model: ${escapeHtml(String(trace.llmPickStatus || "not requested").replaceAll("_", " "))}</span><span>Record: ${escapeHtml(trace.selectedRecord?.ingredientId || entry.ingredientId || "—")} · v${escapeHtml(String(trace.selectedRecord?.version || "—"))}</span><span>Compatibility: ${escapeHtml(trace.compatibility?.status || "not reported")} · checked against ${escapeHtml(checked)}</span>${explanation.whyThisIngredient ? `<span>Score explanation: ${escapeHtml(explanation.whyThisIngredient)}</span>` : ""}</details></article>`;
   }).join("");
   return `<section class="research-context-card ingredient-candidate-panel"><div class="ingredient-card-top"><div><p class="ingredient-eyebrow">${icon("shield", 14)} Approved ingredient recommendations</p><h3>Named AM/PM recommendations</h3></div><span class="ingredient-output-mode">${escapeHtml(selection.registryVersion || "live database")}</span></div><p class="ingredient-card-summary">Each step's candidates are retrieved from the approved knowledge base, ranked by a transparent score, and rescanned by the final safety pass.</p>${gptStatusMarkup}${removedMarkup}<div class="research-context-list">${cards}</div></section>`;
 }
@@ -1201,7 +1219,7 @@ function synthesizedRoutineCard(routine, meta) {
     ? `<section class="ai-category-rationale"><div><span>${icon("sparkles", 14)} AI category rationale</span><small>${escapeHtml(aiRationale.cue && aiRationale.cue.score !== null && aiRationale.cue.score !== undefined ? `CUE ${Number(aiRationale.cue.score).toFixed(2)} · ${String(aiRationale.cue.status || "").replaceAll("_", " ")}` : (aiRationale.label || String(aiRationale.status).replaceAll("_", " ")))}</small></div><p>${escapeHtml(aiRationale.text)}</p><strong>${escapeHtml(aiRationale.boundary || "Deterministic safety checks remain the final authority for every displayed category.")}</strong></section>`
     : `<section class="ai-category-rationale is-unavailable"><div><span>${icon("info", 14)} AI category rationale</span><small>Not available</small></div><p>No AI category rationale is shown because the configured gate did not permit it or the GPT billing/provider connection is unavailable.</p><strong>Deterministic safety checks remain the final authority for every displayed category.</strong></section>`;
   const candidates = Array.isArray(meta?.ingredientCandidates?.entries) ? meta.ingredientCandidates.entries : [];
-  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span></div>${approvedIngredientCandidatePanel(meta)}<div class="synth-structure-label">${icon("layers", 13)} Routine structure by category</div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these recommendations?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p>${meta?.explanation?.level1?.text ? `<p class="peg-level1"><b>Environment (level 1):</b> ${escapeHtml(meta.explanation.level1.text)}</p>` : ""}${aiRationaleMarkup}</div>` : ""}</section>`;
+  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><div class="synth-top-actions"><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span><button type="button" class="expert-toggle" data-action="toggle-expert" aria-pressed="${state.expertView}">${state.expertView ? "Expert view on" : "Expert view"}</button></div></div>${degradedBanner(meta)}${approvedIngredientCandidatePanel(meta)}<div class="synth-structure-label">${icon("layers", 13)} Routine structure by category</div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these recommendations?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p>${meta?.explanation?.level1?.text ? `<p class="peg-level1"><b>Environment (level 1):</b> ${escapeHtml(meta.explanation.level1.text)}</p>` : ""}${aiRationaleMarkup}</div>` : ""}</section>`;
 }
 
 function simulatorView() {
@@ -1956,6 +1974,7 @@ document.addEventListener("click", (event) => {
   if (action === "concern-choice") { if (state.runStatus === "running") return; state.concern = target.dataset.concern; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); return; }
   if (action === "simulate") { generateRoutine(); return; }
   if (action === "report-condition") { state.reportedConditions = { ...(state.reportedConditions || {}), [target.dataset.key]: target.dataset.value }; render(); return; }
+  if (action === "toggle-expert") { state.expertView = !state.expertView; render(); return; }
   if (action === "submit-conditions") { generateRoutine({ reportedConditions: state.reportedConditions }); return; }
   if (action === "reason") { state.reasonOpen = !state.reasonOpen; render(); return; }
   if (action === "batch") { runBatch(); return; }

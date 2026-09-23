@@ -167,6 +167,15 @@ The triage report gives sensitivity and specificity per method and records the h
 
 `npm run eval:input-sensitivity` measures how much each input changes the output (full grid, about 2 minutes). `npm test` runs a 720-run quick version and fails if any input stops mattering.
 
+## GPT layer: live evidence, budget and fallbacks
+
+- `npm run eval:live` (with `npm start` running and live keys in `.env`) sends 20 routine requests across 10 cities and 4 profiles, asks for the GPT explanations of each, and reports GPT success, invented or out-of-pool picks, agreement with the candidate score, degraded runs, CUE results and latency (`data/evaluation/reports/live-gpt-evaluation.latest.md`). `npm run report:selection-log` summarises everything logged, including explanation drafts from `data/logs/context-log.jsonl`.
+- The ingredient picker is never shown the candidate score, retrieval rank, fit factor or EWG reference, and options are listed alphabetically, so agreement with the score is an independent result. The report gives agreement expected by chance and kappa.
+- Each routine request has a shared GPT time budget (`GPT_ROUTINE_BUDGET_MS`, 20 s); explanations have their own (`GPT_CONTEXT_BUDGET_MS`, 45 s). When GPT fails or runs out of time, the rule-based result is used and the response carries `degraded` with plain-language reasons, shown in the app as "Reduced mode".
+- Every step always has a rule-based reason. The Expert view toggle on the routine card shows the rule-based and GPT versions side by side, with CUE scores.
+- CUE against people: `npm run cue:sheet` builds a blinded rating sheet from logged drafts; raters fill it; `npm run eval:cue-human` reports agreement and Cohen's kappa. Steps are in [data/evaluation/cue-rating](data/evaluation/cue-rating/README.md).
+- `npm run eval:gpt-layer` (part of `npm test`) checks these contracts offline against a mock of the OpenAI API.
+
 ## When live weather is unavailable
 
 With `LIVE_SERVICES_ENABLED=true`, the app never falls back to demo weather. If the weather or air-quality lookup fails, the routine request returns `status: "needs_conditions"` and the app asks the user four quick questions (sun, air, haze, temperature). The routine is then built from those answers and labelled "Your reported conditions". Demo readings are used only when live services are switched off.

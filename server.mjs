@@ -36,7 +36,7 @@ import {
   triageRoutineRequest,
 } from "./lib/safety.mjs";
 import { summarizeKnowledgeContext, synthesizeRoutine, composeIngredientRationales, synthesizeIngredientSelection, composeRoutineContext } from "./lib/synthesis.mjs";
-import { describeOpenAiError, openAiStatus } from "./lib/openai.mjs";
+import { budgetSummary, createGptBudget, currentGptBudget, describeOpenAiError, openAiStatus, runWithGptBudget } from "./lib/openai.mjs";
 import { functionalClass } from "./lib/ingredient-evidence-corpus.mjs";
 import { evidenceGrade } from "./lib/ingredient-evidence-notes.mjs";
 import { getEwgReference } from "./lib/kb-reference.mjs";
@@ -45,7 +45,7 @@ import { buildIngredientEvidenceCorpus } from "./lib/ingredient-evidence-corpus.
 import { postSelectionSafetyPass } from "./lib/post-selection-safety.mjs";
 import { effectiveReactivity } from "./lib/personalisation.mjs";
 import { buildTwoLevelExplanation, slotReasonText } from "./lib/peg.mjs";
-import { appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
+import { appendContextLog, appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
 import { getRuntimePolicy } from "./lib/policy-store.mjs";
 import { getIngredientEvidenceNote } from "./lib/ingredient-evidence-notes.mjs";
 import {
@@ -900,7 +900,7 @@ async function selectNamedIngredients({ routine, profile, finishPreference, conc
     llm.status = "not_configured";
   }
   const selection = llm.requested
-    ? selectApprovedIngredientCandidates({ ...base, selectionMap, llmRequested: true, llmRejected: llm.rejected })
+    ? selectApprovedIngredientCandidates({ ...base, selectionMap, llmRequested: true, llmFailed: llm.status !== "completed", llmRejected: llm.rejected })
     : pre;
   stages.push(stage("ingredient_selection", selection.status, selectionStarted, {
     selectionMode: selection.selectionMode || null,
@@ -1029,6 +1029,8 @@ async function routineResult({
       postSafety,
       cue: cue ? { status: cue.status || null, score: cue.score ?? null, method: cue.method || null } : null,
       llm,
+      gptBudget: budgetSummary(currentGptBudget()),
+      stages: stages.map((item) => ({ id: item.id, status: item.status, durationMs: item.durationMs })),
     }));
   }
   return {
@@ -1163,7 +1165,39 @@ function stage(id, status, startedAt, detail = {}) {
   };
 }
 
+/**
+ * C4/C5: every GPT call made while serving one routine shares one time budget
+ * (GPT_ROUTINE_BUDGET_MS, default 20 s). When a GPT step fails, times out or is
+ * skipped, the rule-based path answers instead and the response says so in
+ * `degraded`, so a reduced answer is never presented as a full one.
+ */
 async function handleRoutine(input, requestId) {
+  const gptActive = Boolean(config.liveServicesEnabled && config.openai?.apiKey);
+  const budget = gptActive ? createGptBudget(config.openai.routineBudgetMs) : null;
+  const result = budget ? await runWithGptBudget(budget, () => handleRoutineRun(input, requestId)) : await handleRoutineRun(input, requestId);
+  return { ...result, gpt: { active: gptActive, budget: budgetSummary(budget) }, degraded: degradedStatus(result, { gptActive, budget }) };
+}
+
+function degradedStatus(result, { gptActive, budget }) {
+  const stages = result?.trace?.stages || [];
+  const find = (name) => stages.find((item) => item.id === name) || null;
+  const reasons = [];
+  if (gptActive) {
+    if (budget?.exhausted) reasons.push({ id: "gpt_time_budget", text: `GPT used its ${Math.round(budget.totalMs / 1000)}-second budget, so the remaining GPT steps were skipped.` });
+    const triage = find("triage");
+    if (triage?.secondOpinion === "failed") reasons.push({ id: "ai_symptom_check_failed", text: "The AI second symptom check did not complete; the rule-based symptom check still ran." });
+    const synthesis = find("synthesis");
+    if (synthesis && synthesis.providerCode && synthesis.providerCode !== "not_enabled" && synthesis.providerCode !== "insufficient_evidence") reasons.push({ id: "gpt_category_selection_failed", text: "GPT did not complete the routine selection; the rule-based routine is shown." });
+    const selection = find("ingredient_selection");
+    if (String(selection?.llm?.status || "").startsWith("failed")) reasons.push({ id: "gpt_ingredient_pick_failed", text: "GPT did not complete the ingredient choice; the top-scored ingredient was used in each step." });
+  }
+  const environmentMode = result?.environment?.mode;
+  if (environmentMode === "degraded") reasons.push({ id: "environment_partial", text: "Some live environmental readings were missing." });
+  if (environmentMode === "user_reported") reasons.push({ id: "environment_user_reported", text: "Live readings were unavailable, so the conditions you reported were used." });
+  return { status: reasons.length ? "degraded" : "full", reasons };
+}
+
+async function handleRoutineRun(input, requestId) {
   const startedAt = new Date();
   const profile = requiredChoice(input.profile, ALLOWED_PROFILES, "profile", "combination");
   const concern = requiredConcern(input.concern);
@@ -1455,6 +1489,7 @@ async function routeApi(request, response, url, requestId) {
         openai: openAiStatus(config),
         postSelectionSafetyPass: true,
         selectionLog: Boolean(config.selectionLog.enabled),
+        gptBudgetMs: { routine: config.openai.routineBudgetMs, explanations: config.openai.contextBudgetMs },
       },
       requestId,
     }, requestId);
@@ -1603,7 +1638,15 @@ async function routeApi(request, response, url, requestId) {
     if (!config.liveServicesEnabled || !config.openai?.apiKey) throw new HttpError(503, describeOpenAiError({ code: "not_enabled" }));
     try {
       if (!cached.result) {
-        cached.pending = cached.pending || composeRoutineContext({ config, ...cached.payload });
+        if (!cached.pending) {
+          const contextStarted = Date.now();
+          const budget = createGptBudget(config.openai.contextBudgetMs);
+          cached.budget = budget;
+          cached.pending = runWithGptBudget(budget, () => composeRoutineContext({ config, ...cached.payload })).then(async (result) => {
+            await appendContextLog(config, { runId, latencyMs: Date.now() - contextStarted, model: result.model, retry: result.retry, budget: budgetSummary(budget), accepted: { steps: Object.keys(result.steps).length, ingredients: Object.keys(result.ingredients).length }, withheld: result.withheld, drafts: result.audit });
+            return result;
+          });
+        }
         cached.result = await cached.pending;
       }
       return sendJson(response, 200, {
@@ -1613,6 +1656,8 @@ async function routeApi(request, response, url, requestId) {
         steps: cached.result.steps,
         ingredients: cached.result.ingredients,
         withheld: cached.result.withheld,
+        retry: cached.result.retry,
+        budget: budgetSummary(cached.budget),
         cue: { threshold: config.cueThreshold, method: config.cue.method },
         requestId,
       }, requestId);
