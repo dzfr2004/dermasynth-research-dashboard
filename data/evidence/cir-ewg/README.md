@@ -57,11 +57,15 @@ These files live in a subfolder so they are **not** swept into the default
 All 50 Atlas ingredients now have a source-verified card; the full set
 dry-run validates as 50 records with no duplicate document IDs.
 
-- **46** cards are `verified_paraphrase` (a read CIR/SCCS/EU conclusion,
+- **47** cards are `verified_paraphrase` (a read CIR/SCCS/AICIS/EU conclusion,
   paraphrased with attribution + source link).
-- **4** cards are `verified_status_no_dedicated_assessment` — an honest record
+- **3** cards are `verified_status_no_dedicated_assessment` — an honest record
   that **no dedicated cosmetic panel opinion exists**, not a safety conclusion:
-  Ectoin, Retinal (retinaldehyde), Mandelic Acid, Tranexamic Acid.
+  Ectoin, Mandelic Acid, Tranexamic Acid (all re-checked 2026-09-23; see each
+  card's `recheck_log`).
+- Retinal moved from a status card to an **AICIS** conclusion on 2026-09-23:
+  Evaluation Statement EVA00186 (26 June 2026) classifies it as a developmental
+  toxicant (Repr. 1B). It is excluded from routine selection.
 
 Files (all dry-run validated):
 - `cir-factual-context.verified.batch1..5.v1.jsonl` — CIR conclusions.
@@ -71,7 +75,7 @@ Files (all dry-run validated):
   beta-glucan, plus the status cards).
 
 Source families used where CIR had no assessment: **SCCS** (Alpha-Arbutin,
-Titanium Dioxide, Retinal context), **EU-regulation** (Piroctone Olamine),
+Titanium Dioxide), **AICIS** (Retinal), **EU-regulation** (Piroctone Olamine),
 **regulatory-status** (Tranexamic Acid, Ectoin, Mandelic Acid). Petrolatum is a
 CIR-deferred-to-FDA card.
 
@@ -80,8 +84,11 @@ and `routine_selection_allowed: false`; a qualified reviewer must reconfirm each
 against its source before anything is set to approved/activated. The
 `cir-ewg-factual-context.scaffold-50.v1.jsonl` file remains as the regenerable
 template and is **not** ingested alongside the verified set (it would duplicate).
-- EWG ratings: left **unverified by design** — Skin Deep scores change over
-  time, so freeze one only with a recorded "date checked".
+- EWG ratings: recorded on 2026-09-23 with the check date, in
+  `ewg-reference-context.verified.batch8.v1.jsonl` (46 cards) and
+  `data/ingredients/ewg-hazard-reference.v1.json` (all 50 ingredients; 4 have
+  no exact Skin Deep entry: Ceramide 1, Ceramide 3, Ceramide 6 II, Lanolin).
+  Skin Deep scores change over time, so re-check before citing a value.
 - `verified_by` on batch 1 marks these as web-search-assisted drafts; a
   qualified reviewer must reconfirm against each source PDF, and
   `clinical_review_status` stays `pending` (no activation without qualified
@@ -92,3 +99,27 @@ template and is **not** ingested alongside the verified set (it would duplicate)
 CIR remains citation/paraphrase-with-attribution; EWG remains
 reference-with-attribution. The Atlas stores project-authored factual summaries
 and source locators, not the source corpora themselves.
+
+## What `routine_selection_allowed: false` on a card means
+
+Every card carries `routine_selection_allowed: false`, `card_role:
+"grounding_evidence_only"` and `selection_authority:
+"ingredient_governance_record"`. The flag is about the **card**, not the
+ingredient: an evidence card can ground an explanation or a retrieval result,
+but it can never on its own authorise a routine. Whether an ingredient may be
+selected is decided by its governed ingredient record in the knowledge-base
+database (`approval_state` = approved/published and `routine_selection_allowed`
+= true), which is signed off through the governance workflow. So Zinc Oxide's
+card saying `false` and Zinc Oxide being selectable are consistent: the card
+supplies the evidence, the ingredient record carries the permission.
+
+## How EWG is used
+
+EWG Skin Deep is a consumer-advocacy hazard rating, not a regulatory
+conclusion, and it often disagrees with CIR/SCCS. DermaSynth therefore:
+
+- never uses an EWG card as the safety note behind an ingredient (those come
+  from CIR, SCCS, AICIS or EU/FDA cards only);
+- uses the EWG score only as a low-weight factor (weight 0.10 of 1.00) in the
+  transparent candidate score, shown in every explanation;
+- never lets EWG override the deterministic safety passes.

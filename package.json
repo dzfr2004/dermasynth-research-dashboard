@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "node --watch server.mjs",
     "start": "node server.mjs",
-    "check": "node --check app.js && node --check server.mjs && node --check lib/environment.mjs && node --check lib/explainability.mjs && node --check lib/ingredient-selection.mjs && node --check scripts/promote-signedoff-corpus.mjs && node --check scripts/reindex-approved-knowledge-base.mjs && node --check scripts/fit-environmental-surrogate.mjs",
+    "check": "node --check app.js && node --check server.mjs && node --check lib/environment.mjs && node --check lib/explainability.mjs && node --check lib/ingredient-selection.mjs && node --check scripts/promote-signedoff-corpus.mjs && node --check scripts/reindex-approved-knowledge-base.mjs && node --check scripts/fit-environmental-surrogate.mjs && node --check lib/candidate-retrieval.mjs && node --check lib/cue.mjs && node --check lib/post-selection-safety.mjs && node --check lib/peg.mjs && node --check labelling.js",
     "test": "npm run check && npm run verify:ingredient-kb && npm run verify:demo-kb && npm run eval:study && npm run eval:retrieval && npm run eval:safety-50 && npm run eval:ingredient-selection && npm run eval:category-coverage",
     "db:migrate": "node scripts/migrate-db.mjs",
     "db:seed": "node scripts/seed-ingredient-db.mjs --fresh",
@@ -36,7 +38,17 @@
     "eval:ingredient-selection": "node scripts/evaluate-ingredient-selection.mjs",
     "eval:category-coverage": "node scripts/evaluate-category-coverage.mjs",
     "eval:uat": "node scripts/score-uat.mjs",
-    "eval:inter-rater": "node scripts/score-inter-rater.mjs"
+    "eval:inter-rater": "node scripts/score-inter-rater.mjs",
+    "check:openai": "node scripts/check-openai.mjs",
+    "labelling:sheet": "node scripts/generate-labelling-sheet.mjs",
+    "labelling:import": "node scripts/import-expert-labels.mjs",
+    "fit:environmental-expert": "node scripts/fit-environmental-surrogate.mjs data/models/environmental-context-training.expert.v1.csv --source expert",
+    "report:selection-log": "node scripts/report-selection-log.mjs",
+    "report:corpus-inventory": "node scripts/corpus-inventory.mjs",
+    "db:apply-kb-update": "node scripts/apply-kb-update-2026-09.mjs",
+    "sync:evidence-pinecone": "node scripts/sync-ingredient-evidence-pinecone.mjs"
   },
-  "dependencies": { "better-sqlite3": "^12.11.1" }
+  "dependencies": {
+    "better-sqlite3": "^12.11.1"
+  }
 }

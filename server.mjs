@@ -35,6 +35,12 @@ import {
   triageRoutineRequest,
 } from "./lib/safety.mjs";
 import { summarizeKnowledgeContext, synthesizeRoutine, composeIngredientRationales, synthesizeIngredientSelection } from "./lib/synthesis.mjs";
+import { retrieveSlotCandidates } from "./lib/candidate-retrieval.mjs";
+import { buildIngredientEvidenceCorpus } from "./lib/ingredient-evidence-corpus.mjs";
+import { postSelectionSafetyPass } from "./lib/post-selection-safety.mjs";
+import { buildTwoLevelExplanation } from "./lib/peg.mjs";
+import { appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
+import { getRuntimePolicy } from "./lib/policy-store.mjs";
 import { getIngredientEvidenceNote } from "./lib/ingredient-evidence-notes.mjs";
 import {
   appendReviewerAnnotation,
@@ -112,6 +118,9 @@ const publicFiles = new Map([
   ["/app.js", { path: "app.js", contentType: "text/javascript; charset=utf-8" }],
   ["/styles.css", { path: "styles.css", contentType: "text/css; charset=utf-8" }],
   ["/assets/dermasynth-mark.svg", { path: "assets/dermasynth-mark.svg", contentType: "image/svg+xml" }],
+  ["/labelling", { path: "labelling.html", contentType: "text/html; charset=utf-8" }],
+  ["/labelling.html", { path: "labelling.html", contentType: "text/html; charset=utf-8" }],
+  ["/labelling.js", { path: "labelling.js", contentType: "text/javascript; charset=utf-8" }],
 ]);
 
 class HttpError extends Error {
@@ -467,14 +476,14 @@ function acquireRoutineBudget(request) {
 function notRunRetrieval() {
   return {
     mode: "not_run",
-    cueScore: 0,
+    sufficiencyScore: 0,
     scoreType: "not_run",
     evidence: [],
     eligibleEvidence: [],
     gate: {
+      kind: "evidence_sufficiency",
       passed: false,
-      cueScore: 0,
-      cueThreshold: config.cueThreshold,
+      sufficiencyScore: 0,
       relevanceThreshold: null,
       criteria: [],
       rationale: "Retrieval was not run because symptom triage redirected the request.",
@@ -552,11 +561,35 @@ function optionalConcernFromQuery(url) {
   return requiredConcern(value);
 }
 
-function groundingPayload(retrieval) {
+function cuePayload(cue) {
+  if (!cue || typeof cue !== "object" || cue.score === undefined) {
+    return {
+      status: cue?.status || "not_run",
+      score: null,
+      threshold: config.cueThreshold,
+      passed: null,
+      method: cue?.method || null,
+      explanation: "CUE scores model-written text against the context it was given. It runs only when the language model writes a rationale.",
+    };
+  }
+  return {
+    status: cue.status || (cue.passed ? "passed" : "withheld_below_threshold"),
+    score: cue.score,
+    threshold: cue.threshold ?? config.cueThreshold,
+    passed: Boolean(cue.passed),
+    method: cue.method || null,
+    evaluatedClaims: cue.evaluatedClaims ?? null,
+    supportedClaims: cue.supportedClaims ?? null,
+    attempts: Array.isArray(cue.attempts) ? cue.attempts : [],
+    unsupported: Array.isArray(cue.unsupported) ? cue.unsupported : [],
+  };
+}
+
+function groundingPayload(retrieval, cue = null) {
   const gate = retrieval.gate || {};
   return {
-    cueScore: Number.isFinite(Number(retrieval.cueScore)) ? Number(retrieval.cueScore) : 0,
-    threshold: Number.isFinite(Number(gate.cueThreshold)) ? Number(gate.cueThreshold) : config.cueThreshold,
+    kind: "evidence_sufficiency",
+    sufficiencyScore: Number.isFinite(Number(retrieval.sufficiencyScore)) ? Number(retrieval.sufficiencyScore) : 0,
     passed: Boolean(gate.passed),
     evidenceCount: Array.isArray(retrieval.evidence) ? retrieval.evidence.length : 0,
     eligibleEvidenceCount: Array.isArray(retrieval.eligibleEvidence) ? retrieval.eligibleEvidence.length : 0,
@@ -564,6 +597,8 @@ function groundingPayload(retrieval) {
     relevanceThreshold: gate.relevanceThreshold ?? null,
     criteria: Array.isArray(gate.criteria) ? gate.criteria : [],
     rationale: gate.rationale || "No retrieval gate result is available.",
+    relevanceMethod: retrieval.relevanceMethod || null,
+    cue: cuePayload(cue),
   };
 }
 
@@ -646,7 +681,13 @@ function aiCategoryRationalePayload(routine) {
       tags: Array.isArray(rationale.tags) ? rationale.tags : [],
       factors: Array.isArray(rationale.factors) ? rationale.factors : [],
       text: rationale.text,
-      boundary: "The model selected only constrained rationale tags. Visible wording is locally allowlisted, and deterministic safety checks remain the final authority.",
+      compositionStatus: rationale.compositionStatus || null,
+      cue: rationale.cue ? cuePayload(rationale.cue) : null,
+      boundary: rationale.compositionStatus === "withheld_below_cue_threshold"
+        ? "The model's composed paragraph was withheld because its CUE stayed below the threshold after one regeneration; the locally allowlisted text is shown instead."
+        : rationale.mode === "openai_composed_grounded_rationale"
+          ? "Composed by the model from the supplied facts and retrieved evidence, then checked with CUE and the deterministic safety passes."
+          : "The model selected only constrained rationale tags. Visible wording is locally allowlisted, and deterministic safety checks remain the final authority.",
     };
   }
   return {
@@ -682,6 +723,8 @@ function buildRunReport({
   aiCategoryRationale,
   ingredientCandidates,
   namedRoutine,
+  cue = null,
+  explanation = null,
 }) {
   const finishedAt = new Date();
   return {
@@ -707,7 +750,7 @@ function buildRunReport({
       mode: retrieval.mode,
       query: retrieval.query || "",
       scoreType: retrieval.scoreType,
-      gate: groundingPayload(retrieval),
+      gate: groundingPayload(retrieval, cue),
       trace: retrieval.trace || {},
       evidence: (retrieval.evidence || []).map(evidenceProvenance),
     },
@@ -716,6 +759,7 @@ function buildRunReport({
       checks: safety.checks || [],
       rules: safety.rules || [],
       flags: safety.flags || [],
+      postSelection: safety.postSelection || null,
     },
     ingredientResearch,
     ingredientCandidates,
@@ -729,17 +773,88 @@ function buildRunReport({
       notices: researchEvidence?.notices || [],
     },
     explainability: explainability || null,
+    explanation: explanation || null,
     aiCategoryRationale,
   };
 }
 
-function routineResult({
+function selectionUnavailable(status, notice) {
+  return { status, registryVersion: getRuntimePolicy().policyVersion, entries: [], pool: [], notices: [notice], boundary: "Routine steps remain broad categories. No named ingredient candidate is shown." };
+}
+
+/**
+ * Named-ingredient layer: retrieve each slot's pool, optionally let the model
+ * choose within it, re-validate, then run the post-selection safety pass over
+ * the final output. Returns the selection plus everything the run report and
+ * selection log need.
+ */
+async function selectNamedIngredients({ routine, concern, environment, reactivityLevel, allowLlmSelection, stages }) {
+  const repo = knowledgeRepo();
+  const selectionStarted = Date.now();
+  const policy = getRuntimePolicy();
+  const categoryIds = [...(routine?.am || []), ...(routine?.pm || [])].map((step) => String(step?.id || "").toLowerCase()).filter(Boolean);
+  let corpus = [];
+  try {
+    corpus = buildIngredientEvidenceCorpus({ ingredients: repo.listIngredients(), sources: repo.listSources() });
+  } catch {
+    corpus = [];
+  }
+  const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds, concern, environment, policy });
+  stages.push(stage("ingredient_retrieval", corpus.length ? "completed" : "unavailable", selectionStarted, {
+    corpusDocuments: corpus.length,
+    modes: [...new Set([...slotRetrieval.values()].map((item) => item.mode))],
+  }));
+
+  const base = { enabled: true, repository: repo, routine, concern, environment, reactivityLevel, slotRetrieval };
+  const pre = selectApprovedIngredientCandidates(base);
+  const llm = { requested: false, status: "not_requested", raw: [], rejected: [] };
+  let selectionMap = null;
+  const llmPermitted = allowLlmSelection && config.liveServicesEnabled && config.openai?.apiKey;
+  if (llmPermitted && pre.status === "available" && pre.pool.some((slot) => slot.candidates.length)) {
+    llm.requested = true;
+    const llmStarted = Date.now();
+    try {
+      const result = await synthesizeIngredientSelection({ config, concern, environment, pool: pre.pool });
+      selectionMap = result.map;
+      llm.status = "completed";
+      llm.raw = result.raw;
+      llm.rejected = result.rejected;
+    } catch (error) {
+      llm.status = "failed_fell_back_to_top_score";
+      llm.error = error instanceof ExternalServiceError ? error.code || "provider_error" : "provider_error";
+    }
+    llm.latencyMs = Date.now() - llmStarted;
+  } else if (allowLlmSelection && !llmPermitted) {
+    llm.status = "not_configured";
+  }
+  const selection = llm.requested
+    ? selectApprovedIngredientCandidates({ ...base, selectionMap, llmRequested: true, llmRejected: llm.rejected })
+    : pre;
+  stages.push(stage("ingredient_selection", selection.status, selectionStarted, {
+    selectionMode: selection.selectionMode || null,
+    llm: { requested: llm.requested, status: llm.status, rejected: llm.rejected.length },
+  }));
+
+  const postStarted = Date.now();
+  const postSafety = postSelectionSafetyPass({ entries: selection.entries, concern, reactivityLevel, environment });
+  selection.entries = postSafety.entries;
+  selection.removedBySafety = postSafety.removed;
+  if (!selection.entries.length && postSafety.removed.length) selection.status = "removed_by_post_selection_safety";
+  stages.push(stage("post_selection_safety", postSafety.status, postStarted, {
+    ruleIds: postSafety.rules.map((item) => item.id),
+    removed: postSafety.removed.map((item) => item.ingredientId),
+  }));
+  return { selection, postSafety, llm };
+}
+
+async function routineResult({
   requestId,
   startedAt,
   profile,
   concern,
   finishPreference,
   reactivityLevel,
+  exposureContext,
   symptomsProvided,
   requestedLocation,
   mode,
@@ -753,7 +868,7 @@ function routineResult({
   notices = [],
   researchEvidence = null,
   explainability = null,
-  ingredientSelectionMap = null,
+  allowLlmSelection = false,
 }) {
   const ingredientResearch = ingredientResearchForConcern(concern, {
     exposeCandidates: status !== "medical_redirect",
@@ -761,16 +876,44 @@ function routineResult({
   const resolvedResearchEvidence = researchEvidence || notRunResearchEvidence();
   const resolvedExplainability = explainability || buildEnvironmentalExplainability({ concern, environment });
   const aiCategoryRationale = aiCategoryRationalePayload(routine);
-  const ingredientCandidates = selectApprovedIngredientCandidates({
-    enabled: config.ingredientSelectionEnabled && config.ingredientDb?.enabled && status !== "medical_redirect" && safety?.status === "cleared",
-    repository: knowledgeRepo(),
-    routine,
-    concern,
-    environment,
-    reactivityLevel,
-    selectionMap: ingredientSelectionMap,
-  });
+  const cue = routine?.generation?.aiRationale?.cue || null;
+  if (routine) {
+    stages.push(stage("cue", cue ? String(cue.status || (cue.passed ? "passed" : "withheld_below_threshold")) : "not_run", Date.now(), {
+      score: cue?.score ?? null,
+      threshold: config.cueThreshold,
+      method: cue?.method || null,
+    }));
+  }
+
+  const selectionEnabled = config.ingredientSelectionEnabled && config.ingredientDb?.enabled && status !== "medical_redirect" && safety?.status === "cleared" && routine;
+  let ingredientCandidates;
+  let postSafety = null;
+  let llm = { requested: false, status: "not_requested" };
+  if (!selectionEnabled) {
+    ingredientCandidates = selectApprovedIngredientCandidates({ enabled: false });
+  } else {
+    try {
+      ({ selection: ingredientCandidates, postSafety, llm } = await selectNamedIngredients({ routine, concern, environment, reactivityLevel, allowLlmSelection, stages }));
+    } catch {
+      ingredientCandidates = selectionUnavailable("knowledge_base_unavailable", "The approved knowledge base could not be read, so no named ingredient is shown.");
+    }
+  }
+  const resolvedSafety = postSafety
+    ? {
+      ...safety,
+      checks: [...new Set([...(safety.checks || []), ...postSafety.checks])],
+      rules: [...(safety.rules || []), ...postSafety.rules],
+      postSelection: { status: postSafety.status, removed: postSafety.removed, flags: postSafety.flags },
+    }
+    : safety;
   const namedRoutine = enrichRoutineWithApprovedIngredients(routine, ingredientCandidates);
+  const explanation = routine ? buildTwoLevelExplanation({ explainability: resolvedExplainability, routine, entries: ingredientCandidates.entries || [], environment, concern }) : null;
+  if (explanation) {
+    for (const entry of ingredientCandidates.entries || []) {
+      const level2 = explanation.level2.find((item) => item.ingredientId === entry.ingredientId && item.phase === entry.phase);
+      if (level2) entry.explanation = { whyThisStep: level2.whyThisStep, whyThisIngredient: level2.whyThisIngredient };
+    }
+  }
   const runReport = buildRunReport({
     requestId,
     startedAt,
@@ -782,7 +925,7 @@ function routineResult({
     requestedLocation,
     environment,
     retrieval,
-    safety,
+    safety: resolvedSafety,
     stages,
     mode,
     status,
@@ -793,7 +936,25 @@ function routineResult({
     aiCategoryRationale,
     ingredientCandidates,
     namedRoutine,
+    cue,
+    explanation,
   });
+  if (selectionEnabled) {
+    await appendSelectionLog(config, selectionLogRecord({
+      runId: requestId,
+      startedAt,
+      concern,
+      profile,
+      reactivityLevel,
+      environment,
+      routineMode: mode,
+      synthesisStatus,
+      selection: ingredientCandidates,
+      postSafety,
+      cue: cue ? { status: cue.status || null, score: cue.score ?? null, method: cue.method || null } : null,
+      llm,
+    }));
+  }
   return {
     mode,
     status,
@@ -804,18 +965,20 @@ function routineResult({
     profileModifiers: {
       ...(finishPreference === undefined ? {} : { finishPreference }),
       ...(reactivityLevel === undefined ? {} : { reactivityLevel }),
+      ...(exposureContext === undefined ? {} : { exposureContext }),
     },
     routine,
     namedRoutine,
     environment,
-    grounding: groundingPayload(retrieval),
-    safety,
+    grounding: groundingPayload(retrieval, cue),
+    safety: resolvedSafety,
     evidence: retrieval.evidence || [],
-    notices: uniqueNotices([...(retrieval.notices || []), ...notices]),
+    notices: uniqueNotices([...(retrieval.notices || []), ...notices, ...(postSafety?.flags || [])]),
     ingredientResearch,
     ingredientCandidates,
     researchEvidence: resolvedResearchEvidence,
     explainability: resolvedExplainability,
+    explanation,
     aiCategoryRationale,
     runReport,
     // Compact compatibility alias for clients that call this provenance a trace.
@@ -868,7 +1031,7 @@ function bulkResultFor({ profile, index, environment, retrieval, researchEvidenc
   const stages = [
     stage("input", "normalised", Date.now(), { profile: profile.profile }),
     stage("environment", environment?.mode || "unavailable", Date.now()),
-    stage("retrieval", retrieval?.mode || "not_run", Date.now(), { cueScore: retrieval?.cueScore ?? 0 }),
+    stage("retrieval", retrieval?.mode || "not_run", Date.now(), { sufficiencyScore: retrieval?.sufficiencyScore ?? 0 }),
     stage("research_knowledge", researchEvidence?.mode || "not_run", Date.now(), {
       ingredientCount: researchEvidence?.coverage?.uniqueIngredients ?? 0,
     }),
@@ -899,8 +1062,8 @@ function bulkResultFor({ profile, index, environment, retrieval, researchEvidenc
     profileId: profile.id || `SP-${String(2000 + index).padStart(4, "0")}`,
     profile: profile.profile,
     concern: profile.concern,
-    cueScore: Number(retrieval?.cueScore || 0),
-    cueGatePassed: strictGatePassed,
+    sufficiencyScore: Number(retrieval?.sufficiencyScore || 0),
+    evidenceGatePassed: strictGatePassed,
     researchEvidenceCount: researchEvidence?.coverage?.queryCoverage ?? 0,
     researchSourceCount: researchEvidence?.coverage?.sourceRecords ?? 0,
     safetyStatus: safety.status,
@@ -981,9 +1144,8 @@ async function handleRoutine(input, requestId) {
     ingredientCount: researchEvidence.coverage?.uniqueIngredients ?? 0,
     sourceRecords: researchEvidence.coverage?.sourceRecords ?? 0,
   }));
-  stages.push(stage("cue_gate", retrieval.gate?.passed ? "passed" : "blocked", Date.now(), {
-    cueScore: retrieval.cueScore,
-    threshold: retrieval.gate?.cueThreshold ?? config.cueThreshold,
+  stages.push(stage("evidence_sufficiency_gate", retrieval.gate?.passed ? "passed" : "blocked", Date.now(), {
+    sufficiencyScore: retrieval.sufficiencyScore,
     criteria: retrieval.gate?.criteria || [],
   }));
 
@@ -1003,7 +1165,7 @@ async function handleRoutine(input, requestId) {
   const genericSafety = combineSafety(firstPass, genericSecondPass);
 
   if (!retrieval.gate?.passed) {
-    stages.push(stage("synthesis", "category_fallback", Date.now(), { reason: "cue_gate_not_passed" }));
+    stages.push(stage("synthesis", "category_fallback", Date.now(), { reason: "evidence_sufficiency_gate_not_passed" }));
     stages.push(stage("second_safety", genericSafety.status, Date.now(), { ruleIds: (genericSecondPass.rules || []).map((rule) => rule.id) }));
     return routineResult({
       requestId,
@@ -1109,21 +1271,9 @@ async function handleRoutine(input, requestId) {
     });
   }
 
-  // LLM-driven ingredient synthesis, constrained to the RAG-approved pool. Only
-  // runs on the cleared, live path with selection enabled; on any failure the
-  // routine falls back to deterministic first-match selection.
-  let ingredientSelectionMap = null;
-  if (config.liveServicesEnabled && config.openai?.apiKey && config.ingredientSelectionEnabled && config.ingredientDb?.enabled) {
-    try {
-      const pre = selectApprovedIngredientCandidates({
-        enabled: true, repository: knowledgeRepo(), routine, concern, environment, reactivityLevel,
-      });
-      if (pre.status === "available" && Array.isArray(pre.pool) && pre.pool.length) {
-        ingredientSelectionMap = await synthesizeIngredientSelection({ config, concern, environment, pool: pre.pool });
-      }
-    } catch { ingredientSelectionMap = null; }
-  }
-
+  // The language model may choose named ingredients only on this fully cleared
+  // live path; routineResult() retrieves each slot's pool, re-validates the
+  // picks and runs the post-selection safety pass.
   return routineResult({
     requestId,
     startedAt,
@@ -1137,14 +1287,13 @@ async function handleRoutine(input, requestId) {
     mode: "live",
     status: "cleared",
     routine,
-    namedRoutine,
     environment,
-    ingredientSelectionMap,
+    allowLlmSelection: true,
     retrieval,
     safety,
     stages,
     synthesisStatus: "completed",
-    notices: ["Live category selection completed with eligible indexed evidence and two deterministic safety passes. Visible routine wording remains locally allowlisted and category-only."],
+    notices: ["Live category selection completed with sufficient evidence and two deterministic safety passes; named ingredients passed the post-selection safety pass."],
     researchEvidence,
     explainability,
   });
@@ -1165,6 +1314,9 @@ async function routeApi(request, response, url, requestId) {
         routineInFlightPerClient: ROUTINE_MAX_IN_FLIGHT_PER_CLIENT,
         routineCategoryOnlyContract: true,
         approvedIngredientCandidateLayer: Boolean(config.ingredientSelectionEnabled),
+        cue: { threshold: config.cueThreshold, method: config.cue.method, maxRetries: config.cue.maxRetries },
+        postSelectionSafetyPass: true,
+        selectionLog: Boolean(config.selectionLog.enabled),
       },
       requestId,
     }, requestId);
@@ -1174,6 +1326,24 @@ async function routeApi(request, response, url, requestId) {
     return sendJson(response, 200, {
       concerns: CONCERN_CATALOG,
       scope: "Research-preview concern topics only; none are diagnoses or treatment indications.",
+      requestId,
+    }, requestId);
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/labelling/scenarios") {
+    let text = "";
+    try {
+      text = await readFile(resolve(root, "data/models/labelling/scenario-sheet.v1.csv"), "utf8");
+    } catch {
+      throw new HttpError(404, "No labelling sheet found. Run npm run labelling:sheet.");
+    }
+    const [header, ...lines] = text.trim().split(/\r?\n/);
+    const keys = header.split(",");
+    const scenarios = lines.map((line) => Object.fromEntries(line.split(",").map((value, index) => [keys[index], value])));
+    return sendJson(response, 200, {
+      sheet: "scenario-sheet.v1",
+      scenarios,
+      concernLabels: Object.fromEntries(CONCERN_CATALOG.map((item) => [item.id, item.label])),
       requestId,
     }, requestId);
   }
@@ -1317,7 +1487,15 @@ async function routeApi(request, response, url, requestId) {
     if (!candidates.length) throw new HttpError(400, "No valid approved candidate to explain.");
     try {
       const rationales = await composeIngredientRationales({ config, concern, environment: { readings }, candidates });
-      return sendJson(response, 200, { status: rationales.length ? "available" : "unavailable", rationales, requestId }, requestId);
+      return sendJson(response, 200, {
+        status: rationales.length ? "available" : "unavailable",
+        rationales: [...rationales],
+        // Rationales whose CUE stayed below the threshold after one
+        // regeneration are withheld; the UI keeps the deterministic reason.
+        withheld: rationales.withheld || [],
+        cue: { threshold: config.cueThreshold, method: config.cue.method },
+        requestId,
+      }, requestId);
     } catch (error) {
       if (error instanceof ExternalServiceError) throw new HttpError(503, error.message);
       throw error;
@@ -1451,8 +1629,8 @@ async function routeApi(request, response, url, requestId) {
       });
     });
     const cleared = results.filter((item) => item.status === "Cleared").length;
-    const averageCue = results.length
-      ? Number((results.reduce((sum, item) => sum + item.cueScore, 0) / results.length).toFixed(2))
+    const averageSufficiency = results.length
+      ? Number((results.reduce((sum, item) => sum + item.sufficiencyScore, 0) / results.length).toFixed(2))
       : 0;
     return sendJson(response, 200, {
       results,
@@ -1460,13 +1638,13 @@ async function routeApi(request, response, url, requestId) {
         total: results.length,
         cleared,
         review: results.length - cleared,
-        averageCue,
+        averageSufficiency,
         researchEvidenceRecords: results.reduce((sum, item) => sum + item.researchEvidenceCount, 0),
         environmentMode: environment.mode,
       },
       environment: environmentProvenance(environment),
       mode: "deterministic-research-batch",
-      notices: ["Bulk analysis executes the deterministic environment, strict retrieval/CUE, non-clinical research-atlas, safety, and explainability paths for each concern. It does not fan out live LLM requests or generate individual treatment advice."],
+      notices: ["Bulk analysis executes the deterministic environment, evidence-sufficiency, non-clinical research-atlas, safety, and explainability paths for each concern. It does not fan out live LLM requests (so no CUE is computed) or generate individual treatment advice."],
       requestId,
     }, requestId);
   }

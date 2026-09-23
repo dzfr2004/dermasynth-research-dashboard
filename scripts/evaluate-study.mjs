@@ -551,10 +551,10 @@ await evaluate({
       environment: { readings: {} },
     });
     assert.equal(result.mode, "seed");
-    assert.equal(result.cueScore, 0);
+    assert.equal(result.sufficiencyScore, 0);
     assert.equal(fetchCalled, false);
     assert.equal(result.evidence.length, 0);
-    assert.equal(result.scoreType, "eligibility_weighted_retrieval_coverage_proxy");
+    assert.equal(result.scoreType, "evidence_sufficiency_coverage");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -564,7 +564,7 @@ await evaluate({
   id: "retrieval-citation-contract",
   category: "retrieval_provenance",
   title: "Mocked retrieval preserves usable source, citation, locator, tier, and jurisdiction fields",
-  expected: "three eligible evidence notes across two documents; CUE coverage proxy 1.00; unsafe URL omitted",
+  expected: "three eligible evidence notes across two documents; evidence-sufficiency score 1.00; unsafe URL omitted",
 }, async () => {
   const originalFetch = globalThis.fetch;
   const retrieval = fixture.retrievalFixture;
@@ -619,7 +619,7 @@ await evaluate({
     assert.equal(discoveryRequested, true);
     assert.equal(searchRequested, true);
     assert.equal(result.mode, "pinecone");
-    assert.equal(result.cueScore, 1);
+    assert.equal(result.sufficiencyScore, 1);
     assert.equal(result.evidence.length, 3);
     assert.equal(new Set(result.evidence.map((item) => item.documentId)).size, 2);
     for (const item of result.evidence) {
@@ -627,7 +627,7 @@ await evaluate({
     }
     assert.equal(result.evidence[0].sourceUrl, "https://example.org/fixture-a");
     assert.equal(result.evidence[2].sourceUrl, "", "Unsafe source URLs must be omitted from the response.");
-    assert.equal(result.scoreType, "eligibility_weighted_retrieval_coverage_proxy");
+    assert.equal(result.scoreType, "evidence_sufficiency_coverage");
     assert.equal(result.gate?.passed, true);
     assert.equal(result.eligibleEvidence?.length, 3);
   } finally {
@@ -866,15 +866,15 @@ if (offlineServer) {
           assert.equal(payload.synthesisStatus, "not_requested");
           assert.deepEqual(payload.environment?.location, fixture.routineContract.testLocation);
           assert.equal(payload.environment?.mode, "demo");
-          assert.equal(payload.grounding?.cueScore, 0);
-          assert.equal(payload.grounding?.scoreType, "eligibility_weighted_retrieval_coverage_proxy");
+          assert.equal(payload.grounding?.sufficiencyScore, 0);
+          assert.equal(payload.grounding?.scoreType, "evidence_sufficiency_coverage");
           assert.equal(payload.safety?.status, "cleared");
           assertRoutineContract(payload.routine);
           assert.equal(Object.hasOwn(payload, "categoryReferences"), false, "Static category references must not be attached to an individual routine response.");
           assert.deepEqual(payload.evidence, []);
           assert.equal(payload.runReport?.researchOnly, true);
           assert.equal(payload.runReport?.outputMode, fixture.ingredientResearch.outputMode);
-          assert.ok(Array.isArray(payload.runReport?.stages) && payload.runReport.stages.some((stage) => stage.id === "cue_gate"), "The run report must preserve the CUE stage.");
+          assert.ok(Array.isArray(payload.runReport?.stages) && payload.runReport.stages.some((stage) => stage.id === "evidence_sufficiency_gate"), "The run report must preserve the evidence-sufficiency stage.");
           assert.ok(Array.isArray(payload.trace?.stages) && payload.trace.stages.some((stage) => stage.id === "second_safety"), "The compact trace must preserve the second safety stage.");
           assertIngredientResearchRoutineContract(payload.ingredientResearch, concern);
           assert.equal(payload.runReport?.ingredientResearch?.status, payload.ingredientResearch.status, "Run report must mirror the ingredient research status.");

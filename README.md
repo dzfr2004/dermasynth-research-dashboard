@@ -53,17 +53,30 @@ npm run verify:demo-pinecone
 
 `GET /api/health` confirms whether a key is configured; it deliberately does not spend a request to test account balance or billing. If `POST /api/routine` returns `synthesisStatus: "quota_unavailable"`, add available API billing or credits to the configured account, then restart `npm run dev`. The server temporarily pauses further synthesis calls after that result so repeated clicks do not keep sending failed requests. The interface remains usable with a clearly labelled generic research preview.
 
-## Current pipeline
+## Current pipeline (September 2026)
 
-`profile + concern + location → urgent-symptom redirect → environment → Pinecone retrieval + local BM25 fusion → CUE trace → deterministic safety passes → category-only routine → approved category-first research candidates (when enabled) → ingredient research context + Shapley/PEG explanation → exportable run report`
+`profile + concern + location → urgent-symptom triage → environment → first safety pass → evidence retrieval → evidence-sufficiency gate → model category selection + composed rationale (CUE-gated) → second safety pass → per-slot hybrid retrieval of candidate ingredients → model picks within each retrieved pool → re-validation → post-selection safety pass → two-level Shapley/PEG explanation → run report + selection log`
 
-- Live environmental adapter: OpenWeather One Call 3.0, with Current Weather fallback, plus IQAir PM2.5 when the plan returns it.
-- Retrieval: the Atlas uses the live `demo-atlas-50-v1` Pinecone metadata namespace, fused with local BM25 metadata. The generic category-only routine retains a separate conservative CUE coverage proxy. The 30-query fixture documents local retrieval behaviour, not effectiveness or calibrated performance.
-- Synthesis: the server-only OpenAI Responses call uses `store: false`. It can only choose an optional hydration category and already-eligible evidence IDs; all visible AM/PM category wording is locally allowlisted. Its optional **AI category rationale** returns allowlisted rationale tags only, and deterministic safety remains the final authority.
-- Safety: explicit urgent-symptom redirect plus two deterministic passes enforce the AM/PM category contract, restricted medical/ingredient content scans, evidence-link validation, high-UV visibility, and barrier-comfort exclusions. If a gate fails, the UI receives a marked deterministic research preview rather than a live synthesis.
-- Ingredient evidence: all 50 named ingredients are searchable through the live Atlas metadata index. With `INGREDIENT_SELECTION_ENABLED=true`, approved registry entries may appear as separate evidence-linked research candidates only after a cleared safety result; the AM/PM display remains category-only.
-- Explainability: each routine response includes `grounding`, a compact trace, an exact Shapley decomposition of a versioned additive surrogate artifact, a PEG-style plain-language explanation, and a detailed `runReport`. It responds to live environmental readings; its current coefficients are transparent configured study parameters, not learned or published clinical coefficients. The browser's local history/export excludes free-text symptoms, source excerpts, and identifiers.
-- Bulk analysis: the deterministic batch path runs the same environment, retrieval/CUE, research-atlas, safety, and explanation paths for up to 100 de-identified profiles, with CSV and audit-JSON export. It does not fan out paid LLM requests.
+- **Environment:** OpenWeather One Call 3.0 (Current Weather fallback) and IQAir PM2.5 (OpenWeather air-pollution fallback). Keys stay on the server.
+- **Evidence-sufficiency gate** (was called the "CUE gate"): before the model is called, retrieval must return at least 3 eligible records from 2 documents, 2 of them direct to the concern, all above the relevance threshold. With the database enabled, relevance is a real BM25 score over the published sources' metadata, and review status is reported as governance sign-off (not clinical review).
+- **CUE** (Context Utilisation Evaluation, `lib/cue.mjs`): any text the model writes (the routine rationale and each ingredient rationale) is split into statements and checked against the facts and evidence the model was given. CUE = supported statements / statements. Below 0.80 the text is regenerated once with feedback, then withheld and replaced by local text. `CUE_METHOD=llm_judge` asks the model to verify each statement (RAGAS-style faithfulness) and falls back to a deterministic lexical check.
+- **Candidate pools** (`lib/candidate-retrieval.mjs`): for each safety-cleared step a query is built from the category and the reading that triggered it, and run over one evidence document per ingredient (`lib/ingredient-evidence-corpus.mjs`) with local BM25 plus Pinecone dense search (`PINECONE_EVIDENCE_NAMESPACE`), fused with reciprocal rank fusion. Only approved ingredients the retriever surfaces for that step enter its pool.
+- **Selection:** each candidate gets a transparent additive score (environmental driver 0.40, retrieval relevance 0.30, evidence strength 0.20, EWG reference 0.10). The model chooses within each pool without seeing the score; an invented or misplaced pick is rejected and the top-scored candidate is used instead.
+- **Safety:** triage, first pass, second pass over the model's routine text, and a **post-selection pass** over the final named ingredients (excluded ingredients such as retinal, prescription-only actives, incompatible pairs, photosensitisers in a morning step, exfoliants under the barrier guardrail, restricted claims in model text). A failing ingredient is removed and reported.
+- **Explainability:** level 1 is the environmental Shapley surrogate (weights now fitted by non-negative least squares; see `data/models/README.md`). Level 2 explains each step (the rule and reading that added it) and each ingredient (Shapley values of the candidate score, including the contrast with the runner-up in the same pool). The text is template-generated from computed values only.
+- **Selection log:** every run appends a JSONL record (`data/logs/selection-log.jsonl`, not committed). `npm run report:selection-log` reports acceptance, rejection and fallback rates, agreement between the model and the candidate score, whether picks change with the environment, safety removals and CUE outcomes.
+- **Bulk analysis:** the deterministic batch path (up to 100 profiles) runs environment, evidence-sufficiency, research-atlas, safety and environmental explanation. It does not call the model, so it has no CUE.
+
+### Commands added in September 2026
+
+| Command | What it does |
+| --- | --- |
+| `npm run check:openai` | Confirms the OpenAI key and model in `.env` work (run on the machine with `.env`). |
+| `npm run sync:evidence-pinecone -- --upload` | Uploads the 50 ingredient evidence documents to the Pinecone evidence namespace (dry run without `--upload`). |
+| `npm run db:apply-kb-update` | Applies the 2026-09-23 knowledge-base update (AICIS retinal source, retinal blocked). Idempotent. |
+| `npm run report:selection-log` | Summarises the selection log into `data/evaluation/reports/selection-log.latest.md`. |
+| `npm run report:corpus-inventory` | Regenerates `data/source-manifests/corpus-inventory.md` (source, paper and card counts). |
+| `npm run labelling:sheet` / `labelling:import` / `fit:environmental-expert` | Expert labelling workflow for the environmental surrogate (tool at `/labelling`). |
 
 ## Dynamic ingredient & evidence knowledge base (database-backed)
 
@@ -208,11 +221,11 @@ Before a human study or production deployment, complete qualified source review 
 
 ## Not claimed by this final-review demo
 
-- Obtain permission before any CIR report text or EWG Skin Deep data is copied, embedded, or made machine-readable; they currently remain citation/direct-link sources.
+- Obtain permission before any CIR report text or EWG Skin Deep data is copied or embedded. The knowledge base stores only paraphrased CIR/SCCS/AICIS conclusions and one attributed EWG score per ingredient with a check date.
 - A clinical trial, treatment decision, product recommendation, or real-world safety/effectiveness claim.
-- A copied/embedded CIR report or EWG Skin Deep database; both are linked as provenance only.
+- A copied/embedded CIR report or EWG Skin Deep database; CIR conclusions are paraphrased with attribution and EWG is recorded as one dated score per ingredient.
 - An independent human-domain audit or formal UAT; the supplied evaluation packs are reproducible software tests.
 - A BYO-vector Pinecone adapter; the current demo index is integrated-embedding.
-- Calibration of the generic CUE proxy against a separate held-out dataset.
-- A calibrated or learned environmental model; the Shapley view is exact only for the configured study-demo surrogate.
+- Calibration of CUE (either method) against human faithfulness judgements; this is planned alongside the expert audit.
+- A clinically validated environmental model: the surrogate is fitted to a constructed dataset until the expert labels are collected, and the Shapley view is exact for whichever fitted surrogate is loaded.
 - Cloud persistence, authentication, consent/data-retention rules, and audit logs before handling real participant data.

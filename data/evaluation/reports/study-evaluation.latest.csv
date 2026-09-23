@@ -59,7 +59,7 @@ guardrail-13,output_guardrail,passed,Second safety pass blocks incompatible acti
 guardrail-14,output_guardrail,passed,Second safety pass blocks High-UV context,review_required with a High-UV context flag,
 guardrail-15,output_guardrail,passed,Second safety pass blocks Barrier preview,review_required with a Barrier preview flag,
 retrieval-seed-disabled,retrieval_provenance,passed,Disabled retrieval returns a labelled seed response,"seed mode, zero score and evidence, no live provider call",
-retrieval-citation-contract,retrieval_provenance,passed,"Mocked retrieval preserves usable source, citation, locator, tier, and jurisdiction fields",three eligible evidence notes across two documents; CUE coverage proxy 1.00; unsafe URL omitted,
+retrieval-citation-contract,retrieval_provenance,passed,"Mocked retrieval preserves usable source, citation, locator, tier, and jurisdiction fields",three eligible evidence notes across two documents; evidence-sufficiency score 1.00; unsafe URL omitted,
 retrieval-unqualified-approval-hold,retrieval_provenance,passed,User-confirmed or anonymous approval cannot satisfy the strict category gate,unqualified approval remains visible but all affected records are withheld from strict CUE and live synthesis,
 retrieval-ingredient-activation-hold,ingredient_knowledge_base,passed,Ingredient-tagged evidence cannot satisfy the generic category gate before explicit activation,"the tagged source remains visible for audit, is excluded from eligibility, and prevents the CUE gate from passing",
 api-isolated-server-start,api_contract,passed,An isolated offline server starts with provider credentials blank,server listens in demo mode without contacting providers,

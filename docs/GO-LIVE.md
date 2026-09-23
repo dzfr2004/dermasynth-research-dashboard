@@ -27,7 +27,7 @@ npm rebuild better-sqlite3
 ## 1. Fit the environmental surrogate (learned SHAP weights)
 
 ```sh
-npm run fit:environmental-default
+npm run fit:environmental-default   # constructed dataset; see data/models/README.md for the expert-label workflow
 ```
 
 ## 2. Seed the knowledge base at APPROVED state (activates the named layer)
@@ -57,6 +57,8 @@ npm run ingest:evidence -- \
   --file data/evidence/cir-ewg/regulatory-factual-context.verified.batch6.v1.jsonl \
   --file data/evidence/cir-ewg/factual-context.verified.batch7.v1.jsonl \
   --research-upload --namespace demo-cir-ewg-safety-v1
+# Candidate-pool retrieval uses its own namespace of ingredient evidence documents:
+npm run sync:evidence-pinecone -- --upload
 ```
 
 Do NOT ingest `cir-ewg-factual-context.scaffold-50.v1.jsonl` alongside the
@@ -74,17 +76,31 @@ under each eligible category with an Evidence link, (c) the LLM-composed
 rationale, and (d) the run report. `GET /api/health` confirms provider keys are
 seen without spending a call.
 
-## 5. EWG hazard scores (optional, item 5)
+## 5. September 2026 update (run once on the Mac)
 
-CIR is the substantive half and is verified (44/50). EWG hazard scores change
-over time, so verify them with a recorded "date checked" and paraphrase (never
-bulk-copy the database). Use the scaffold as the worklist:
+The knowledge-base database in `data/db/` was already updated in the session
+that made these changes. If you restore an older database, re-apply it:
 
 ```sh
-npm run data:cir-ewg-cards    # regenerates the 100-card CIR+EWG scaffold
-# then read each EWG Skin Deep entry and fill an EWG verified batch, same
-# pattern as the CIR batches, setting verification_status: verified_paraphrase.
+npm rebuild better-sqlite3                         # only if you see "invalid ELF header"
+npm run check:openai                               # key + model + structured output
+npm run db:apply-kb-update                         # AICIS retinal source, retinal blocked (idempotent)
+npm run sync:evidence-pinecone                     # dry run: 50 ingredient evidence documents
+npm run sync:evidence-pinecone -- --upload         # dense half of the candidate retriever
+npm run report:corpus-inventory                    # regenerate the corpus counts
 ```
+
+Then run a few routines (different locations, concerns and reactivity levels)
+and summarise them:
+
+```sh
+npm run report:selection-log
+```
+
+EWG scores are already recorded (checked 2026-09-23) in
+`data/ingredients/ewg-hazard-reference.v1.json` and
+`data/evidence/cir-ewg/ewg-reference-context.verified.batch8.v1.jsonl`.
+Re-check them before citing individual values.
 
 ## Rollback
 

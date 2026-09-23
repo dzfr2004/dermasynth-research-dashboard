@@ -1,16 +1,91 @@
 {
-  "schemaVersion": "1.1",
+  "schemaVersion": "1.2",
   "modelId": "dermasynth-environmental-surrogate",
-  "modelVersion": "fitted-2026-07-27",
+  "modelVersion": "fitted-2026-09-23",
   "method": "exact_shapley_values_for_additive_environmental_surrogate",
-  "weightStatus": "fitted_to_documented_labelled_context_dataset",
+  "weightStatus": "fitted_to_constructed_labelled_dataset",
   "training": {
     "input": "data/models/environmental-context-training.v1.csv",
+    "source": "constructed",
     "rows": 140,
-    "fitMethod": "normalised covariance weighting",
-    "target": "target_context_score"
+    "fitMethod": "non-negative least squares with intercept (best all-subsets OLS)",
+    "target": "target_context_score",
+    "fitQuality": {
+      "acne": {
+        "rows": 14,
+        "r2": 0.991,
+        "rmse": 0.0144,
+        "intercept": 0.1774
+      },
+      "barrier": {
+        "rows": 14,
+        "r2": 0.9789,
+        "rmse": 0.0191,
+        "intercept": 0.1476
+      },
+      "pigment": {
+        "rows": 14,
+        "r2": 0.9934,
+        "rmse": 0.0171,
+        "intercept": 0.1786
+      },
+      "dryness": {
+        "rows": 14,
+        "r2": 0.9747,
+        "rmse": 0.02,
+        "intercept": 0.1101
+      },
+      "oil": {
+        "rows": 14,
+        "r2": 0.9911,
+        "rmse": 0.0114,
+        "intercept": 0.1648
+      },
+      "sensitivity": {
+        "rows": 14,
+        "r2": 0.9897,
+        "rmse": 0.0115,
+        "intercept": 0.1445
+      },
+      "texture": {
+        "rows": 14,
+        "r2": 0.9907,
+        "rmse": 0.0126,
+        "intercept": 0.1834
+      },
+      "redness": {
+        "rows": 14,
+        "r2": 0.9826,
+        "rmse": 0.0127,
+        "intercept": 0.1513
+      },
+      "radiance": {
+        "rows": 14,
+        "r2": 0.9892,
+        "rmse": 0.0127,
+        "intercept": 0.1581
+      },
+      "pores": {
+        "rows": 14,
+        "r2": 0.9737,
+        "rmse": 0.0173,
+        "intercept": 0.1639
+      }
+    }
   },
   "baselineScore": 0.5,
+  "concernBaselines": {
+    "acne": 0.5052,
+    "barrier": 0.5007,
+    "pigment": 0.5086,
+    "dryness": 0.4943,
+    "oil": 0.5058,
+    "sensitivity": 0.493,
+    "texture": 0.4789,
+    "redness": 0.4943,
+    "radiance": 0.4814,
+    "pores": 0.5165
+  },
   "features": {
     "uvi": {
       "label": "UV index",
@@ -35,65 +110,65 @@
   },
   "concernWeights": {
     "acne": {
-      "uvi": 0.3123,
-      "humidity": 0.0301,
-      "pm25": 0.4893,
-      "temperature": 0.1683
+      "uvi": 0.1181,
+      "humidity": 0.3047,
+      "pm25": 0.3716,
+      "temperature": 0.2346
     },
     "barrier": {
-      "uvi": 0.0004,
-      "humidity": 0.215,
-      "pm25": 0.5644,
-      "temperature": 0.2202
+      "uvi": 0.191,
+      "humidity": 0.3925,
+      "pm25": 0.2436,
+      "temperature": 0.1575
     },
     "pigment": {
-      "uvi": 0.3386,
-      "humidity": 0.0577,
-      "pm25": 0.4441,
-      "temperature": 0.1597
+      "uvi": 0.5079,
+      "humidity": 0.1358,
+      "pm25": 0.2865,
+      "temperature": 0.0882
     },
     "dryness": {
-      "uvi": 0.2971,
-      "humidity": 0.5095,
-      "pm25": 0.1861,
-      "temperature": 0.0073
+      "uvi": 0.1199,
+      "humidity": 0.5222,
+      "pm25": 0.1487,
+      "temperature": 0.2011
     },
     "oil": {
-      "uvi": 0.2308,
-      "humidity": 0.0802,
-      "pm25": 0.4413,
-      "temperature": 0.2477
+      "uvi": 0.1331,
+      "humidity": 0.3233,
+      "pm25": 0.2042,
+      "temperature": 0.3621
     },
     "sensitivity": {
-      "uvi": 0.4045,
-      "humidity": 0.1744,
-      "pm25": 0.3978,
-      "temperature": 0.0233
+      "uvi": 0.2492,
+      "humidity": 0.3468,
+      "pm25": 0.2462,
+      "temperature": 0.1444
     },
     "texture": {
-      "uvi": 0.5133,
-      "humidity": 0.003,
-      "pm25": 0.3287,
-      "temperature": 0.1551
+      "uvi": 0.2785,
+      "humidity": 0.12,
+      "pm25": 0.3447,
+      "temperature": 0.2651
     },
     "redness": {
-      "uvi": 0.3601,
-      "humidity": 0.27,
-      "pm25": 0.0349,
-      "temperature": 0.335
+      "uvi": 0.3145,
+      "humidity": 0.2121,
+      "pm25": 0.1694,
+      "temperature": 0.3594
     },
     "radiance": {
-      "uvi": 0.2904,
-      "humidity": 0.0909,
-      "pm25": 0.4504,
-      "temperature": 0.1682
+      "uvi": 0.3967,
+      "humidity": 0.1333,
+      "pm25": 0.3918,
+      "temperature": 0.1418
     },
     "pores": {
-      "uvi": 0.3832,
-      "humidity": 0.3406,
-      "pm25": 0.162,
-      "temperature": 0.1141
+      "uvi": 0.1183,
+      "humidity": 0.3755,
+      "pm25": 0.2175,
+      "temperature": 0.315
     }
   },
-  "scope": "Fitted environmental context explanation; not a clinical score or treatment decision."
+  "scope": "Environmental context explanation fitted to a constructed, domain-reasoned dataset; not clinical-outcome data, a clinical score or a treatment decision."
 }

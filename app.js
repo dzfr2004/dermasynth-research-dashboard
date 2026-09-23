@@ -42,8 +42,8 @@ const pipeline = [
   { id: "input", number: "01", name: "Input", meta: "Profile + environment", detail: "Profile context and current environmental readings are normalised before processing." },
   { id: "triage", number: "02", name: "Triage", meta: "Intent + medical redirect", detail: "Potentially clinical intents are identified and redirected before any skincare advisory is generated." },
   { id: "retrieval", number: "03", name: "Retrieval", meta: "Indexed evidence search", detail: "The server queries configured indexed evidence before it permits model synthesis." },
-  { id: "cue", number: "04", name: "Coverage Gate", meta: "CUE proxy threshold", detail: "Responses only continue when the prototype's evidence-coverage proxy satisfies the configured threshold. It is not a calibrated clinical-validity score." },
-  { id: "safety", number: "05", name: "Safety", meta: "Dual deterministic passes", detail: "Clinical redirect and restricted-content checks run before and after synthesis." },
+  { id: "cue", number: "04", name: "Evidence + CUE", meta: "Sufficiency gate · CUE on model text", detail: "The model is only called when enough attributable evidence is retrieved (evidence-sufficiency gate). Any text the model writes must then score at least 0.80 on Context Utilisation Evaluation (supported claims / claims), or it is regenerated once and then withheld." },
+  { id: "safety", number: "05", name: "Safety", meta: "Deterministic passes + final rescan", detail: "Clinical redirect and restricted-content checks run before and after synthesis, and a post-selection pass rescans the final named ingredients (exclusions, incompatible pairs, photosensitisers in the morning, barrier guardrail)." },
   { id: "synthesis", number: "06", name: "Synthesis", meta: "Structured response", detail: "A server-only structured model response is allowed only after retrieval and safety gates pass." },
 ];
 
@@ -372,8 +372,18 @@ function locationLabel() {
 }
 
 function cueLabel() {
-  const cue = Number(state.routineMeta?.grounding?.cueScore);
-  return Number.isFinite(cue) ? `Evidence coverage ${cue.toFixed(2)}` : "Evidence coverage not run";
+  const rawCue = state.routineMeta?.grounding?.cue?.score;
+  const cue = rawCue === null || rawCue === undefined ? NaN : Number(rawCue);
+  if (Number.isFinite(cue)) return `CUE ${cue.toFixed(2)}`;
+  const sufficiency = Number(state.routineMeta?.grounding?.sufficiencyScore);
+  return Number.isFinite(sufficiency) ? `Evidence sufficiency ${sufficiency.toFixed(2)}` : "Evidence gate not run";
+}
+
+function cueSummary(grounding) {
+  const cue = grounding?.cue;
+  if (!cue || cue.score === null || cue.score === undefined) return { value: "Not run", foot: "Runs when the model writes text" };
+  const status = String(cue.status || "").replaceAll("_", " ");
+  return { value: safelyNumber(cue.score), foot: `${status} · threshold ${safelyNumber(cue.threshold)} · ${cue.method || "method n/a"}` };
 }
 
 function routineStatusLabel() {
@@ -409,6 +419,7 @@ function normaliseRoutineStep(step, index) {
           ? step.sources
           : [];
     return {
+      id: typeof step.id === "string" ? step.id : "",
       title: String(step.title || step.name || step.category || `Research category ${index + 1}`),
       note: String(step.note || step.rationale || step.reason || step.description || "Research-only category"),
       sourceIds: sourceIds.map((value) => String(value)).slice(0, 3),
@@ -445,11 +456,60 @@ function routineStepList(steps, { dark = false, ingredientCandidates = [], phase
   }).join("")}</ol>`;
 }
 
+function ingredientAttributionMarkup(attr) {
+  if (!attr || !Array.isArray(attr.features)) return "";
+  const rows = attr.features.map((f) => {
+    const value = Number(f.shapValue) || 0;
+    return `<span class="ingredient-attr-row"><i>${escapeHtml(f.label)}</i><b class="ingredient-attr-bar"><b style="width:${Math.max(0, Math.min(100, Number(f.influencePercent) || 0))}%"></b></b><em>${value >= 0 ? "+" : "−"}${escapeHtml(Math.abs(value).toFixed(3))}</em></span>`;
+  }).join("");
+  const contrast = attr.contrast
+    ? `<span class="ingredient-attr-contrast">vs ${escapeHtml(attr.contrast.runnerUp?.displayName || "runner-up")}: margin ${escapeHtml(Number(attr.contrast.margin || 0).toFixed(3))}${attr.contrast.decisive ? ` · decided by ${escapeHtml(attr.contrast.decisive.label)}` : ""}</span>`
+    : `<span class="ingredient-attr-contrast">Only candidate in the retrieved pool</span>`;
+  return `<div class="ingredient-attr"><span class="ingredient-attr-head">${icon("activity", 11)} Why chosen · rank ${escapeHtml(String(attr.poolRank || "—"))} of ${escapeHtml(String(attr.poolSize || "—"))} · score ${escapeHtml(Number(attr.selectionScore || 0).toFixed(3))}</span>${rows}${contrast}</div>`;
+}
+
+function atlasReferenceLine(ingredient) {
+  const parts = [];
+  const safety = ingredient?.safetyEvidence;
+  if (safety) {
+    const kind = /no_dedicated/.test(safety.verificationStatus || "") ? "no dedicated assessment" : `${safety.sourceFamily} conclusion`;
+    parts.push(`Safety card: ${kind}${safety.verifiedAt ? ` (checked ${safety.verifiedAt})` : ""}`);
+  }
+  const ewg = ingredient?.ewgReference;
+  if (ewg) parts.push(ewg.status === "listed" ? `EWG ${ewg.hazardScore}/10 · ${ewg.dataAvailability} data` : "EWG: not listed");
+  if (ingredient?.routineSelectionAllowed === false) parts.push("Not selectable in routines");
+  return parts.length ? `<p class="atlas-reference-line">${escapeHtml(parts.join(" · "))}</p>` : "";
+}
+
 function approvedIngredientCandidatePanel(meta = state.routineMeta) {
   const selection = meta?.ingredientCandidates;
   const entries = Array.isArray(selection?.entries) ? selection.entries : [];
-  if (selection?.status !== "available" || !entries.length) return "";
-  return `<section class="research-context-card ingredient-candidate-panel"><div class="ingredient-card-top"><div><p class="ingredient-eyebrow">${icon("shield", 14)} Approved ingredient recommendations</p><h3>Named AM/PM recommendations</h3></div><span class="ingredient-output-mode">${escapeHtml(selection.registryVersion || "live database")}</span></div><p class="ingredient-card-summary">Approved database ingredients matched to each safety-cleared category.</p><div class="research-context-list">${entries.map((entry) => { const source = Array.isArray(entry.sourceRecords) ? entry.sourceRecords[0] : null; const url = safeEvidenceUrl(source?.sourceUrl); const trace = entry.selectionTrace || {}; const checked = Array.isArray(trace.compatibility?.checkedAgainst) && trace.compatibility.checkedAgainst.length ? trace.compatibility.checkedAgainst.map((item) => item.displayName).join(", ") : "No earlier named recommendation"; const llm = state.ingredientRationales?.[entry.ingredientId]; const rationaleText = (llm && llm.text) ? llm.text : (entry.rationale || "Matched from the approved knowledge base."); const rationaleTag = (llm && llm.text) ? ('<span class="ingredient-rationale-tag">' + icon("sparkles", 11) + ' GPT · grounded' + (llm.source ? (' · ' + escapeHtml(llm.source)) : '') + '</span>') : (state.ingredientRationaleStatus === "loading" ? '<span class="ingredient-rationale-tag is-loading">Explaining…</span>' : ''); const attr = entry.attribution; const pickChip = entry.selectedBy === 'llm_from_rag_pool' ? ('<span class="ingredient-pick-chip">' + icon('sparkles', 10) + ' LLM · from RAG pool</span>') : '<span class="ingredient-pick-chip is-rule">rule-based</span>'; const attrMarkup = (attr && Array.isArray(attr.features)) ? ('<div class="ingredient-attr"><span class="ingredient-attr-head">' + icon('activity', 11) + ' Why chosen · ' + escapeHtml((attr.dominant && attr.dominant.label) || '') + '</span>' + attr.features.map(function (f) { return '<span class="ingredient-attr-row"><i>' + escapeHtml(f.label) + '</i><b class="ingredient-attr-bar"><b style="width:' + (f.influencePercent || 0) + '%"></b></b></span>'; }).join('') + '</div>') : ''; return `<article><div><strong>${escapeHtml(entry.displayName || "Approved ingredient")}</strong><small>${escapeHtml(`${entry.phase === "am" ? "Morning" : "Evening"} · ${entry.categoryTitle || entry.categoryId || "routine category"}`)} ${pickChip}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Evidence ${icon("arrow", 12)}</a>` : ""}<p class="ingredient-rationale ${llm && llm.text ? "is-grounded" : ""}">${escapeHtml(rationaleText)}</p>${rationaleTag}${attrMarkup}<details class="selection-trace"><summary>Selection trace</summary><span>Category: ${escapeHtml(trace.category?.title || entry.categoryId || "—")}</span><span>Record: ${escapeHtml(trace.selectedRecord?.ingredientId || entry.ingredientId || "—")} · v${escapeHtml(String(trace.selectedRecord?.version || "—"))}</span><span>Compatibility: ${escapeHtml(trace.compatibility?.status || "not reported")} · checked against ${escapeHtml(checked)}</span></details></article>`; }).join("")}</div></section>`;
+  const removed = Array.isArray(selection?.removedBySafety) ? selection.removedBySafety : [];
+  if ((selection?.status !== "available" || !entries.length) && !removed.length) return "";
+  const removedMarkup = removed.length
+    ? `<p class="ingredient-removed-note">${icon("shield", 13)} Final safety rescan removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}; ${removed.length === 1 ? "its step stays" : "their steps stay"} as a category.</p>`
+    : "";
+  const cards = entries.map((entry) => {
+    const source = Array.isArray(entry.sourceRecords) ? entry.sourceRecords[0] : null;
+    const url = safeEvidenceUrl(source?.sourceUrl);
+    const trace = entry.selectionTrace || {};
+    const attr = entry.attribution || {};
+    const checked = Array.isArray(trace.compatibility?.checkedAgainst) && trace.compatibility.checkedAgainst.length ? trace.compatibility.checkedAgainst.map((item) => item.displayName).join(", ") : "No earlier named recommendation";
+    const llm = state.ingredientRationales?.[entry.ingredientId];
+    const explanation = entry.explanation || {};
+    const rationaleText = (llm && llm.text) ? llm.text : (explanation.whyThisIngredient || entry.rationale || "Matched from the approved knowledge base.");
+    const cueTag = llm?.cue && Number.isFinite(Number(llm.cue.score)) ? ` · CUE ${escapeHtml(Number(llm.cue.score).toFixed(2))}` : "";
+    const rationaleTag = (llm && llm.text)
+      ? `<span class="ingredient-rationale-tag">${icon("sparkles", 11)} GPT · grounded${llm.source ? ` · ${escapeHtml(llm.source)}` : ""}${cueTag}</span>`
+      : (state.ingredientRationaleStatus === "loading" ? '<span class="ingredient-rationale-tag is-loading">Explaining…</span>' : "");
+    const pickChip = entry.selectedBy === "llm_from_rag_pool"
+      ? `<span class="ingredient-pick-chip">${icon("sparkles", 10)} LLM · from retrieved pool${attr.agreesWithSurrogate === false ? " · differs from top score" : ""}</span>`
+      : '<span class="ingredient-pick-chip is-rule">top-scored</span>';
+    const ranking = Array.isArray(attr.ranking) ? attr.ranking.map((item) => `${item.rank}. ${item.displayName} (${Number(item.score).toFixed(3)})`).join(" · ") : "—";
+    const retrieval = trace.retrieval ? `${trace.retrieval.mode || "retrieval"} · pool ${trace.poolSource || "—"}` : (trace.poolSource || "not reported");
+    return `<article><div><strong>${escapeHtml(entry.displayName || "Approved ingredient")}</strong><small>${escapeHtml(`${entry.phase === "am" ? "Morning" : "Evening"} · ${entry.categoryTitle || entry.categoryId || "routine category"}`)} ${pickChip}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Evidence ${icon("arrow", 12)}</a>` : ""}${explanation.whyThisStep ? `<p class="ingredient-why-step"><b>Why this step:</b> ${escapeHtml(explanation.whyThisStep)}</p>` : ""}<p class="ingredient-rationale ${llm && llm.text ? "is-grounded" : ""}"><b>Why this ingredient:</b> ${escapeHtml(rationaleText)}</p>${rationaleTag}${ingredientAttributionMarkup(attr)}<details class="selection-trace"><summary>Selection trace</summary><span>Category: ${escapeHtml(trace.category?.title || entry.categoryId || "—")}</span><span>Retrieval: ${escapeHtml(retrieval)}</span><span>Pool ranking: ${escapeHtml(ranking)}</span><span>Language model: ${escapeHtml(String(trace.llmPickStatus || "not requested").replaceAll("_", " "))}</span><span>Record: ${escapeHtml(trace.selectedRecord?.ingredientId || entry.ingredientId || "—")} · v${escapeHtml(String(trace.selectedRecord?.version || "—"))}</span><span>Compatibility: ${escapeHtml(trace.compatibility?.status || "not reported")} · checked against ${escapeHtml(checked)}</span>${llm && llm.text && explanation.whyThisIngredient ? `<span>Score explanation: ${escapeHtml(explanation.whyThisIngredient)}</span>` : ""}</details></article>`;
+  }).join("");
+  return `<section class="research-context-card ingredient-candidate-panel"><div class="ingredient-card-top"><div><p class="ingredient-eyebrow">${icon("shield", 14)} Approved ingredient recommendations</p><h3>Named AM/PM recommendations</h3></div><span class="ingredient-output-mode">${escapeHtml(selection.registryVersion || "live database")}</span></div><p class="ingredient-card-summary">Each step's candidates are retrieved from the approved knowledge base, ranked by a transparent score, and rescanned by the final safety pass.</p>${removedMarkup}<div class="research-context-list">${cards}</div></section>`;
 }
 
 function safelyNumber(value, digits = 2) {
@@ -616,8 +676,9 @@ function metricStrip() {
   const meta = state.routineMeta;
   const grounding = meta?.grounding;
   const metrics = [
-    ["Evidence coverage", grounding ? `CUE proxy ${safelyNumber(grounding.cueScore)}` : "—", grounding ? `Prototype threshold ${safelyNumber(grounding.threshold)}` : "Not run"],
-    ["Safety", routineStatusLabel(), "Two deterministic passes"],
+    ["Evidence gate", grounding ? (grounding.passed ? "Passed" : "Not passed") : "—", grounding ? `Sufficiency ${safelyNumber(grounding.sufficiencyScore)} · ${grounding.criteria?.length || 0} criteria` : "Not run"],
+    ["CUE", grounding ? cueSummary(grounding).value : "—", grounding ? cueSummary(grounding).foot : "Not run"],
+    ["Safety", routineStatusLabel(), meta?.safety?.postSelection?.removed?.length ? `${meta.safety.postSelection.removed.length} removed by final rescan` : "Deterministic passes + final rescan"],
     ["Environment", activeEnvironment().mode || "demo", environmentSourceLabel()],
     ["Retrieval", meta?.grounding?.evidenceCount ?? "—", meta?.grounding?.scoreType || "Awaiting index"],
     ["Profiles", String(state.bulkRows.length), "Deterministic batch preview"],
@@ -753,10 +814,10 @@ function evidencePanel() {
   const meta = state.routineMeta;
   const grounding = meta?.grounding;
   const evidence = Array.isArray(meta?.evidence) ? meta.evidence.slice(0, 4) : [];
-  const cue = Number(grounding?.cueScore);
-  const cueText = Number.isFinite(cue) ? `CUE proxy ${cue.toFixed(2)}` : "CUE proxy not run";
-  const detail = String(grounding?.scoreType || "").includes("retrieval_coverage_proxy")
-    ? "A source-coverage check, not a diagnosis score."
+  const cue = Number(grounding?.sufficiencyScore);
+  const cueText = Number.isFinite(cue) ? `Evidence sufficiency ${cue.toFixed(2)}` : "Evidence gate not run";
+  const detail = String(grounding?.scoreType || "").includes("evidence_sufficiency")
+    ? "An evidence-coverage check before the model is called, not a diagnosis score."
     : "No indexed evidence was used for this preview.";
 
   if (!evidence.length) {
@@ -783,8 +844,8 @@ function inferredStage(step, index, meta = state.routineMeta) {
     input: [],
     triage: ["triage"],
     retrieval: ["retrieval"],
-    cue: ["cue_gate"],
-    safety: ["first_safety", "second_safety"],
+    cue: ["evidence_sufficiency_gate", "cue"],
+    safety: ["first_safety", "second_safety", "post_selection_safety"],
     synthesis: ["synthesis"],
   };
   const matches = traceEntries(meta).filter((entry) => stageAliases[step.id]?.includes(String(entry.id || entry.stage || entry.name || "").toLowerCase()));
@@ -807,7 +868,7 @@ function inferredStage(step, index, meta = state.routineMeta) {
     if (index > 1) return { kind: "skipped", label: "Skipped", detail: "Triage did not permit this stage." };
   }
   if (step.id === "retrieval" && meta.grounding?.evidenceCount) return { kind: "passed", label: "Evidence returned", detail: `${meta.grounding.evidenceCount} indexed note(s) reported.` };
-  if (step.id === "cue" && meta.grounding) return { kind: meta.status === "cleared" ? "passed" : "reported", label: `CUE proxy ${safelyNumber(meta.grounding.cueScore)}`, detail: `Proxy threshold ${safelyNumber(meta.grounding.threshold)}` };
+  if (step.id === "cue" && meta.grounding) return { kind: meta.grounding.passed ? "passed" : "reported", label: `Evidence sufficiency ${safelyNumber(meta.grounding.sufficiencyScore)}`, detail: `CUE ${cueSummary(meta.grounding).value}` };
   if (step.id === "safety" && meta.safety) return { kind: meta.safety.status === "cleared" ? "passed" : "reported", label: String(meta.safety.status || "Reported"), detail: "Deterministic safety result from server." };
   if (step.id === "synthesis" && meta.synthesisStatus) return { kind: meta.synthesisStatus === "completed" ? "passed" : "reported", label: String(meta.synthesisStatus).replaceAll("_", " "), detail: "Provider status reported by server." };
   return { kind: meta.status === "cleared" ? "passed" : "reported", label: meta.status === "cleared" ? "Completed" : "Reported", detail: "Client-side fallback inferred from the response." };
@@ -836,7 +897,8 @@ function reportPanel() {
     ["Concern", concernOption().label],
     ["Environment", `${locationLabel()} · ${environmentModeLabel()}`],
     ["Evidence", grounding.evidenceCount ?? "—"],
-    ["Coverage gate", Number.isFinite(Number(grounding.cueScore)) ? `CUE proxy ${safelyNumber(grounding.cueScore)}` : "Not reported"],
+    ["Evidence gate", Number.isFinite(Number(grounding.sufficiencyScore)) ? `${grounding.passed ? "Passed" : "Not passed"} · sufficiency ${safelyNumber(grounding.sufficiencyScore)}` : "Not reported"],
+    ["CUE", cueSummary(grounding).value],
     ["Safety flags", safetyFlags.length ? safetyFlags.length : "None reported"],
     ["Run time", generatedAt],
   ];
@@ -845,7 +907,7 @@ function reportPanel() {
 
 function historyPanel() {
   const runs = state.runHistory.slice(0, 5);
-  return `<section class="panel history-panel"><div class="panel-header"><div><h2 class="panel-title">${icon("layers", 17)} Local research run history</h2><p class="panel-note">De-identified summary only · newest first</p></div><div class="history-actions"><button class="ghost-button" type="button" data-action="export-run-history" ${runs.length ? "" : "disabled"}>${icon("download", 14)} Export</button><button class="text-button" type="button" data-action="clear-run-history" ${runs.length ? "" : "disabled"}>Clear</button></div></div>${runs.length ? `<div class="history-list">${runs.map((run) => `<article class="history-item"><div><strong>${escapeHtml(run.concern || "Research run")}</strong><small>${escapeHtml(run.timestamp || "Time unavailable")} · ${escapeHtml(run.profile || "Profile unavailable")}</small></div><div><span class="table-status ${run.status === "Cleared" ? "" : "review"}">${escapeHtml(run.status || "Reported")}</span><small>CUE proxy ${escapeHtml(run.cue || "—")} · ${escapeHtml(run.evidenceCount ?? "—")} notes</small></div></article>`).join("")}</div>` : `<div class="evidence-empty"><strong>No local run summaries yet.</strong><span>Completed requests can be exported as a de-identified research record from this browser.</span></div>`}<p class="history-privacy">Stored locally: time, profile, concern, city/area context, status, evidence-coverage proxy and evidence count. Never stored: free-text symptoms, source excerpts, or identifiers.</p></section>`;
+  return `<section class="panel history-panel"><div class="panel-header"><div><h2 class="panel-title">${icon("layers", 17)} Local research run history</h2><p class="panel-note">De-identified summary only · newest first</p></div><div class="history-actions"><button class="ghost-button" type="button" data-action="export-run-history" ${runs.length ? "" : "disabled"}>${icon("download", 14)} Export</button><button class="text-button" type="button" data-action="clear-run-history" ${runs.length ? "" : "disabled"}>Clear</button></div></div>${runs.length ? `<div class="history-list">${runs.map((run) => `<article class="history-item"><div><strong>${escapeHtml(run.concern || "Research run")}</strong><small>${escapeHtml(run.timestamp || "Time unavailable")} · ${escapeHtml(run.profile || "Profile unavailable")}</small></div><div><span class="table-status ${run.status === "Cleared" ? "" : "review"}">${escapeHtml(run.status || "Reported")}</span><small>CUE / evidence score ${escapeHtml(run.cue || "—")} · ${escapeHtml(run.evidenceCount ?? "—")} notes</small></div></article>`).join("")}</div>` : `<div class="evidence-empty"><strong>No local run summaries yet.</strong><span>Completed requests can be exported as a de-identified research record from this browser.</span></div>`}<p class="history-privacy">Stored locally: time, profile, concern, city/area context, status, CUE (or evidence-sufficiency score when no model text was written) and evidence count. Never stored: free-text symptoms, source excerpts, or identifiers.</p></section>`;
 }
 
 function locationResultLabel(location) {
@@ -1045,8 +1107,9 @@ function insightPanel() {
   const explanation = state.routineMeta?.explainability || state.explainability;
   const features = Array.isArray(explanation?.features) ? explanation.features : [];
   const peg = explanation?.peg;
+  const weightStatus = String(explanation?.model?.weightStatus || "");
   const label = explanation?.method === "exact_shapley_values_for_additive_environmental_surrogate"
-    ? "Exact Shapley values · configured additive study-demo surrogate"
+    ? `Exact Shapley values · additive surrogate ${/expert/.test(weightStatus) ? "fitted to expert-labelled scenarios" : /fitted/.test(weightStatus) ? "fitted to a labelled dataset" : "with configured weights"}`
     : "Loading contribution model";
   if (!features.length) {
     return `<section class="panel insight-panel"><div class="panel-header"><h2 class="panel-title">${icon("sparkles", 17)} Environmental contribution</h2><p class="panel-note">${escapeHtml(label)}</p></div><div class="evidence-empty"><strong>Contribution profile is loading.</strong><span>The final-review model decomposes UV, humidity, PM2.5, and temperature against a transparent baseline.</span></div></section>`;
@@ -1110,10 +1173,10 @@ function synthesizedRoutineCard(routine, meta) {
   const aiRationale = meta?.aiCategoryRationale;
   const aiRationaleAvailable = Boolean(aiRationale?.status && aiRationale?.text);
   const aiRationaleMarkup = aiRationaleAvailable
-    ? `<section class="ai-category-rationale"><div><span>${icon("sparkles", 14)} AI category rationale</span><small>${escapeHtml(aiRationale.label || String(aiRationale.status).replaceAll("_", " "))}</small></div><p>${escapeHtml(aiRationale.text)}</p><strong>${escapeHtml(aiRationale.boundary || "Deterministic safety checks remain the final authority for every displayed category.")}</strong></section>`
+    ? `<section class="ai-category-rationale"><div><span>${icon("sparkles", 14)} AI category rationale</span><small>${escapeHtml(aiRationale.cue && aiRationale.cue.score !== null && aiRationale.cue.score !== undefined ? `CUE ${Number(aiRationale.cue.score).toFixed(2)} · ${String(aiRationale.cue.status || "").replaceAll("_", " ")}` : (aiRationale.label || String(aiRationale.status).replaceAll("_", " ")))}</small></div><p>${escapeHtml(aiRationale.text)}</p><strong>${escapeHtml(aiRationale.boundary || "Deterministic safety checks remain the final authority for every displayed category.")}</strong></section>`
     : `<section class="ai-category-rationale is-unavailable"><div><span>${icon("info", 14)} AI category rationale</span><small>Not available</small></div><p>No AI category rationale is shown because the configured gate did not permit it or the GPT billing/provider connection is unavailable.</p><strong>Deterministic safety checks remain the final authority for every displayed category.</strong></section>`;
   const candidates = Array.isArray(meta?.ingredientCandidates?.entries) ? meta.ingredientCandidates.entries : [];
-  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span></div>${approvedIngredientCandidatePanel(meta)}<div class="synth-structure-label">${icon("layers", 13)} Routine structure by category</div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these recommendations?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p>${aiRationaleMarkup}</div>` : ""}</section>`;
+  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span></div>${approvedIngredientCandidatePanel(meta)}<div class="synth-structure-label">${icon("layers", 13)} Routine structure by category</div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these recommendations?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p>${meta?.explanation?.level1?.text ? `<p class="peg-level1"><b>Environment (level 1):</b> ${escapeHtml(meta.explanation.level1.text)}</p>` : ""}${aiRationaleMarkup}</div>` : ""}</section>`;
 }
 
 function simulatorView() {
@@ -1252,7 +1315,7 @@ function knowledgeExplorerView() {
     const sources = Array.isArray(ingredient.sources) ? ingredient.sources : [];
     const primarySource = sources[0];
     const sourceCount = sources.length;
-    return `<article class="atlas-ingredient"><div class="atlas-ingredient-head"><div><h3>${escapeHtml(ingredient.displayName)}</h3><p>${escapeHtml(inci || ingredient.id)}</p></div><span class="atlas-state">${sourceCount} source${sourceCount === 1 ? "" : "s"}</span></div><div class="atlas-contexts">${contexts}</div>${primarySource ? `<div class="atlas-primary-source">${atlasSourceCard(primarySource)}</div>` : ""}${sources.length > 1 ? `<details class="atlas-limitations"><summary>View ${sources.length - 1} more source${sources.length === 2 ? "" : "s"}</summary><div class="atlas-sources">${sources.slice(1).map(atlasSourceCard).join("")}</div></details>` : ""}</article>`;
+    return `<article class="atlas-ingredient"><div class="atlas-ingredient-head"><div><h3>${escapeHtml(ingredient.displayName)}</h3><p>${escapeHtml(inci || ingredient.id)}</p></div><span class="atlas-state">${sourceCount} source${sourceCount === 1 ? "" : "s"}</span></div><div class="atlas-contexts">${contexts}</div>${atlasReferenceLine(ingredient)}${primarySource ? `<div class="atlas-primary-source">${atlasSourceCard(primarySource)}</div>` : ""}${sources.length > 1 ? `<details class="atlas-limitations"><summary>View ${sources.length - 1} more source${sources.length === 2 ? "" : "s"}</summary><div class="atlas-sources">${sources.slice(1).map(atlasSourceCard).join("")}</div></details>` : ""}</article>`;
   }).join("");
   const retrievalCards = results.slice(0, 8).map((item) => {
     const sourceUrl = safeEvidenceUrl(item.sourceUrl);
@@ -1555,13 +1618,13 @@ function downloadCsv() {
   const results = Array.isArray(state.bulkReport?.results) ? state.bulkReport.results : [];
   const content = results.length
     ? [
-      "profile_id,skin_profile,concern,cue_score,cue_gate_passed,research_evidence_records,research_source_records,safety_status,top_environmental_driver,status",
+      "profile_id,skin_profile,concern,evidence_sufficiency_score,evidence_gate_passed,research_evidence_records,research_source_records,safety_status,top_environmental_driver,status",
       ...results.map((item) => [
         item.profileId,
         item.profile,
         concernLabelFromId(item.concern),
-        safelyNumber(item.cueScore),
-        item.cueGatePassed,
+        safelyNumber(item.sufficiencyScore),
+        item.evidenceGatePassed,
         item.researchEvidenceCount,
         item.researchSourceCount,
         item.safetyStatus,
@@ -1569,7 +1632,7 @@ function downloadCsv() {
         item.status,
       ].map(quoteCsv).join(",")),
     ].join("\n")
-    : ["profile_id,concern,cue_score,status", ...state.bulkRows.map((row) => row.map(quoteCsv).join(","))].join("\n");
+    : ["profile_id,concern,evidence_sufficiency_score,status", ...state.bulkRows.map((row) => row.map(quoteCsv).join(","))].join("\n");
   const url = URL.createObjectURL(new Blob([content], { type: "text/csv" }));
   const link = document.createElement("a");
   link.href = url;
@@ -1674,7 +1737,7 @@ function printableResearchReportDocument() {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>DermaSynth final-review report</title><style>
     :root { color-scheme: light; --ink:#173530; --muted:#5e716b; --line:#d8e5e0; --accent:#1b7467; --soft:#eef8f4; }
     * { box-sizing:border-box; } body { margin:0; color:var(--ink); background:#eef4f1; font:14px/1.48 Inter, Avenir Next, Arial, sans-serif; } main { width:min(920px,100%); margin:0 auto; padding:34px; background:#fff; } .masthead { display:flex; justify-content:space-between; gap:24px; padding:25px 28px; color:#effff9; border-radius:20px; background:linear-gradient(135deg,#0c3d38,#176a5e); } .mark { display:flex; align-items:center; gap:11px; color:#b9e6d9; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; } .mark::before { width:12px; height:12px; border-radius:4px; background:#8ee2ca; content:""; } h1 { margin:8px 0 0; color:#fff; font-size:31px; letter-spacing:-.05em; } .masthead p { max-width:510px; margin:8px 0 0; color:#c7e8df; } .stamp { min-width:155px; color:#b7ded4; font-size:11px; text-align:right; } .stamp strong { display:block; margin-top:4px; color:#fff; font-size:13px; } section { margin-top:24px; padding:22px; border:1px solid var(--line); border-radius:16px; } h2 { margin:0; font-size:16px; letter-spacing:-.02em; } .lead { margin:6px 0 0; color:var(--muted); font-size:12px; } .status { display:inline-block; margin-top:13px; padding:5px 9px; color:#235f54; border-radius:999px; background:#dcf1ea; font-size:11px; font-weight:800; } .environment { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:15px; } .environment div { padding:12px; border-radius:11px; background:#f6faf8; } .environment span, .environment strong { display:block; } .environment span { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; } .environment strong { margin-top:4px; font-size:17px; } .routine { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:15px; } .routine article { padding:15px; border-radius:12px; background:#f8fbf9; } .routine h3 { margin:0; font-size:12px; text-transform:uppercase; letter-spacing:.08em; } ol { display:grid; gap:10px; margin:13px 0 0; padding:0; list-style:none; } ol li { display:grid; grid-template-columns:22px 1fr; gap:9px; } ol b { display:grid; width:21px; height:21px; place-items:center; color:#176a5e; border-radius:50%; background:#dff2ec; font-size:10px; } ol strong, ol span { display:block; } ol span { margin-top:2px; color:var(--muted); font-size:11px; } .facts { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:14px; } .facts div { padding:11px; border-left:3px solid #9ed6c8; background:#f8fbf9; } .facts dt { color:var(--muted); font-size:10px; text-transform:uppercase; } .facts dd { margin:4px 0 0; font-weight:750; } .checks { display:grid; gap:7px; margin-top:14px; padding:0; list-style:none; } .checks li { padding:10px 11px; color:#41564f; border-radius:10px; background:#f7faf8; font-size:12px; } table { width:100%; margin-top:14px; border-collapse:collapse; font-size:12px; } th, td { padding:9px; border-bottom:1px solid var(--line); text-align:left; } th { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.06em; } .sources { display:grid; gap:10px; margin:14px 0 0; padding:0; list-style:none; } .sources li { padding:12px; border:1px solid var(--line); border-radius:10px; } .sources strong, .sources span { display:block; } .sources span, .sources p { color:var(--muted); font-size:11px; } .sources p { margin:4px 0; } a { color:#176a5e; font-size:11px; font-weight:750; } .boundary { margin-top:24px; padding:15px 17px; color:#46625a; border:1px solid #cbe7dd; border-radius:13px; background:#eff9f5; font-size:11px; } .boundary strong { color:#176a5e; } footer { margin-top:18px; color:#71827d; font-size:10px; text-align:center; } @media print { body { background:#fff; } main { padding:0; } section { break-inside:avoid; } } @media (max-width:620px) { main { padding:18px; } .masthead { display:block; } .stamp { margin-top:15px; text-align:left; } .environment, .facts, .routine { grid-template-columns:1fr 1fr; } }
-  </style></head><body><main><header class="masthead"><div><div class="mark">DermaSynth · Final-review research report</div><h1>Explainable category-preview record</h1><p>Environment inputs, category-only routine output, source links, deterministic guardrails, and configured contribution values in one printable artefact.</p></div><div class="stamp">Generated<strong>${escapeHtml(printReportDate())}</strong><br />Non-clinical research demonstrator</div></header><section><h2>Run boundary</h2><p class="lead">The report intentionally omits optional free-text safety context. It does not diagnose, prescribe, select a named ingredient, establish individual suitability, or replace qualified care.</p><span class="status">${escapeHtml(status)}</span><dl class="facts"><div><dt>Research context</dt><dd>${escapeHtml(concernOption().label)}</dd></div><div><dt>Profile input</dt><dd>${escapeHtml(state.profile)}</dd></div><div><dt>Evidence coverage gate</dt><dd>${Number.isFinite(Number(grounding.cueScore)) ? `CUE proxy ${escapeHtml(safelyNumber(grounding.cueScore))}` : "Not reported"}</dd></div></dl></section><section><h2>Labelled environment inputs</h2><p class="lead">${escapeHtml(locationLabel())} · ${escapeHtml(environmentModeLabel())} · ${escapeHtml(state.lastUpdated)}</p><div class="environment">${environmentRows}</div></section><section><h2>Category-only routine preview</h2><p class="lead">${escapeHtml(routine.label)}</p><div class="routine"><article><h3>Morning</h3><ol>${stepRows(routine.am)}</ol></article><article><h3>Evening</h3><ol>${stepRows(routine.pm)}</ol></article></div></section><section><h2>Deterministic guardrail trace</h2><p class="lead">${escapeHtml(String(safety.status || "Not reported").replaceAll("_", " "))}. The guardrail status is reported by the server; it is not a clinical safety guarantee.</p><ul class="checks">${safetyChecks.length ? safetyChecks.map((check) => `<li>${escapeHtml(check)}</li>`).join("") : "<li>No safety-check list was returned for this report.</li>"}</ul></section><section><h2>Configured environmental contribution view</h2><p class="lead">Exact Shapley values for the configured additive study-demo surrogate. Values explain this transparent study model only, not clinical causation.</p>${contributionRows ? `<table><thead><tr><th>Input</th><th>Reading</th><th>Shapley value</th><th>Direction</th></tr></thead><tbody>${contributionRows}</tbody></table>` : "<p class=\"lead\">No contribution values were returned for this run.</p>"}</section><section><h2>Source-linked research records</h2><p class="lead">Links are provided for final-review traceability. Their presence does not authorise a named ingredient, product, dose, frequency, compatibility, or treatment claim.</p><ul class="sources">${sourceNote}</ul></section><aside class="boundary"><strong>Scope declaration:</strong> this printable report documents a non-clinical technology demonstration. Category-source cards are source-mapped research context, remain pending qualified clinical review, and are excluded from strict CUE, live category selection, ingredient activation, and routine selection.</aside><footer>DermaSynth · local final-review export · save through the browser print dialog if a PDF file is needed.</footer></main></body></html>`;
+  </style></head><body><main><header class="masthead"><div><div class="mark">DermaSynth · Final-review research report</div><h1>Explainable category-preview record</h1><p>Environment inputs, category-only routine output, source links, deterministic guardrails, and configured contribution values in one printable artefact.</p></div><div class="stamp">Generated<strong>${escapeHtml(printReportDate())}</strong><br />Non-clinical research demonstrator</div></header><section><h2>Run boundary</h2><p class="lead">The report intentionally omits optional free-text safety context. It does not diagnose, prescribe, select a named ingredient, establish individual suitability, or replace qualified care.</p><span class="status">${escapeHtml(status)}</span><dl class="facts"><div><dt>Research context</dt><dd>${escapeHtml(concernOption().label)}</dd></div><div><dt>Profile input</dt><dd>${escapeHtml(state.profile)}</dd></div><div><dt>Evidence-sufficiency gate</dt><dd>${Number.isFinite(Number(grounding.sufficiencyScore)) ? `${grounding.passed ? "Passed" : "Not passed"} · ${escapeHtml(safelyNumber(grounding.sufficiencyScore))}` : "Not reported"}</dd></div><div><dt>CUE (model text)</dt><dd>${escapeHtml(cueSummary(grounding).value)}</dd></div></dl></section><section><h2>Labelled environment inputs</h2><p class="lead">${escapeHtml(locationLabel())} · ${escapeHtml(environmentModeLabel())} · ${escapeHtml(state.lastUpdated)}</p><div class="environment">${environmentRows}</div></section><section><h2>Category-only routine preview</h2><p class="lead">${escapeHtml(routine.label)}</p><div class="routine"><article><h3>Morning</h3><ol>${stepRows(routine.am)}</ol></article><article><h3>Evening</h3><ol>${stepRows(routine.pm)}</ol></article></div></section><section><h2>Deterministic guardrail trace</h2><p class="lead">${escapeHtml(String(safety.status || "Not reported").replaceAll("_", " "))}. The guardrail status is reported by the server; it is not a clinical safety guarantee.</p><ul class="checks">${safetyChecks.length ? safetyChecks.map((check) => `<li>${escapeHtml(check)}</li>`).join("") : "<li>No safety-check list was returned for this report.</li>"}</ul></section><section><h2>Configured environmental contribution view</h2><p class="lead">Exact Shapley values for the configured additive study-demo surrogate. Values explain this transparent study model only, not clinical causation.</p>${contributionRows ? `<table><thead><tr><th>Input</th><th>Reading</th><th>Shapley value</th><th>Direction</th></tr></thead><tbody>${contributionRows}</tbody></table>` : "<p class=\"lead\">No contribution values were returned for this run.</p>"}</section><section><h2>Source-linked research records</h2><p class="lead">Links are provided for final-review traceability. Their presence does not authorise a named ingredient, product, dose, frequency, compatibility, or treatment claim.</p><ul class="sources">${sourceNote}</ul></section><aside class="boundary"><strong>Scope declaration:</strong> this printable report documents a non-clinical technology demonstration. Category-source cards are source-mapped research context, remain pending qualified clinical review, and are excluded from the evidence-sufficiency gate, live category selection, ingredient activation, and routine selection.</aside><footer>DermaSynth · local final-review export · save through the browser print dialog if a PDF file is needed.</footer></main></body></html>`;
 }
 
 function printResearchReport() {
@@ -1704,7 +1767,8 @@ function persistRunHistory() {
 
 function recordRunSummary(payload, location) {
   const status = payload?.status === "cleared" ? "Cleared" : payload?.status === "medical_redirect" ? "Redirected" : payload?.status === "review_required" ? "Review" : "Reported";
-  const cue = Number(payload?.grounding?.cueScore);
+  const cueScore = payload?.grounding?.cue?.score;
+  const cue = Number(cueScore === null || cueScore === undefined ? payload?.grounding?.sufficiencyScore : cueScore);
   const entry = {
     id: String(payload?.requestId || `local-${Date.now()}`),
     timestamp: new Date().toLocaleString(),
@@ -2415,7 +2479,7 @@ async function refreshIngredientRationales() {
     if (key !== state.ingredientRationaleKey) return;
     const map = {};
     for (const item of Array.isArray(payload.rationales) ? payload.rationales : []) {
-      if (item && item.ingredientId && item.text) map[item.ingredientId] = { text: item.text, source: item.source || "" };
+      if (item && item.ingredientId && item.text) map[item.ingredientId] = { text: item.text, source: item.source || "", cue: item.cue || null };
     }
     state.ingredientRationales = map;
     state.ingredientRationaleStatus = Object.keys(map).length ? "available" : "unavailable";
@@ -2442,7 +2506,7 @@ async function runBatch() {
     if (!response.ok) throw new Error("Bulk API is unavailable");
     const payload = await response.json();
     const results = Array.isArray(payload.results) ? payload.results : [];
-    state.bulkRows = results.map((item) => [item.profileId, concernLabelFromId(item.concern), safelyNumber(item.cueScore), item.status]);
+    state.bulkRows = results.map((item) => [item.profileId, concernLabelFromId(item.concern), safelyNumber(item.sufficiencyScore), item.status]);
     state.bulkReport = {
       mode: payload.mode || "deterministic-research-batch",
       summary: payload.summary || {},

@@ -1,0 +1,426 @@
+{
+  "schemaVersion": "1.0",
+  "referenceVersion": "ewg-skin-deep-2026-09-23",
+  "source": "Environmental Working Group (EWG) Skin Deep cosmetics database",
+  "sourceUrl": "https://www.ewg.org/skindeep/",
+  "checkedAt": "2026-09-23",
+  "checkedBy": "web-assisted lookup of each Skin Deep ingredient search listing / ingredient page; a reviewer should spot-check before citing individual values",
+  "scale": "EWG hazard score 1 (low hazard) to 10 (high hazard); data availability None, Limited, Fair, Good or Robust.",
+  "reuse": "Attribution only. One score and one data-availability label per ingredient are recorded with a link; no EWG text or dataset is copied.",
+  "interpretation": "EWG scores are a consumer-advocacy hazard rating that changes over time and can differ from regulatory conclusions (CIR, SCCS, FDA). DermaSynth uses them only as a low-weight, clearly labelled reference factor and never as a safety conclusion or a reason to override the deterministic safety passes.",
+  "entries": [
+    {
+      "ingredientId": "allantoin",
+      "status": "listed",
+      "ewgName": "ALLANTOIN",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/700244-ALLANTOIN/"
+    },
+    {
+      "ingredientId": "alpha-arbutin",
+      "status": "listed",
+      "ewgName": "ALPHA-ARBUTIN",
+      "hazardScore": 1,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/716533-ALPHAARBUTIN/"
+    },
+    {
+      "ingredientId": "ascorbic-acid",
+      "status": "listed",
+      "ewgName": "ASCORBIC ACID (VITAMIN C)",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/700544-ASCORBIC_ACID_VITAMIN_C/",
+      "note": "Listed on EWG Skin Deep as ASCORBIC ACID (VITAMIN C)."
+    },
+    {
+      "ingredientId": "asiaticoside",
+      "status": "listed",
+      "ewgName": "ASIATICOSIDE",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/716797-ASIATICOSIDE/"
+    },
+    {
+      "ingredientId": "azelaic-acid",
+      "status": "listed",
+      "ewgName": "AZELAIC ACID",
+      "hazardScore": 2,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/700603-AZELAIC_ACID/"
+    },
+    {
+      "ingredientId": "beta-glucan",
+      "status": "listed",
+      "ewgName": "BETA-GLUCAN",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/700721-BETAGLUCAN/"
+    },
+    {
+      "ingredientId": "bisabolol",
+      "status": "listed",
+      "ewgName": "BISABOLOL",
+      "hazardScore": 2,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/700771-BISABOLOL/"
+    },
+    {
+      "ingredientId": "caffeine",
+      "status": "listed",
+      "ewgName": "CAFFEINE",
+      "hazardScore": 2,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/700946-CAFFEINE/"
+    },
+    {
+      "ingredientId": "caprylic-capric-triglyceride",
+      "status": "listed",
+      "ewgName": "CAPRYLIC/CAPRIC TRIGLYCERIDE",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/701056-CAPRYLICCAPRIC_TRIGLYCERIDE/"
+    },
+    {
+      "ingredientId": "centella-asiatica-extract",
+      "status": "listed",
+      "ewgName": "CENTELLA ASIATICA (GOTU KOLA) EXTRACT",
+      "hazardScore": 1,
+      "dataAvailability": "Good",
+      "url": "https://www.ewg.org/skindeep/ingredients/701197-CENTELLA_ASIATICA_GOTU_KOLA_EXTRACT/",
+      "note": "Matched to the EWG entry CENTELLA ASIATICA (GOTU KOLA) EXTRACT (full INCI form of the same extract)."
+    },
+    {
+      "ingredientId": "ceramide-1",
+      "status": "not_listed",
+      "ewgName": null,
+      "hazardScore": null,
+      "dataAvailability": null,
+      "url": null,
+      "note": "Legacy INCI name. EWG Skin Deep has no entry named CERAMIDE 1; the modern INCI equivalent (Ceramide EOP) is listed separately and its score is not transferred here."
+    },
+    {
+      "ingredientId": "ceramide-3",
+      "status": "not_listed",
+      "ewgName": null,
+      "hazardScore": null,
+      "dataAvailability": null,
+      "url": null,
+      "note": "Legacy INCI name. EWG Skin Deep has no entry named CERAMIDE 3; the modern INCI equivalent (Ceramide NP) is listed separately and its score is not transferred here."
+    },
+    {
+      "ingredientId": "ceramide-6-ii",
+      "status": "not_listed",
+      "ewgName": null,
+      "hazardScore": null,
+      "dataAvailability": null,
+      "url": null,
+      "note": "Legacy INCI name. EWG Skin Deep has no entry named CERAMIDE 6 II; the modern INCI equivalent (Ceramide AP) is listed separately and its score is not transferred here."
+    },
+    {
+      "ingredientId": "ceramide-ap",
+      "status": "listed",
+      "ewgName": "CERAMIDE AP",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/701206-CERAMIDE_AP/"
+    },
+    {
+      "ingredientId": "ceramide-eop",
+      "status": "listed",
+      "ewgName": "CERAMIDE EOP",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/701202-CERAMIDE_EOP/"
+    },
+    {
+      "ingredientId": "ceramide-np",
+      "status": "listed",
+      "ewgName": "CERAMIDE NP",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/701204-CERAMIDE_NP/"
+    },
+    {
+      "ingredientId": "cholesterol",
+      "status": "listed",
+      "ewgName": "CHOLESTEROL",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/701332-CHOLESTEROL/"
+    },
+    {
+      "ingredientId": "citric-acid",
+      "status": "listed",
+      "ewgName": "CITRIC ACID",
+      "hazardScore": 2,
+      "dataAvailability": "Good",
+      "url": "https://www.ewg.org/skindeep/ingredients/701385-CITRIC_ACID/"
+    },
+    {
+      "ingredientId": "colloidal-oatmeal",
+      "status": "listed",
+      "ewgName": "AVENA SATIVA (OAT) KERNEL FLOUR",
+      "hazardScore": 1,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/700581-AVENA_SATIVA_OAT_KERNEL_FLOUR/",
+      "note": "Matched by INCI name AVENA SATIVA (OAT) KERNEL FLOUR."
+    },
+    {
+      "ingredientId": "dexpanthenol",
+      "status": "listed",
+      "ewgName": "PANTHENOL, D-",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/725785-PANTHENOL_D/",
+      "note": "Dexpanthenol is D-panthenol; matched to the EWG entry PANTHENOL, D-."
+    },
+    {
+      "ingredientId": "dimethicone",
+      "status": "listed",
+      "ewgName": "DIMETHICONE",
+      "hazardScore": 5,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/702011-DIMETHICONE/"
+    },
+    {
+      "ingredientId": "ectoin",
+      "status": "listed",
+      "ewgName": "ECTOIN",
+      "hazardScore": 1,
+      "dataAvailability": "None",
+      "url": "https://www.ewg.org/skindeep/ingredients/702227-ECTOIN/"
+    },
+    {
+      "ingredientId": "gluconolactone",
+      "status": "listed",
+      "ewgName": "GLUCONOLACTONE",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/702593-GLUCONOLACTONE/"
+    },
+    {
+      "ingredientId": "glycerin",
+      "status": "listed",
+      "ewgName": "GLYCERIN",
+      "hazardScore": 2,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/702620-GLYCERIN/"
+    },
+    {
+      "ingredientId": "glycolic-acid",
+      "status": "listed",
+      "ewgName": "GLYCOLIC ACID",
+      "hazardScore": 6,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/702704-GLYCOLIC_ACID/"
+    },
+    {
+      "ingredientId": "kojic-acid",
+      "status": "listed",
+      "ewgName": "KOJIC ACID",
+      "hazardScore": 7,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/703324-KOJIC_ACID/"
+    },
+    {
+      "ingredientId": "lactic-acid",
+      "status": "listed",
+      "ewgName": "LACTIC ACID",
+      "hazardScore": 5,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/703350-LACTIC_ACID/"
+    },
+    {
+      "ingredientId": "lanolin",
+      "status": "not_listed",
+      "ewgName": null,
+      "hazardScore": null,
+      "dataAvailability": null,
+      "url": null,
+      "note": "EWG Skin Deep search returned lanolin derivatives (for example Anhydrous Liquid Lanolin, Lanolin Oil, Hydrogenated Lanolin) but no entry named exactly LANOLIN, so no score is recorded."
+    },
+    {
+      "ingredientId": "licorice-root-extract",
+      "status": "listed",
+      "ewgName": "GLYCYRRHIZA GLABRA (LICORICE) ROOT EXTRACT",
+      "hazardScore": 5,
+      "dataAvailability": "Good",
+      "url": "https://www.ewg.org/skindeep/ingredients/702715-GLYCYRRHIZA_GLABRA_LICORICE_ROOT_EXTRACT/",
+      "note": "Matched by INCI name GLYCYRRHIZA GLABRA (LICORICE) ROOT EXTRACT."
+    },
+    {
+      "ingredientId": "linoleic-acid",
+      "status": "listed",
+      "ewgName": "LINOLEIC ACID",
+      "hazardScore": 1,
+      "dataAvailability": "Good",
+      "url": "https://www.ewg.org/skindeep/ingredients/703578-LINOLEIC_ACID/"
+    },
+    {
+      "ingredientId": "madecassoside",
+      "status": "listed",
+      "ewgName": "MADECASSOSIDE",
+      "hazardScore": 1,
+      "dataAvailability": "None",
+      "url": "https://www.ewg.org/skindeep/ingredients/729675-MADECASSOSIDE/"
+    },
+    {
+      "ingredientId": "mandelic-acid",
+      "status": "listed",
+      "ewgName": "MANDELIC ACID",
+      "hazardScore": 1,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/703735-MANDELIC_ACID/"
+    },
+    {
+      "ingredientId": "mineral-oil",
+      "status": "listed",
+      "ewgName": "MINERAL OIL",
+      "hazardScore": 3,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/703977-MINERAL_OIL/"
+    },
+    {
+      "ingredientId": "niacinamide",
+      "status": "listed",
+      "ewgName": "NIACINAMIDE",
+      "hazardScore": 1,
+      "dataAvailability": "Good",
+      "url": "https://www.ewg.org/skindeep/ingredients/704134-NIACINAMIDE/"
+    },
+    {
+      "ingredientId": "petrolatum",
+      "status": "listed",
+      "ewgName": "PETROLATUM",
+      "hazardScore": 5,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/704786-PETROLATUM/"
+    },
+    {
+      "ingredientId": "phytosphingosine",
+      "status": "listed",
+      "ewgName": "PHYTOSPHINGOSINE",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/704855-PHYTOSPHINGOSINE/"
+    },
+    {
+      "ingredientId": "piroctone-olamine",
+      "status": "listed",
+      "ewgName": "PIROCTONE OLAMINE",
+      "hazardScore": 3,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/704914-PIROCTONE_OLAMINE/"
+    },
+    {
+      "ingredientId": "propylene-glycol",
+      "status": "listed",
+      "ewgName": "PROPYLENE GLYCOL",
+      "hazardScore": 3,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/705315-PROPYLENE_GLYCOL/"
+    },
+    {
+      "ingredientId": "resveratrol",
+      "status": "listed",
+      "ewgName": "RESVERATROL",
+      "hazardScore": 2,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/705540-RESVERATROL/"
+    },
+    {
+      "ingredientId": "retinal",
+      "status": "listed",
+      "ewgName": "RETINALDEHYDE",
+      "hazardScore": 9,
+      "dataAvailability": "Good",
+      "url": "https://www.ewg.org/skindeep/ingredients/723265-RETINALDEHYDE/",
+      "note": "Retinal is listed on EWG Skin Deep as RETINALDEHYDE."
+    },
+    {
+      "ingredientId": "retinol",
+      "status": "listed",
+      "ewgName": "RETINOL (VITAMIN A)",
+      "hazardScore": 9,
+      "dataAvailability": "Good",
+      "url": "https://www.ewg.org/skindeep/ingredients/706889-RETINOL_VITAMIN_A/",
+      "note": "Listed on EWG Skin Deep as RETINOL (VITAMIN A)."
+    },
+    {
+      "ingredientId": "retinyl-palmitate",
+      "status": "listed",
+      "ewgName": "RETINYL PALMITATE (VITAMIN A PALMITATE)",
+      "hazardScore": 9,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/705545-RETINYL_PALMITATE_VITAMIN_A_PALMITATE/",
+      "note": "Listed on EWG Skin Deep as RETINYL PALMITATE (VITAMIN A PALMITATE)."
+    },
+    {
+      "ingredientId": "salicylic-acid",
+      "status": "listed",
+      "ewgName": "SALICYLIC ACID",
+      "hazardScore": 6,
+      "dataAvailability": "Robust",
+      "url": "https://www.ewg.org/skindeep/ingredients/705746-SALICYLIC_ACID/"
+    },
+    {
+      "ingredientId": "sodium-hyaluronate",
+      "status": "listed",
+      "ewgName": "SODIUM HYALURONATE",
+      "hazardScore": 1,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/706071-SODIUM_HYALURONATE/"
+    },
+    {
+      "ingredientId": "squalane",
+      "status": "listed",
+      "ewgName": "SQUALANE",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/706264-SQUALANE/"
+    },
+    {
+      "ingredientId": "titanium-dioxide",
+      "status": "listed",
+      "ewgName": "TITANIUM DIOXIDE",
+      "hazardScore": 1,
+      "dataAvailability": "Fair",
+      "url": "https://www.ewg.org/skindeep/ingredients/706561-TITANIUM_DIOXIDE/"
+    },
+    {
+      "ingredientId": "tocopherol",
+      "status": "listed",
+      "ewgName": "TOCOPHEROL",
+      "hazardScore": 2,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/706564-TOCOPHEROL/"
+    },
+    {
+      "ingredientId": "tranexamic-acid",
+      "status": "listed",
+      "ewgName": "TRANEXAMIC ACID",
+      "hazardScore": 1,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/724565-TRANEXAMIC_ACID/"
+    },
+    {
+      "ingredientId": "urea",
+      "status": "listed",
+      "ewgName": "UREA",
+      "hazardScore": 3,
+      "dataAvailability": "Limited",
+      "url": "https://www.ewg.org/skindeep/ingredients/706791-UREA/"
+    },
+    {
+      "ingredientId": "zinc-oxide",
+      "status": "listed",
+      "ewgName": "ZINC OXIDE",
+      "hazardScore": 2,
+      "dataAvailability": "Good",
+      "url": "https://www.ewg.org/skindeep/ingredients/707070-ZINC_OXIDE/",
+      "note": "EWG lists a separate 'Zinc Oxide (Sunscreen Grade)' entry with a different score; the general ZINC OXIDE entry is recorded here."
+    }
+  ]
+}

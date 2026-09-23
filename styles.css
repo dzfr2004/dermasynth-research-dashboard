@@ -607,7 +607,12 @@ textarea:focus-visible {
 .ingredient-pick-chip.is-rule { background: rgb(255 255 255 / 9%); color: #a9c9c1; }
 .ingredient-attr { grid-column: 1 / -1; margin-top: 7px; display: grid; gap: 4px; }
 .ingredient-attr-head { display: inline-flex; align-items: center; gap: 4px; color: #bff3e3; font-size: 0.68rem; font-weight: 700; }
-.ingredient-attr-row { display: grid; grid-template-columns: minmax(0, 1fr) 84px; align-items: center; gap: 8px; color: #c5e3dc; font-size: 0.68rem; }
+.ingredient-attr-row { display: grid; grid-template-columns: minmax(0, 1fr) 84px 48px; align-items: center; gap: 8px; color: #c5e3dc; font-size: 0.68rem; }
+.ingredient-attr-row > em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: #e6fbf4; }
+.ingredient-attr-contrast { color: #9fd6c7; font-size: 0.66rem; }
+.ingredient-why-step { grid-column: 1 / -1; margin: 6px 0 0; font-size: 0.74rem; color: inherit; opacity: 0.9; }
+.ingredient-removed-note { margin: 6px 0 10px; padding: 8px 10px; border-radius: 8px; background: rgb(255 196 120 / 14%); font-size: 0.74rem; display: flex; gap: 6px; align-items: center; }
+.synth-rationale .peg-level1, .peg-level1 { margin: 8px 0; font-size: inherit; font-weight: inherit; line-height: inherit; }
 .ingredient-attr-row > i { font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ingredient-attr-bar { display: block; height: 5px; border-radius: 3px; background: rgb(255 255 255 / 12%); overflow: hidden; }
 .ingredient-attr-bar > b { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6fe3c0, #35b894); }
@@ -1196,9 +1201,11 @@ textarea:focus-visible {
 @media (max-width: 700px) {
   .synth-time-grid { grid-template-columns: 1fr; }
   .scope-banner { padding: 8px 12px; }
-  .ingredient-attr-row { grid-template-columns: minmax(0, 1fr) 58px; }
+  .ingredient-attr-row { grid-template-columns: minmax(0, 1fr) 58px 42px; }
   .ingredient-candidate-panel .research-context-list article { grid-template-columns: 1fr; }
   .ingredient-candidate-panel .research-context-list a { justify-self: start; }
   .forecast-legend { gap: 5px 8px; }
   .forecast-timeline svg { height: 132px; }
 }
+
+.atlas-reference-line { margin: 6px 0 0; font-size: 0.74rem; opacity: 0.85; }

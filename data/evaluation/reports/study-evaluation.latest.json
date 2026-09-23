@@ -563,7 +563,7 @@
       "id": "retrieval-citation-contract",
       "category": "retrieval_provenance",
       "title": "Mocked retrieval preserves usable source, citation, locator, tier, and jurisdiction fields",
-      "expected": "three eligible evidence notes across two documents; CUE coverage proxy 1.00; unsafe URL omitted",
+      "expected": "three eligible evidence notes across two documents; evidence-sufficiency score 1.00; unsafe URL omitted",
       "status": "passed",
       "detail": ""
     },

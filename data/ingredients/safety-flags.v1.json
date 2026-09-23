@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0",
+  "flagsVersion": "2026-09-23.1",
+  "scope": "Deterministic ingredient-level safety lists used by the post-selection safety pass. They restrict what the selection layer may output; they never add an ingredient.",
+  "excludedFromSelection": [
+    {
+      "ingredientId": "retinal",
+      "reason": "AICIS Evaluation Statement EVA00186 (26 June 2026) classifies retinal as a developmental toxicant (Reproductive toxicity Category 1B).",
+      "evidenceDocumentId": "aicis-retinal-evaluation-v1"
+    }
+  ],
+  "prescriptionOnly": [
+    "tretinoin",
+    "adapalene",
+    "isotretinoin",
+    "tazarotene",
+    "trifarotene",
+    "clindamycin",
+    "hydroquinone",
+    "hydrocortisone",
+    "betamethasone-valerate",
+    "clobetasol-propionate"
+  ],
+  "photosensitising": {
+    "ids": ["glycolic-acid", "lactic-acid", "mandelic-acid", "citric-acid", "salicylic-acid", "retinol", "retinal", "retinyl-palmitate"],
+    "rule": "Not allowed in a morning (AM) slot. CIR's Alpha Hydroxy Acids assessment advises sun protection because AHAs increase UV sensitivity; retinoids are conventionally applied in the evening.",
+    "evidenceSourceId": "cir-alpha-hydroxy-acids"
+  },
+  "highIntensityExfoliants": {
+    "ids": ["glycolic-acid", "lactic-acid", "mandelic-acid", "citric-acid", "salicylic-acid", "gluconolactone", "retinol", "retinal", "retinyl-palmitate"],
+    "rule": "Not allowed when the barrier guardrail is active (barrier, sensitivity or dryness context, or moderate/high self-reported reactivity)."
+  }
+}
