@@ -34,11 +34,15 @@ import {
   templateRoutine,
   triageRoutineRequest,
 } from "./lib/safety.mjs";
-import { summarizeKnowledgeContext, synthesizeRoutine, composeIngredientRationales, synthesizeIngredientSelection } from "./lib/synthesis.mjs";
+import { summarizeKnowledgeContext, synthesizeRoutine, composeIngredientRationales, synthesizeIngredientSelection, composeRoutineContext } from "./lib/synthesis.mjs";
+import { describeOpenAiError, openAiStatus } from "./lib/openai.mjs";
+import { functionalClass } from "./lib/ingredient-evidence-corpus.mjs";
+import { evidenceGrade } from "./lib/ingredient-evidence-notes.mjs";
+import { getEwgReference } from "./lib/kb-reference.mjs";
 import { retrieveSlotCandidates } from "./lib/candidate-retrieval.mjs";
 import { buildIngredientEvidenceCorpus } from "./lib/ingredient-evidence-corpus.mjs";
 import { postSelectionSafetyPass } from "./lib/post-selection-safety.mjs";
-import { buildTwoLevelExplanation } from "./lib/peg.mjs";
+import { buildTwoLevelExplanation, slotReasonText } from "./lib/peg.mjs";
 import { appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
 import { getRuntimePolicy } from "./lib/policy-store.mjs";
 import { getIngredientEvidenceNote } from "./lib/ingredient-evidence-notes.mjs";
@@ -778,6 +782,68 @@ function buildRunReport({
   };
 }
 
+// Facts for the GPT step/ingredient context are kept server-side per run, so
+// the browser can only ask for the context of a run the server produced.
+const ROUTINE_CONTEXT_TTL_MS = 60 * 60 * 1000;
+const routineContextCache = new Map();
+
+function rememberRoutineContext(runId, payload) {
+  const now = Date.now();
+  for (const [key, value] of routineContextCache) {
+    if (now - value.createdAt > ROUTINE_CONTEXT_TTL_MS) routineContextCache.delete(key);
+  }
+  while (routineContextCache.size >= 100) routineContextCache.delete(routineContextCache.keys().next().value);
+  routineContextCache.set(runId, { createdAt: now, payload, result: null, pending: null });
+}
+
+const FACTOR_WORDS = {
+  environmental_driver: "how strongly today's reading triggered the step",
+  retrieval_relevance: "how closely its evidence matched this step",
+  evidence_strength: "the strength of its verified safety evidence",
+  ewg_reference: "its EWG reference score",
+};
+
+function routineContextPayload({ concern, profile, environment, routine, entries }) {
+  const concernLabel = CONCERN_CATALOG.find((item) => item.id === concern)?.label || concern;
+  const steps = [
+    ...(routine?.am || []).map((step) => ({ ...step, phase: "am" })),
+    ...(routine?.pm || []).map((step) => ({ ...step, phase: "pm" })),
+  ].map((step) => ({
+    key: `${step.phase}:${step.id}`,
+    phase: step.phase,
+    title: step.title,
+    purpose: step.note,
+    rule: slotReasonText({ step, environment, routine, concern }),
+  }));
+  const contextEntries = (entries || []).map((entry) => {
+    const attr = entry.attribution || {};
+    const grade = evidenceGrade(entry.ingredientId);
+    const ewg = getEwgReference(entry.ingredientId);
+    const step = steps.find((item) => item.key === `${entry.phase}:${entry.categoryId}`);
+    return {
+      key: `${entry.phase}:${entry.categoryId}`,
+      name: entry.displayName,
+      phase: entry.phase,
+      stepTitle: entry.categoryTitle,
+      stepRule: step?.rule || "",
+      facts: {
+        functional_class: functionalClass(entry.ingredientId) || "not recorded",
+        verified_safety_evidence: grade.note?.text || "no verified safety card",
+        safety_source: grade.note?.source || "none",
+        evidence_grade: grade.label,
+        retrieved_candidates_in_rank_order: (attr.ranking || []).map((item) => item.displayName),
+        selected_rank: attr.poolRank ? `${attr.poolRank} of ${attr.poolSize}` : "only candidate",
+        runner_up: attr.contrast?.runnerUp?.displayName || null,
+        deciding_factor_versus_runner_up: attr.contrast?.decisive ? FACTOR_WORDS[attr.contrast.decisive.id] || attr.contrast.decisive.label : null,
+        chosen_by: entry.selectedBy === "llm_from_rag_pool" ? "the language model, from the retrieved approved pool" : "the highest transparent candidate score",
+        ewg_reference: ewg?.status === "listed" ? `EWG Skin Deep hazard score ${ewg.hazardScore} on a 1 to 10 scale (1 = lowest), ${ewg.dataAvailability} data, checked ${ewg.checkedAt || "2026-09-23"}` : "not listed on EWG Skin Deep",
+      },
+      passages: grade.note ? [{ title: grade.note.source, text: grade.note.text }] : [],
+    };
+  });
+  return { concernLabel, profile, environment: { readings: environment?.readings || {} }, steps, entries: contextEntries };
+}
+
 function selectionUnavailable(status, notice) {
   return { status, registryVersion: getRuntimePolicy().policyVersion, entries: [], pool: [], notices: [notice], boundary: "Routine steps remain broad categories. No named ingredient candidate is shown." };
 }
@@ -914,6 +980,10 @@ async function routineResult({
       if (level2) entry.explanation = { whyThisStep: level2.whyThisStep, whyThisIngredient: level2.whyThisIngredient };
     }
   }
+  const contextAvailable = Boolean(routine && status !== "medical_redirect" && config.liveServicesEnabled && config.openai?.apiKey);
+  if (routine && status !== "medical_redirect") {
+    rememberRoutineContext(requestId, routineContextPayload({ concern, profile, environment, routine, entries: ingredientCandidates.entries || [] }));
+  }
   const runReport = buildRunReport({
     requestId,
     startedAt,
@@ -980,6 +1050,11 @@ async function routineResult({
     explainability: resolvedExplainability,
     explanation,
     aiCategoryRationale,
+    routineContext: {
+      available: contextAvailable,
+      runId: requestId,
+      reason: contextAvailable ? null : (!config.liveServicesEnabled || !config.openai?.apiKey ? "GPT is not configured (set LIVE_SERVICES_ENABLED=true and OPENAI_API_KEY in .env)." : null),
+    },
     runReport,
     // Compact compatibility alias for clients that call this provenance a trace.
     trace: { runId: runReport.runId, schemaVersion: runReport.schemaVersion, stages: runReport.stages },
@@ -1207,7 +1282,10 @@ async function handleRoutine(input, requestId) {
     }));
   } catch (error) {
     const fallback = synthesisFallback(error);
-    stages.push(stage("synthesis", fallback.synthesisStatus, synthesisStarted));
+    if (error instanceof ExternalServiceError && error.code !== "not_enabled") {
+      fallback.notices = [...fallback.notices, `GPT category synthesis did not complete: ${describeOpenAiError(error)}`];
+    }
+    stages.push(stage("synthesis", fallback.synthesisStatus, synthesisStarted, { providerCode: error?.code || null, providerStatus: error?.status ?? null }));
     stages.push(stage("second_safety", genericSafety.status, Date.now(), { ruleIds: (genericSecondPass.rules || []).map((rule) => rule.id) }));
     return routineResult({
       requestId,
@@ -1315,6 +1393,7 @@ async function routeApi(request, response, url, requestId) {
         routineCategoryOnlyContract: true,
         approvedIngredientCandidateLayer: Boolean(config.ingredientSelectionEnabled),
         cue: { threshold: config.cueThreshold, method: config.cue.method, maxRetries: config.cue.maxRetries },
+        openai: openAiStatus(config),
         postSelectionSafetyPass: true,
         selectionLog: Boolean(config.selectionLog.enabled),
       },
@@ -1425,7 +1504,7 @@ async function routeApi(request, response, url, requestId) {
     try {
       return sendJson(response, 200, { ingredientId: ingredient.ingredient_id, ...await summarizeKnowledgeContext({ config, subject: { name: ingredient.display_name, categories: ingredient.categories, contexts: ingredient.concern_contexts }, sources }), requestId }, requestId);
     } catch (error) {
-      if (error instanceof ExternalServiceError) throw new HttpError(503, error.message);
+      if (error instanceof ExternalServiceError) throw new HttpError(503, describeOpenAiError(error));
       throw error;
     }
   }
@@ -1452,7 +1531,35 @@ async function routeApi(request, response, url, requestId) {
     try {
       return sendJson(response, 200, { ...await groundedAugmentation({ config, task: kind.replaceAll("_", " "), facts }), requestId }, requestId);
     } catch (error) {
-      if (error instanceof ExternalServiceError) throw new HttpError(503, error.message);
+      if (error instanceof ExternalServiceError) throw new HttpError(503, describeOpenAiError(error));
+      throw error;
+    }
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/ai/routine-context") {
+    const body = await readJson(request);
+    const runId = optionalText(body?.runId, "run id", 80);
+    const cached = routineContextCache.get(runId);
+    if (!cached) throw new HttpError(404, "This run is no longer available. Run the routine again.");
+    if (!config.liveServicesEnabled || !config.openai?.apiKey) throw new HttpError(503, describeOpenAiError({ code: "not_enabled" }));
+    try {
+      if (!cached.result) {
+        cached.pending = cached.pending || composeRoutineContext({ config, ...cached.payload });
+        cached.result = await cached.pending;
+      }
+      return sendJson(response, 200, {
+        status: "available",
+        runId,
+        model: cached.result.model,
+        steps: cached.result.steps,
+        ingredients: cached.result.ingredients,
+        withheld: cached.result.withheld,
+        cue: { threshold: config.cueThreshold, method: config.cue.method },
+        requestId,
+      }, requestId);
+    } catch (error) {
+      cached.pending = null;
+      if (error instanceof ExternalServiceError) throw new HttpError(503, describeOpenAiError(error));
       throw error;
     }
   }
@@ -1497,7 +1604,7 @@ async function routeApi(request, response, url, requestId) {
         requestId,
       }, requestId);
     } catch (error) {
-      if (error instanceof ExternalServiceError) throw new HttpError(503, error.message);
+      if (error instanceof ExternalServiceError) throw new HttpError(503, describeOpenAiError(error));
       throw error;
     }
   }

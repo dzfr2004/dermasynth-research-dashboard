@@ -47,26 +47,25 @@ try {
     }
   }
 
+  // The app itself goes through lib/openai.mjs, which falls back to
+  // OPENAI_FALLBACK_MODELS when OPENAI_MODEL is not available to this key.
+  const { callResponses } = await import("../lib/openai.mjs");
   const schema = { type: "object", additionalProperties: false, properties: { ok: { type: "boolean" } }, required: ["ok"] };
-  const response = await call("https://api.openai.com/v1/responses", {
-    method: "POST",
-    body: JSON.stringify({
-      model,
+  try {
+    const result = await callResponses(config, {
       store: false,
       reasoning: { effort: config.openai.reasoningEffort },
-      max_output_tokens: 40,
+      max_output_tokens: 60,
       instructions: "Return {\"ok\": true}.",
       input: "health check",
       text: { format: { type: "json_schema", name: "health_check", strict: true, schema } },
-    }),
-  });
-  if (response.status === 200) line(true, "Structured Responses call succeeded", `usage: ${JSON.stringify(response.body?.usage || {})}`);
-  else {
+    }, { service: "check:openai" });
+    failed = false;
+    line(true, `The app will use model ${result._model}`, result._model === model ? "the configured OPENAI_MODEL" : `OPENAI_MODEL (${model}) is not available to this key, so the first working fallback is used. Set OPENAI_MODEL=${result._model} in .env to skip the failed attempt.`);
+  } catch (error) {
     failed = true;
-    const message = response.body?.error?.message || "";
-    line(false, `Responses call returned HTTP ${response.status}`, message);
-    if (response.status === 429 && /quota/i.test(message)) console.log("      The account has no available quota: add credit or check the project's usage limits.");
-    if (response.status === 400 && /reasoning/i.test(message)) console.log("      This model does not accept the reasoning setting: set OPENAI_REASONING_EFFORT to a supported value (or remove it).");
+    const { describeOpenAiError } = await import("../lib/openai.mjs");
+    line(false, "No configured model answered", `${describeOpenAiError(error)} Tried: ${[model, ...config.openai.fallbackModels].join(", ")}. Details: data/logs/provider-errors.jsonl`);
   }
 } catch (error) {
   failed = true;

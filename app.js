@@ -255,6 +255,7 @@ const state = {
   ingredientRationales: {},
   ingredientRationaleStatus: "idle",
   ingredientRationaleKey: "",
+  routineContext: { runId: "", status: "idle", steps: {}, ingredients: {}, error: "", model: "" },
   selectedLocation: { ...defaultLocation },
   locationQuery: "",
   locationResults: [],
@@ -452,7 +453,11 @@ function routineStepList(steps, { dark = false, ingredientCandidates = [], phase
       .map((entry) => entry.displayName)
       .filter(Boolean);
     const recommendation = names.length ? `<span class="routine-step-ingredients">Recommended: ${escapeHtml(names.join(", "))}</span>` : "";
-    return `<li><span class="routine-step-title">${escapeHtml(step.title)}</span><small>${escapeHtml(step.note)}${escapeHtml(sourceText)}</small>${recommendation}${!dark ? "" : `<span class="synth-step-number">${index + 1}</span>`}</li>`;
+    const gpt = phase && step?.id ? state.routineContext?.steps?.[`${phase}:${step.id}`] : null;
+    const note = gpt?.text
+      ? `<small class="routine-step-gpt">${escapeHtml(gpt.text)}</small>`
+      : `<small>${escapeHtml(step.note)}${escapeHtml(sourceText)}${phase && state.routineContext?.status === "loading" ? " · writing context…" : ""}</small>`;
+    return `<li><span class="routine-step-title">${escapeHtml(step.title)}</span>${note}${recommendation}${!dark ? "" : `<span class="synth-step-number">${index + 1}</span>`}</li>`;
   }).join("")}</ol>`;
 }
 
@@ -486,6 +491,12 @@ function approvedIngredientCandidatePanel(meta = state.routineMeta) {
   const entries = Array.isArray(selection?.entries) ? selection.entries : [];
   const removed = Array.isArray(selection?.removedBySafety) ? selection.removedBySafety : [];
   if ((selection?.status !== "available" || !entries.length) && !removed.length) return "";
+  const contextStatus = state.routineContext?.status;
+  const gptStatusMarkup = contextStatus === "error" || contextStatus === "unavailable"
+    ? `<p class="ingredient-gpt-status">${icon("info", 13)} GPT explanations are not shown: ${escapeHtml(state.routineContext.error || "unavailable")} The score-based explanation is shown instead.</p>`
+    : contextStatus === "available" && state.routineContext.withheld?.some((item) => item.kind === "ingredient")
+      ? `<p class="ingredient-gpt-status">${icon("info", 13)} Some GPT explanations were withheld because their CUE stayed below ${escapeHtml(String(state.routineMeta?.grounding?.cue?.threshold ?? 0.8))}; the score-based explanation is shown for those.</p>`
+      : "";
   const removedMarkup = removed.length
     ? `<p class="ingredient-removed-note">${icon("shield", 13)} Final safety rescan removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}; ${removed.length === 1 ? "its step stays" : "their steps stay"} as a category.</p>`
     : "";
@@ -495,21 +506,22 @@ function approvedIngredientCandidatePanel(meta = state.routineMeta) {
     const trace = entry.selectionTrace || {};
     const attr = entry.attribution || {};
     const checked = Array.isArray(trace.compatibility?.checkedAgainst) && trace.compatibility.checkedAgainst.length ? trace.compatibility.checkedAgainst.map((item) => item.displayName).join(", ") : "No earlier named recommendation";
-    const llm = state.ingredientRationales?.[entry.ingredientId];
+    const gpt = state.routineContext?.ingredients?.[`${entry.phase}:${entry.categoryId}`] || null;
     const explanation = entry.explanation || {};
-    const rationaleText = (llm && llm.text) ? llm.text : (explanation.whyThisIngredient || entry.rationale || "Matched from the approved knowledge base.");
-    const cueTag = llm?.cue && Number.isFinite(Number(llm.cue.score)) ? ` · CUE ${escapeHtml(Number(llm.cue.score).toFixed(2))}` : "";
-    const rationaleTag = (llm && llm.text)
-      ? `<span class="ingredient-rationale-tag">${icon("sparkles", 11)} GPT · grounded${llm.source ? ` · ${escapeHtml(llm.source)}` : ""}${cueTag}</span>`
-      : (state.ingredientRationaleStatus === "loading" ? '<span class="ingredient-rationale-tag is-loading">Explaining…</span>' : "");
+    const whyStep = gpt?.whyThisStep || explanation.whyThisStep || "";
+    const rationaleText = gpt?.whyThisIngredient || explanation.whyThisIngredient || entry.rationale || "Matched from the approved knowledge base.";
+    const llm = gpt ? { text: gpt.whyThisIngredient } : null;
+    const rationaleTag = gpt
+      ? gptTag(gpt)
+      : (state.routineContext?.status === "loading" ? '<span class="ingredient-rationale-tag is-loading">GPT is writing the explanation…</span>' : "");
     const pickChip = entry.selectedBy === "llm_from_rag_pool"
       ? `<span class="ingredient-pick-chip">${icon("sparkles", 10)} LLM · from retrieved pool${attr.agreesWithSurrogate === false ? " · differs from top score" : ""}</span>`
       : '<span class="ingredient-pick-chip is-rule">top-scored</span>';
     const ranking = Array.isArray(attr.ranking) ? attr.ranking.map((item) => `${item.rank}. ${item.displayName} (${Number(item.score).toFixed(3)})`).join(" · ") : "—";
     const retrieval = trace.retrieval ? `${trace.retrieval.mode || "retrieval"} · pool ${trace.poolSource || "—"}` : (trace.poolSource || "not reported");
-    return `<article><div><strong>${escapeHtml(entry.displayName || "Approved ingredient")}</strong><small>${escapeHtml(`${entry.phase === "am" ? "Morning" : "Evening"} · ${entry.categoryTitle || entry.categoryId || "routine category"}`)} ${pickChip}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Evidence ${icon("arrow", 12)}</a>` : ""}${explanation.whyThisStep ? `<p class="ingredient-why-step"><b>Why this step:</b> ${escapeHtml(explanation.whyThisStep)}</p>` : ""}<p class="ingredient-rationale ${llm && llm.text ? "is-grounded" : ""}"><b>Why this ingredient:</b> ${escapeHtml(rationaleText)}</p>${rationaleTag}${ingredientAttributionMarkup(attr)}<details class="selection-trace"><summary>Selection trace</summary><span>Category: ${escapeHtml(trace.category?.title || entry.categoryId || "—")}</span><span>Retrieval: ${escapeHtml(retrieval)}</span><span>Pool ranking: ${escapeHtml(ranking)}</span><span>Language model: ${escapeHtml(String(trace.llmPickStatus || "not requested").replaceAll("_", " "))}</span><span>Record: ${escapeHtml(trace.selectedRecord?.ingredientId || entry.ingredientId || "—")} · v${escapeHtml(String(trace.selectedRecord?.version || "—"))}</span><span>Compatibility: ${escapeHtml(trace.compatibility?.status || "not reported")} · checked against ${escapeHtml(checked)}</span>${llm && llm.text && explanation.whyThisIngredient ? `<span>Score explanation: ${escapeHtml(explanation.whyThisIngredient)}</span>` : ""}</details></article>`;
+    return `<article><div><strong>${escapeHtml(entry.displayName || "Approved ingredient")}</strong><small>${escapeHtml(`${entry.phase === "am" ? "Morning" : "Evening"} · ${entry.categoryTitle || entry.categoryId || "routine category"}`)} ${pickChip}</small></div>${url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Evidence ${icon("arrow", 12)}</a>` : ""}${whyStep ? `<p class="ingredient-why-step"><b>Why this step:</b> ${escapeHtml(whyStep)}</p>` : ""}<p class="ingredient-rationale ${llm && llm.text ? "is-grounded" : ""}"><b>Why this ingredient:</b> ${escapeHtml(rationaleText)}</p>${rationaleTag}${ingredientAttributionMarkup(attr)}<details class="selection-trace"><summary>Selection trace</summary><span>Category: ${escapeHtml(trace.category?.title || entry.categoryId || "—")}</span><span>Retrieval: ${escapeHtml(retrieval)}</span><span>Pool ranking: ${escapeHtml(ranking)}</span><span>Language model: ${escapeHtml(String(trace.llmPickStatus || "not requested").replaceAll("_", " "))}</span><span>Record: ${escapeHtml(trace.selectedRecord?.ingredientId || entry.ingredientId || "—")} · v${escapeHtml(String(trace.selectedRecord?.version || "—"))}</span><span>Compatibility: ${escapeHtml(trace.compatibility?.status || "not reported")} · checked against ${escapeHtml(checked)}</span>${explanation.whyThisIngredient ? `<span>Score explanation: ${escapeHtml(explanation.whyThisIngredient)}</span>` : ""}</details></article>`;
   }).join("");
-  return `<section class="research-context-card ingredient-candidate-panel"><div class="ingredient-card-top"><div><p class="ingredient-eyebrow">${icon("shield", 14)} Approved ingredient recommendations</p><h3>Named AM/PM recommendations</h3></div><span class="ingredient-output-mode">${escapeHtml(selection.registryVersion || "live database")}</span></div><p class="ingredient-card-summary">Each step's candidates are retrieved from the approved knowledge base, ranked by a transparent score, and rescanned by the final safety pass.</p>${removedMarkup}<div class="research-context-list">${cards}</div></section>`;
+  return `<section class="research-context-card ingredient-candidate-panel"><div class="ingredient-card-top"><div><p class="ingredient-eyebrow">${icon("shield", 14)} Approved ingredient recommendations</p><h3>Named AM/PM recommendations</h3></div><span class="ingredient-output-mode">${escapeHtml(selection.registryVersion || "live database")}</span></div><p class="ingredient-card-summary">Each step's candidates are retrieved from the approved knowledge base, ranked by a transparent score, and rescanned by the final safety pass.</p>${gptStatusMarkup}${removedMarkup}<div class="research-context-list">${cards}</div></section>`;
 }
 
 function safelyNumber(value, digits = 2) {
@@ -2426,7 +2438,7 @@ async function generateRoutine() {
     state.explainability = payload.explainability || state.explainability;
     recordRunSummary(payload, location);
     render();
-    refreshIngredientRationales();
+    refreshRoutineContext();
     if (payload.status === "cleared") {
       showToast("Grounded research preview cleared the configured gates.");
     } else if (payload.status === "medical_redirect") {
@@ -2453,42 +2465,50 @@ async function generateRoutine() {
   }
 }
 
-async function refreshIngredientRationales() {
-  const selection = state.routineMeta?.ingredientCandidates;
-  const entries = Array.isArray(selection?.entries) ? selection.entries : [];
-  if (selection?.status !== "available" || !entries.length) {
-    state.ingredientRationales = {};
-    state.ingredientRationaleStatus = "idle";
-    state.ingredientRationaleKey = "";
+async function refreshRoutineContext() {
+  const meta = state.routineMeta;
+  const runId = meta?.routineContext?.runId || "";
+  if (!runId) {
+    state.routineContext = { runId: "", status: "idle", steps: {}, ingredients: {}, error: "", model: "" };
     return;
   }
-  const candidates = entries.map((entry) => ({ ingredientId: entry.ingredientId, displayName: entry.displayName, categoryTitle: entry.categoryTitle }));
-  const key = JSON.stringify({ c: state.concern, e: state.environment?.readings, ids: candidates.map((c) => c.ingredientId) });
-  if (key === state.ingredientRationaleKey && state.ingredientRationaleStatus === "available") return;
-  state.ingredientRationaleKey = key;
-  state.ingredientRationaleStatus = "loading";
+  if (!meta.routineContext.available) {
+    state.routineContext = { runId, status: "unavailable", steps: {}, ingredients: {}, error: meta.routineContext.reason || "GPT explanations are not available for this run.", model: "" };
+    render();
+    return;
+  }
+  if (state.routineContext.runId === runId && ["loading", "available"].includes(state.routineContext.status)) return;
+  state.routineContext = { runId, status: "loading", steps: {}, ingredients: {}, error: "", model: "" };
   render();
   try {
-    const response = await fetch("/api/ai/ingredient-rationale", {
+    const response = await fetch("/api/ai/routine-context", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ concern: state.concern, environment: { readings: state.environment?.readings || {} }, candidates }),
+      body: JSON.stringify({ runId }),
     });
-    if (!response.ok) throw new Error("Ingredient rationale is unavailable");
-    const payload = await response.json();
-    if (key !== state.ingredientRationaleKey) return;
-    const map = {};
-    for (const item of Array.isArray(payload.rationales) ? payload.rationales : []) {
-      if (item && item.ingredientId && item.text) map[item.ingredientId] = { text: item.text, source: item.source || "", cue: item.cue || null };
-    }
-    state.ingredientRationales = map;
-    state.ingredientRationaleStatus = Object.keys(map).length ? "available" : "unavailable";
-  } catch {
-    if (key !== state.ingredientRationaleKey) return;
-    state.ingredientRationales = {};
-    state.ingredientRationaleStatus = "unavailable";
+    const payload = await response.json().catch(() => ({}));
+    if (state.routineContext.runId !== runId) return;
+    if (!response.ok) throw new Error(payload?.error || "GPT explanations are unavailable.");
+    state.routineContext = {
+      runId,
+      status: "available",
+      steps: payload.steps || {},
+      ingredients: payload.ingredients || {},
+      withheld: Array.isArray(payload.withheld) ? payload.withheld : [],
+      error: "",
+      model: payload.model || "",
+    };
+  } catch (error) {
+    if (state.routineContext.runId !== runId) return;
+    state.routineContext = { runId, status: "error", steps: {}, ingredients: {}, error: error instanceof Error ? error.message : "GPT explanations are unavailable.", model: "" };
   }
   render();
+}
+
+function gptTag(item) {
+  const cue = item?.cue && Number.isFinite(Number(item.cue.score)) ? ` · CUE ${Number(item.cue.score).toFixed(2)}` : "";
+  const model = state.routineContext?.model ? ` · ${escapeHtml(state.routineContext.model)}` : "";
+  return `<span class="ingredient-rationale-tag">${icon("sparkles", 11)} GPT${escapeHtml(cue)}${model}</span>`;
 }
 
 async function runBatch() {
