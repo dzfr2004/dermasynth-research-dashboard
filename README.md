@@ -167,6 +167,14 @@ The triage report gives sensitivity and specificity per method and records the h
 
 `npm run eval:input-sensitivity` measures how much each input changes the output (full grid, about 2 minutes). `npm test` runs a 720-run quick version and fails if any input stops mattering.
 
+## Consumer view and Expert view
+
+The app opens on the routine page in the **consumer view**: today's conditions (UV, humidity, haze, temperature in plain bands), then the morning and evening routine as short steps with the ingredient to look for, one plain reason, and a **Why?** button. The **Expert view** button in the top bar (remembered in this browser) adds everything an examiner needs: ingredient scores and Shapley bars, selection traces, run progress, the run report, evidence grounding, the defence walkthrough, and the rule-based and GPT versions of each explanation side by side.
+
+Technical failures are shown to consumers in plain words; configuration details stay in Expert view and the server log.
+
+`npm run test:browser` (part of `npm test`) opens the app in headless Chromium at phone and desktop widths and checks for JavaScript errors, sideways scrolling, serious accessibility violations (axe-core, WCAG 2.1 AA), the safety question, the Why? buttons, the check-up redirect and Expert view. First time only: `npm install` then `npx playwright install chromium`. Without them the test reports that it was skipped.
+
 ## GPT layer: live evidence, budget and fallbacks
 
 - `npm run eval:live` (with `npm start` running and live keys in `.env`) sends 20 routine requests across 10 cities and 4 profiles, asks for the GPT explanations of each, and reports GPT success, invented or out-of-pool picks, agreement with the candidate score, degraded runs, CUE results and latency (`data/evaluation/reports/live-gpt-evaluation.latest.md`). `npm run report:selection-log` summarises everything logged, including explanation drafts from `data/logs/context-log.jsonl`.

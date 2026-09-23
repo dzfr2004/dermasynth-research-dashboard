@@ -9,7 +9,7 @@ const defaultLocation = Object.freeze({
 const VIEW_META = Object.freeze({
   dashboard: { title: "Overview", subtitle: "Source-linked skincare research intelligence", hash: "overview" },
   monitor: { title: "Environment", subtitle: "Live location-aware research context", hash: "environment" },
-  simulator: { title: "Routine Preview", subtitle: "Explainable category preview", hash: "routine" },
+  simulator: { title: "Your routine", subtitle: "Today's skincare routine", hash: "routine" },
   knowledge: { title: "Ingredient Atlas", subtitle: "Source-linked research records", hash: "atlas" },
 });
 
@@ -18,7 +18,9 @@ const CORE_VIEWS = Object.freeze(["dashboard", "monitor", "simulator", "knowledg
 function viewFromHash() {
   if (typeof window === "undefined") return "dashboard";
   const requested = String(window.location.hash || "").replace(/^#/, "").trim().toLowerCase();
-  if (!requested) return "dashboard";
+  // G1: with no page in the address, consumers land on their routine and
+  // the expert view lands on the research overview.
+  if (!requested) return loadExpertView() ? "dashboard" : "simulator";
   return Object.entries(VIEW_META).find(([, meta]) => meta.hash === requested)?.[0] || null;
 }
 
@@ -111,16 +113,16 @@ const profileRoutines = {
 };
 
 const concernOptions = [
-  { id: "acne", label: "Breakout-prone appearance", description: "Simple research context" },
-  { id: "barrier", label: "Barrier comfort", description: "Low-irritation context" },
-  { id: "pigment", label: "Uneven tone", description: "Appearance research context" },
-  { id: "dryness", label: "Dry-feeling comfort", description: "Comfort-focused context" },
-  { id: "oil", label: "Oil / shine", description: "Lightweight finish context" },
-  { id: "sensitivity", label: "Sensitivity context", description: "Low-irritation context" },
-  { id: "texture", label: "Texture appearance", description: "Cosmetic appearance context" },
-  { id: "redness", label: "Redness-prone appearance", description: "Self-reported comfort context" },
-  { id: "radiance", label: "Dullness / radiance appearance", description: "Cosmetic appearance context" },
-  { id: "pores", label: "Visible-pore appearance", description: "Cosmetic appearance context" },
+  { id: "acne", label: "Breakouts", description: "Breakout-prone appearance" },
+  { id: "barrier", label: "Skin barrier", description: "Barrier comfort" },
+  { id: "pigment", label: "Uneven tone", description: "Dark spots, uneven tone" },
+  { id: "dryness", label: "Dryness", description: "Skin that feels dry or tight" },
+  { id: "oil", label: "Oiliness / shine", description: "Shine through the day" },
+  { id: "sensitivity", label: "Sensitivity", description: "Stings or reddens easily" },
+  { id: "texture", label: "Rough texture", description: "Uneven surface" },
+  { id: "redness", label: "Redness", description: "Redness-prone appearance" },
+  { id: "radiance", label: "Dullness", description: "Lack of glow" },
+  { id: "pores", label: "Visible pores", description: "Pore appearance" },
 ];
 
 // These records mirror the versioned category-source coverage report. They are
@@ -223,6 +225,21 @@ const INCORPORATED_INGREDIENTS = Object.freeze([
 ]);
 
 const RUN_HISTORY_STORAGE_KEY = "dermasynth.deidentified-run-history.v1";
+const EXPERT_VIEW_STORAGE_KEY = "dermasynth.expert-view.v1";
+
+// G1: the app opens in the consumer view; the expert view (scores, traces,
+// run report) is one toggle away and remembered in this browser only.
+function loadExpertView() {
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem(EXPERT_VIEW_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function saveExpertView(value) {
+  try { window.localStorage.setItem(EXPERT_VIEW_STORAGE_KEY, value ? "1" : "0"); } catch { /* storage unavailable */ }
+}
 
 function loadRunHistory() {
   try {
@@ -256,7 +273,8 @@ const state = {
   ingredientRationaleStatus: "idle",
   ingredientRationaleKey: "",
   routineContext: { runId: "", status: "idle", steps: {}, ingredients: {}, error: "", model: "" },
-  expertView: false,
+  expertView: loadExpertView(),
+  openWhy: {},
   selectedLocation: { ...defaultLocation },
   locationQuery: "",
   locationResults: [],
@@ -361,7 +379,13 @@ function environmentModeLabel() {
   if (mode === "degraded") return "Degraded environment";
   if (mode === "unavailable") return "Readings unavailable";
   if (mode === "user_reported") return "Your reported conditions";
-  return "Demo environment";
+  return "Sample weather (not live)";
+}
+
+const SOURCE_STATUS_WORDS = Object.freeze({ live: "live", demo: "sample data", not_configured: "not set up", unavailable: "unavailable", error: "unavailable", degraded: "partial", cached: "recent", user_reported: "reported by you", stale: "not recent" });
+
+function sourceStatusWord(status) {
+  return SOURCE_STATUS_WORDS[status] || String(status || "unknown").replaceAll("_", " ");
 }
 
 function environmentSourceLabel() {
@@ -369,7 +393,8 @@ function environmentSourceLabel() {
   const weather = sources.weather?.status || "demo";
   const air = sources.airQuality?.status || "demo";
   if (weather === "user_reported" && air === "user_reported") return "Conditions reported by you";
-  return `Weather ${weather} · Air ${air}`;
+  if (weather === air) return `Weather and air: ${sourceStatusWord(weather)}`;
+  return `Weather ${sourceStatusWord(weather)} · Air ${sourceStatusWord(air)}`;
 }
 
 function locationLabel() {
@@ -428,6 +453,7 @@ function normaliseRoutineStep(step, index) {
       title: String(step.title || step.name || step.category || `Research category ${index + 1}`),
       note: String(step.note || step.rationale || step.reason || step.description || "Research-only category"),
       sourceIds: sourceIds.map((value) => String(value)).slice(0, 3),
+      ruleIds: Array.isArray(step.ruleIds) ? step.ruleIds.map(String) : [],
     };
   }
   return { title: `Research category ${index + 1}`, note: "Research-only category", sourceIds: [] };
@@ -476,7 +502,7 @@ function stepRuleReason(phase, categoryId) {
 function degradedBanner(meta) {
   const reasons = meta?.degraded?.status === "degraded" ? meta.degraded.reasons || [] : [];
   if (!reasons.length) return "";
-  return `<div class="degraded-banner" role="status">${icon("info", 14)}<div><strong>Reduced mode for this run</strong><ul>${reasons.map((reason) => `<li>${escapeHtml(reason.text)}</li>`).join("")}</ul><small>Every step still passed the rule-based safety checks. Rule-based reasons are shown wherever GPT text is missing.</small></div></div>`;
+  return `<div class="degraded-banner" role="status">${icon("info", 14)}<div><strong>${state.expertView ? "Reduced mode for this run" : "Some parts are simpler today"}</strong><ul>${reasons.map((reason) => `<li>${escapeHtml(reason.text)}</li>`).join("")}</ul><small>Every step still passed the rule-based safety checks. Rule-based reasons are shown wherever GPT text is missing.</small></div></div>`;
 }
 
 function ingredientAttributionMarkup(attr) {
@@ -600,10 +626,10 @@ function shell(view) {
   const modeClass = activeEnvironment().mode === "live" ? "" : ["degraded", "unavailable"].includes(activeEnvironment().mode) ? "is-warning" : "is-neutral";
   const cueClass = state.routineMeta?.status === "cleared" ? "" : "is-warning";
   const locationUpdating = isLocationUpdating();
-  return `<div class="app-shell">
+  return `<div class="app-shell ${state.expertView ? "is-expert" : "is-consumer"}">
     <a class="skip-link" href="#main-content">Skip to content</a>
     <aside class="sidebar">
-      <div class="brand"><span class="brand-mark"><img src="/assets/dermasynth-mark.svg" alt="" /></span><span class="brand-copy"><strong>DermaSynth</strong><small>Environment-aware research</small></span></div>
+      <div class="brand"><span class="brand-mark"><img src="/assets/dermasynth-mark.svg" alt="" /></span><span class="brand-copy"><strong>DermaSynth</strong><small>Weather-aware skincare</small></span></div>
       <div class="sidebar-navigation">
         <div class="sidebar-navigation-group">
           <p class="side-section-label">Core workflow</p>
@@ -624,13 +650,14 @@ function shell(view) {
       <header class="topbar">
         <div class="page-title"><h1 id="page-title" tabindex="-1">${title}</h1><p class="location-line">${icon("pin", 15)}<span>${escapeHtml(locationLabel())}</span><span>· ${escapeHtml(environmentModeLabel())}</span></p></div>
         <div class="topbar-actions">
-          <button class="presentation-button" type="button" data-action="presentation-start">${icon("sparkles", 14)} Defence walkthrough</button>
+          <button class="expert-toggle-top" type="button" data-action="toggle-expert" aria-pressed="${state.expertView}">${icon("layers", 14)} <span>Expert view</span></button>
+          ${state.expertView ? `<button class="presentation-button" type="button" data-action="presentation-start">${icon("sparkles", 14)} Defence walkthrough</button>
           <span class="pill ${cueClass}">${icon("sparkles", 14)} ${escapeHtml(cueLabel())}</span>
-          <span class="pill ${modeClass}">${escapeHtml(environmentSourceLabel())}</span>
+          <span class="pill ${modeClass}">${escapeHtml(environmentSourceLabel())}</span>` : ""}
           <button class="refresh-button" type="button" data-action="refresh" aria-label="Refresh environment readings" ${locationUpdating ? "disabled" : ""}>${icon("refresh", 16)} <span>Refresh environment</span></button>
         </div>
       </header>
-      <div class="scope-banner" role="note">${icon("shield", 14)}<span><strong>Non-clinical research preview.</strong> Environment-aware ingredient suggestions with source-linked safety context — not medical advice, diagnosis, or treatment.</span></div>
+      <div class="scope-banner" role="note">${icon("shield", 14)}<span><strong>Research prototype.</strong> Skincare suggestions based on today's weather. Not medical advice.</span></div>
       <div class="content"><div class="view">${view}</div></div>
     </main>
     <div class="toast" role="status" aria-live="polite" id="toast"></div>
@@ -778,7 +805,7 @@ function ingredientSystemPanel() {
     </div>
     <div class="ingredient-system-roster">
       <div class="ingredient-system-roster-head"><span>Incorporated records</span><strong>${ingredients.length} listed</strong></div>
-      <div class="ingredient-system-grid">${ingredients.map((ingredient) => `<article class="ingredient-system-chip"><strong>${escapeHtml(ingredient.name)}</strong><small>${escapeHtml(ingredient.inci)}</small></article>`).join("")}</div>
+      <div class="ingredient-system-grid" tabindex="0" role="region" aria-label="Ingredients in the knowledge base (scrollable list)">${ingredients.map((ingredient) => `<article class="ingredient-system-chip"><strong>${escapeHtml(ingredient.name)}</strong><small>${escapeHtml(ingredient.inci)}</small></article>`).join("")}</div>
     </div>
   </section>`;
 }
@@ -1171,7 +1198,7 @@ function monitorView() {
 
 function concernPicker() {
   const disabled = state.runStatus === "running";
-  return `<div class="field concern-field"><label id="concern-label">Primary research concern</label><div class="concern-grid" role="group" aria-labelledby="concern-label">${concernOptions.map((option) => `<button type="button" class="concern-choice ${state.concern === option.id ? "is-selected" : ""}" data-action="concern-choice" data-concern="${option.id}" aria-pressed="${state.concern === option.id}" ${disabled ? "disabled" : ""}><strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(option.description)}</small></button>`).join("")}</div><p class="field-help">These are non-medical research contexts, not diagnoses or treatment categories.</p></div>`;
+  return `<div class="field concern-field"><label id="concern-label">Main skin concern</label><div class="concern-grid" role="group" aria-labelledby="concern-label">${concernOptions.map((option) => `<button type="button" class="concern-choice ${state.concern === option.id ? "is-selected" : ""}" data-action="concern-choice" data-concern="${option.id}" aria-pressed="${state.concern === option.id}" ${disabled ? "disabled" : ""}><strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(option.description)}</small></button>`).join("")}</div><p class="field-help">These describe how skin looks or feels. They are not diagnoses.</p></div>`;
 }
 
 function profilePreferenceFields() {
@@ -1179,9 +1206,9 @@ function profilePreferenceFields() {
   const finishPreference = ["matte", "dewy", "no-preference"].includes(state.finishPreference) ? state.finishPreference : "";
   const reactivityLevel = ["low", "moderate", "high"].includes(state.reactivityLevel) ? state.reactivityLevel : "";
   return `<div class="profile-secondary-fields" aria-label="Optional self-report context">
-    <div class="field"><label for="finish-preference">Finish preference <span class="field-optional">(optional)</span></label><select id="finish-preference" data-action="finish-preference" ${disabled ? "disabled" : ""}><option value="" ${finishPreference ? "" : "selected"}>Not specified</option><option value="matte" ${finishPreference === "matte" ? "selected" : ""}>Matte</option><option value="dewy" ${finishPreference === "dewy" ? "selected" : ""}>Dewy</option><option value="no-preference" ${finishPreference === "no-preference" ? "selected" : ""}>No preference</option></select><p class="field-help">Optional self-described finish context; it only helps select between existing category variants.</p></div>
-    <div class="field"><label for="reactivity-level">How easily does your skin usually react to new products? <span class="field-optional">(optional)</span></label><select id="reactivity-level" data-action="reactivity-level" ${disabled ? "disabled" : ""}><option value="" ${reactivityLevel ? "" : "selected"}>Not specified</option><option value="low" ${reactivityLevel === "low" ? "selected" : ""}>Low</option><option value="moderate" ${reactivityLevel === "moderate" ? "selected" : ""}>Moderate</option><option value="high" ${reactivityLevel === "high" ? "selected" : ""}>High</option></select><p class="field-help">Self-reported cosmetic context only; it does not change the primary research concern.</p></div>
-    <div class="field"><label for="exposure-context">Today’s exposure</label><select id="exposure-context" data-action="exposure-context" ${disabled ? "disabled" : ""}><option value="indoors" ${state.exposureContext === "indoors" ? "selected" : ""}>Mostly indoors</option><option value="mixed" ${state.exposureContext === "mixed" ? "selected" : ""}>Mixed</option><option value="outdoors" ${state.exposureContext === "outdoors" ? "selected" : ""}>Mostly outdoors</option></select><p class="field-help">Adjusts the UV activation threshold.</p></div></div>`;
+    <div class="field"><label for="finish-preference">Finish preference <span class="field-optional">(optional)</span></label><select id="finish-preference" data-action="finish-preference" ${disabled ? "disabled" : ""}><option value="" ${finishPreference ? "" : "selected"}>Not specified</option><option value="matte" ${finishPreference === "matte" ? "selected" : ""}>Matte</option><option value="dewy" ${finishPreference === "dewy" ? "selected" : ""}>Dewy</option><option value="no-preference" ${finishPreference === "no-preference" ? "selected" : ""}>No preference</option></select><p class="field-help">How you like your skin to look after moisturising.</p></div>
+    <div class="field"><label for="reactivity-level">Do new products often sting or redden your skin? <span class="field-optional">(optional)</span></label><select id="reactivity-level" data-action="reactivity-level" ${disabled ? "disabled" : ""}><option value="" ${reactivityLevel ? "" : "selected"}>Not specified</option><option value="low" ${reactivityLevel === "low" ? "selected" : ""}>Rarely</option><option value="moderate" ${reactivityLevel === "moderate" ? "selected" : ""}>Sometimes</option><option value="high" ${reactivityLevel === "high" ? "selected" : ""}>Often</option></select><p class="field-help">If they do, the routine stays extra gentle.</p></div>
+    <div class="field"><label for="exposure-context">Your day today</label><select id="exposure-context" data-action="exposure-context" ${disabled ? "disabled" : ""}><option value="indoors" ${state.exposureContext === "indoors" ? "selected" : ""}>Mostly indoors</option><option value="mixed" ${state.exposureContext === "mixed" ? "selected" : ""}>Mixed</option><option value="outdoors" ${state.exposureContext === "outdoors" ? "selected" : ""}>Mostly outdoors</option></select><p class="field-help">More time outdoors means sun protection is added at lower UV.</p></div></div>`;
 }
 
 function conditionsCard(meta) {
@@ -1191,6 +1218,156 @@ function conditionsCard(meta) {
   const groups = Object.entries(labels).map(([key, label]) => `<fieldset class="conditions-group"><legend>${escapeHtml(label)}</legend><div class="conditions-options">${(options[key] || []).map((option) => `<button type="button" class="condition-chip ${chosen[key] === option.id ? "is-selected" : ""}" data-action="report-condition" data-key="${escapeHtml(key)}" data-value="${escapeHtml(option.id)}" aria-pressed="${chosen[key] === option.id}">${escapeHtml(option.label)}</button>`).join("")}</div></fieldset>`).join("");
   const complete = Object.keys(labels).every((key) => chosen[key]);
   return `<section class="synthesized-routine-card is-review conditions-card" aria-live="polite"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("info", 14)} Live readings unavailable</p><h3>Tell us today's conditions</h3><p>We couldn't get live weather and air-quality readings for ${escapeHtml(locationLabel())}. Rather than guess, the routine will use what you choose below.</p></div></div>${groups}<div class="form-actions"><button class="primary-button" type="button" data-action="submit-conditions" ${complete ? "" : "disabled"}>${icon("sparkles", 15)} Build routine with these conditions</button></div></section>`;
+}
+
+// ---- G1/G2/G3: consumer view ---------------------------------------------
+const STEP_PLAIN = Object.freeze({
+  "low-irritation-cleansing": { name: "Gentle cleanse", what: "A mild, non-stripping cleanser." },
+  "comfort-hydration": { name: "Hydrating layer", what: "A hydrating serum or essence that draws in water." },
+  "light-hydration": { name: "Light hydrating layer", what: "A light, water-based hydrating layer." },
+  "supportive-hydration": { name: "Hydrating layer", what: "A hydrating serum or essence." },
+  "barrier-support-moisturising": { name: "Rich moisturiser", what: "A richer moisturiser that helps skin hold on to water." },
+  "lightweight-moisturising": { name: "Light moisturiser", what: "A light gel or lotion moisturiser." },
+  "supportive-moisturising": { name: "Moisturiser", what: "An everyday moisturiser." },
+  "daytime-photoprotection": { name: "Sun protection", what: "Sunscreen as the last morning step." },
+  "antioxidant-context": { name: "Antioxidant", what: "An antioxidant serum for high-pollution days." },
+  "texture-renewal": { name: "Gentle exfoliant (evenings only)", what: "A mild leave-on exfoliant, evenings only." },
+  "overnight-comfort": { name: "Soothing night step", what: "A calming last step before bed." },
+});
+
+function plainStep(step) {
+  return STEP_PLAIN[step?.id] || { name: step?.title || "Routine step", what: step?.note || "" };
+}
+
+// Everyday bands: WHO UV index categories; US EPA 24-hour PM2.5 breakpoints.
+function uvBand(uvi) {
+  const v = Number(uvi);
+  if (!Number.isFinite(v)) return null;
+  if (v < 3) return { label: "low", tone: "calm" };
+  if (v < 6) return { label: "moderate", tone: "mild" };
+  if (v < 8) return { label: "high", tone: "warn" };
+  if (v < 11) return { label: "very high", tone: "alert" };
+  return { label: "extreme", tone: "alert" };
+}
+function humidityBand(h) {
+  const v = Number(h);
+  if (!Number.isFinite(v)) return null;
+  if (v <= 50) return { label: "dry air", tone: "mild" };
+  if (v >= 75) return { label: "humid", tone: "mild" };
+  return { label: "comfortable", tone: "calm" };
+}
+function hazeBand(pm) {
+  const v = Number(pm);
+  if (!Number.isFinite(v)) return null;
+  if (v <= 12) return { label: "clean air", tone: "calm" };
+  if (v <= 35.4) return { label: "moderate", tone: "mild" };
+  if (v <= 55.4) return { label: "hazy", tone: "warn" };
+  return { label: "very hazy", tone: "alert" };
+}
+function temperatureBand(c) {
+  const v = Number(c);
+  if (!Number.isFinite(v)) return null;
+  if (v <= 15) return { label: "cold", tone: "mild" };
+  if (v >= 30) return { label: "hot", tone: "warn" };
+  return { label: "mild", tone: "calm" };
+}
+
+function conditionsSummaryCard(meta) {
+  const environment = meta?.environment || activeEnvironment();
+  const r = environment?.readings || {};
+  const fmt = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v).toFixed(d) : "—");
+  const items = [
+    ["UV", fmt(r.uvi, 1), "", uvBand(r.uvi)],
+    ["Humidity", fmt(r.humidity), "%", humidityBand(r.humidity)],
+    ["Haze (PM2.5)", fmt(r.pm25), "µg/m³", hazeBand(r.pm25)],
+    ["Temperature", fmt(r.temperature), "°C", temperatureBand(r.temperature)],
+  ];
+  const source = environment?.mode === "live" ? "Live readings" : environment?.mode === "user_reported" ? "Conditions you reported" : environment?.mode === "degraded" ? "Some live readings missing" : "Sample weather (not live)";
+  return `<section class="today-card" aria-labelledby="today-title"><div class="today-head"><h3 id="today-title">${icon("pin", 15)} Today in ${escapeHtml(locationLabel())}</h3><span>${escapeHtml(source)}</span></div><dl class="today-grid">${items.map(([label, value, unit, band]) => `<div class="today-item ${band ? `is-${band.tone}` : ""}"><dt>${escapeHtml(label)}</dt><dd><strong>${escapeHtml(value)}</strong>${unit && value !== "—" ? `<small>${escapeHtml(unit)}</small>` : ""}${band ? `<span>${escapeHtml(band.label)}</span>` : ""}</dd></div>`).join("")}</dl></section>`;
+}
+
+// G6: technical failures become one plain sentence; the detail stays in Expert view.
+function plainMessage(text, fallback = "This part isn't available right now.") {
+  const value = String(text || "");
+  if (!value) return fallback;
+  if (/\.env|LIVE_SERVICES|OPENAI|api\.openai|provider|not_configured|quota|model|HTTP|timeout|timed out|budget|rate limit/i.test(value)) return "Friendlier explanations aren't available right now, so the standard reasons are shown.";
+  return value;
+}
+
+function consumerWhy(entry, meta) {
+  const gpt = state.routineContext?.ingredients?.[`${entry.phase}:${entry.categoryId}`] || null;
+  const attr = entry.attribution || {};
+  const parts = [];
+  if (gpt?.whyThisIngredient) parts.push(gpt.whyThisIngredient);
+  else {
+    parts.push(`${entry.displayName} was picked from ${attr.poolSize > 1 ? `${attr.poolSize} approved ingredients` : "the approved ingredient"} for this step.`);
+    const fits = (entry.userFit?.components || []).filter((c) => c.x >= 0.6).map((c) => c.reason);
+    if (fits.length) parts.push(`It suits you because it has ${fits.join(", and ")}.`);
+  }
+  const evidence = (attr.features || []).find((f) => f.id === "evidence_strength");
+  const evidenceText = evidence ? evidence.label.replace(/^Evidence strength \((.*)\)$/, "$1") : "";
+  const source = Array.isArray(entry.sourceRecords) ? entry.sourceRecords[0] : null;
+  const url = safeEvidenceUrl(source?.sourceUrl);
+  return `<p>${escapeHtml(parts.join(" "))}</p>${evidenceText ? `<p class="consumer-evidence">${icon("shield", 12)} Safety source: ${escapeHtml(evidenceText)}${url ? ` · <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">read the source<span class="sr-only"> (opens in a new tab)</span></a>` : ""}</p>` : ""}${gpt ? "" : `<p class="consumer-note">Turn on Expert view for the full scoring.</p>`}`;
+}
+
+// G2: the same computed facts as the rule-based reason, in everyday words.
+function consumerStepLine(step, phase, meta) {
+  const readings = meta?.environment?.readings || {};
+  const generation = state.generatedRoutine?.generation || {};
+  const vote = generation.textureVote;
+  const guarded = (step.ruleIds || []).includes("low-irritation-barrier-guardrail");
+  const words = (item) => (item.signal === "concern" ? `your ${concernOption(item.value).label.toLowerCase()} concern` : item.signal === "profile" ? `your ${item.value} skin` : item.signal === "finish" ? `your ${item.value} finish preference` : item.signal === "humidity" ? (item.vote > 0 ? `dry air (${Math.round(item.value)}% humidity)` : `humid air (${Math.round(item.value)}% humidity)`) : item.vote > 0 ? `the cold (${Math.round(item.value)} °C)` : `the heat (${Math.round(item.value)} °C)`);
+  const list = (items) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} and ${items.at(-1)}` : items[0] || "");
+  const id = step.id || "";
+  if (id === "low-irritation-cleansing") return phase === "am" ? `Start the day with a gentle cleanse${guarded ? ", kept extra mild for your skin" : ""}.` : `Gently wash off sunscreen and the day's grime${guarded ? ", kept extra mild for your skin" : ""}.`;
+  if (/hydration|moisturising/.test(id)) {
+    if (guarded) return generation.reactivityRaisedByProfile ? "Kept extra gentle and comforting because your skin is sensitive." : "Kept extra gentle and comforting for your skin today.";
+    if (vote?.direction === "richer") return `A richer texture today because of ${list(vote.votes.filter((v) => v.vote > 0).map(words))}.`;
+    if (vote?.direction === "lighter") return `Kept light today because of ${list(vote.votes.filter((v) => v.vote < 0).map(words))}.`;
+    return "A balanced texture suits today's conditions.";
+  }
+  if (id === "daytime-photoprotection") {
+    const band = uvBand(readings.uvi);
+    return band ? `UV is ${band.label} today (${Number(readings.uvi).toFixed(1)}), so sunscreen ${["very high", "extreme", "high"].includes(band.label) ? "is essential" : "still matters when you go out"}.` : "Sunscreen is kept in because today's UV couldn't be read.";
+  }
+  if (id === "antioxidant-context") return `The air is hazy today (PM2.5 ${Math.round(Number(readings.pm25))} µg/m³), so an antioxidant step is added.`;
+  if (id === "texture-renewal") return "Evenings only, because exfoliants make skin more sensitive to the sun.";
+  if (id === "overnight-comfort") return "The last step of your evening routine.";
+  return "";
+}
+
+function consumerStepItem(step, phase, entries, meta) {
+  const key = `${phase}:${step.id}`;
+  const plain = plainStep(step);
+  const entry = entries.find((item) => item.categoryId === step.id && item.phase === phase) || null;
+  const gptStep = state.routineContext?.steps?.[key]?.text || "";
+  const line = gptStep || consumerStepLine(step, phase, meta) || plain.what;
+  const open = Boolean(state.openWhy?.[key]);
+  const panelId = `why-${phase}-${step.id}`;
+  return `<li class="consumer-step"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : `<span class="consumer-ingredient">${escapeHtml(plain.what)}</span>`}<p>${escapeHtml(line)}</p></div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : "Why?"}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, meta) : ""}</div>` : ""}</li>`;
+}
+
+function consumerResult(routine, meta, running) {
+  if (running) {
+    return `<section class="consumer-card is-loading" aria-live="polite" aria-busy="true"><h3>Building your routine…</h3><p>Checking today's weather, running the safety checks and choosing ingredients. This usually takes a few seconds.</p></section>`;
+  }
+  if (!meta) {
+    return `<section class="consumer-card is-ready" aria-live="polite"><h3>Your routine will appear here</h3><p>Choose your skin type and main concern, answer the skin question, then press <b>Build routine</b>.</p></section>`;
+  }
+  if (meta.mode === "local") {
+    const busy = meta.errorKind === "busy";
+    return `<section class="consumer-card is-error" role="alert"><h3>${busy ? "Too many requests just now" : "We couldn't build your routine"}</h3><p>${busy ? "Please wait a minute, then try again." : "DermaSynth couldn't be reached. Check your connection and try again. No routine is shown, because the safety checks could not run."}</p><button class="primary-button" type="button" data-action="simulate">Try again</button></section>`;
+  }
+  const entries = Array.isArray(meta?.ingredientCandidates?.entries) ? meta.ingredientCandidates.entries : [];
+  const removed = Array.isArray(meta?.ingredientCandidates?.removedBySafety) ? meta.ingredientCandidates.removedBySafety : [];
+  const contextStatus = state.routineContext?.status;
+  const contextNote = contextStatus === "loading"
+    ? `<p class="consumer-status" aria-live="polite">${icon("sparkles", 13)} Writing friendlier explanations…</p>`
+    : contextStatus === "error" ? `<p class="consumer-status">${icon("info", 13)} ${escapeHtml(plainMessage(state.routineContext.error))}</p>` : "";
+  const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
+  const reviewNote = meta.status === "cleared" ? "" : `<p class="consumer-status is-warn" role="status">${icon("info", 13)} Some checks asked for review, so treat this routine with extra care.</p>`;
+  return `${conditionsSummaryCard(meta)}<section class="consumer-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}<p class="consumer-safety">${icon("shield", 14)} Every step passed DermaSynth's safety checks. This is a research prototype, not medical advice. Patch-test new products, and stop if your skin reacts.</p></section>`;
 }
 
 function synthesizedRoutineCard(routine, meta) {
@@ -1203,8 +1380,9 @@ function synthesizedRoutineCard(routine, meta) {
   const notices = Array.isArray(meta?.safety?.flags) && meta.safety.flags.length ? meta.safety.flags.join(" ") : "";
   const variant = redirect ? "is-redirect" : cleared ? "is-cleared" : "is-review";
   if (meta?.status === "needs_conditions" && !running) return conditionsCard(meta);
+  if (!state.expertView && !redirect) return consumerResult(routine, meta, running);
   if (redirect) {
-    return `<section class="clinical-redirect" role="alert"><span class="clinical-redirect-icon">${icon("shield", 23)}</span><div><p class="routine-eyebrow">Safety redirect</p><h3>Routine generation stopped</h3><p>${escapeHtml(notices)}</p><small>This research interface cannot assess symptoms or replace in-person care. Seek an appropriate healthcare professional for urgent, worsening, or concerning symptoms.</small></div></section>`;
+    return `<section class="clinical-redirect" role="alert"><span class="clinical-redirect-icon">${icon("shield", 23)}</span><div><p class="routine-eyebrow">Please get this checked</p><h3>We won't suggest a routine today</h3><p>What you described may need a pharmacist or doctor to look at it. Please don't start new products until then.</p><p class="redirect-flags">${escapeHtml(notices)}</p><small>If you have swelling of the face, lips or throat, or trouble breathing, get urgent medical help now.</small></div></section>`;
   }
   const statusMessage = running
     ? "Building your routine…"
@@ -1219,7 +1397,7 @@ function synthesizedRoutineCard(routine, meta) {
     ? `<section class="ai-category-rationale"><div><span>${icon("sparkles", 14)} AI category rationale</span><small>${escapeHtml(aiRationale.cue && aiRationale.cue.score !== null && aiRationale.cue.score !== undefined ? `CUE ${Number(aiRationale.cue.score).toFixed(2)} · ${String(aiRationale.cue.status || "").replaceAll("_", " ")}` : (aiRationale.label || String(aiRationale.status).replaceAll("_", " ")))}</small></div><p>${escapeHtml(aiRationale.text)}</p><strong>${escapeHtml(aiRationale.boundary || "Deterministic safety checks remain the final authority for every displayed category.")}</strong></section>`
     : `<section class="ai-category-rationale is-unavailable"><div><span>${icon("info", 14)} AI category rationale</span><small>Not available</small></div><p>No AI category rationale is shown because the configured gate did not permit it or the GPT billing/provider connection is unavailable.</p><strong>Deterministic safety checks remain the final authority for every displayed category.</strong></section>`;
   const candidates = Array.isArray(meta?.ingredientCandidates?.entries) ? meta.ingredientCandidates.entries : [];
-  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><div class="synth-top-actions"><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span><button type="button" class="expert-toggle" data-action="toggle-expert" aria-pressed="${state.expertView}">${state.expertView ? "Expert view on" : "Expert view"}</button></div></div>${degradedBanner(meta)}${approvedIngredientCandidatePanel(meta)}<div class="synth-structure-label">${icon("layers", 13)} Routine structure by category</div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these recommendations?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p>${meta?.explanation?.level1?.text ? `<p class="peg-level1"><b>Environment (level 1):</b> ${escapeHtml(meta.explanation.level1.text)}</p>` : ""}${aiRationaleMarkup}</div>` : ""}</section>`;
+  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><div class="synth-top-actions"><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span></div></div>${degradedBanner(meta)}${approvedIngredientCandidatePanel(meta)}<div class="synth-structure-label">${icon("layers", 13)} Routine structure by category</div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these recommendations?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p>${meta?.explanation?.level1?.text ? `<p class="peg-level1"><b>Environment (level 1):</b> ${escapeHtml(meta.explanation.level1.text)}</p>` : ""}${aiRationaleMarkup}</div>` : ""}</section>`;
 }
 
 function simulatorView() {
@@ -1227,9 +1405,9 @@ function simulatorView() {
   const profileChoices = ["dry", "combination", "oily", "sensitive"].map((profile) => `<button class="profile-choice ${state.profile === profile ? "is-selected" : ""}" type="button" data-action="profile" data-profile="${profile}" aria-pressed="${state.profile === profile}" ${state.runStatus === "running" ? "disabled" : ""}>${profile[0].toUpperCase()}${profile.slice(1)}</button>`).join("");
   const locationUpdating = isLocationUpdating();
   const running = state.runStatus === "running";
-  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} Build your routine</h3><p class="panel-note">Profile · concern · location</p></div><div class="form-grid"><div class="field"><label>Skin profile</label><div class="profile-pills">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Safety context <span class="field-optional">(optional)</span></label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="Anything that should pause this routine?"></textarea><p class="field-help" id="symptoms-help">Used only for this safety check.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button><button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Environment</button></div></section>`;
-  const result = `<section class="sim-result">${synthesizedRoutineCard(routine, state.routineMeta)}${researchContextPanel(state.routineMeta)}</section>`;
-  return shell(`<div class="view-heading"><div><h2>Your environment-aware routine</h2><p>Built from live context, approved records, and safety checks.</p></div></div><div class="simulator-grid">${inputs}${result}</div><div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>`);
+  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} About your skin</h3><p class="panel-note">Takes about a minute</p></div><div class="form-grid"><div class="field"><label id="skin-type-label">Skin type</label><div class="profile-pills" role="group" aria-labelledby="skin-type-label">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Anything unusual with your skin right now?</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="For example: swelling, burning after a new product, a spreading rash, blisters"></textarea><p class="field-help" id="symptoms-help">Leave it empty if not. If something needs a pharmacist or doctor, we'll tell you instead of giving a routine. This text is used only for that check and is not stored.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button><button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Today's weather</button></div></section>`;
+  const result = `<section class="sim-result" id="routine-result">${synthesizedRoutineCard(routine, state.routineMeta)}${state.expertView ? researchContextPanel(state.routineMeta) : ""}</section>`;
+  return shell(`<div class="view-heading"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid">${inputs}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
 }
 
 function concernLabelFromId(value) {
@@ -1974,7 +2152,8 @@ document.addEventListener("click", (event) => {
   if (action === "concern-choice") { if (state.runStatus === "running") return; state.concern = target.dataset.concern; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); return; }
   if (action === "simulate") { generateRoutine(); return; }
   if (action === "report-condition") { state.reportedConditions = { ...(state.reportedConditions || {}), [target.dataset.key]: target.dataset.value }; render(); return; }
-  if (action === "toggle-expert") { state.expertView = !state.expertView; render(); return; }
+  if (action === "toggle-expert") { state.expertView = !state.expertView; saveExpertView(state.expertView); render(); showToast(state.expertView ? "Expert view on: scores, traces and the run report are shown." : "Expert view off."); return; }
+  if (action === "toggle-why") { const key = target.dataset.key; state.openWhy = { ...state.openWhy, [key]: !state.openWhy[key] }; render(); window.requestAnimationFrame(() => document.querySelector(`[data-action="toggle-why"][data-key="${CSS.escape(key)}"]`)?.focus()); return; }
   if (action === "submit-conditions") { generateRoutine({ reportedConditions: state.reportedConditions }); return; }
   if (action === "reason") { state.reasonOpen = !state.reasonOpen; render(); return; }
   if (action === "batch") { runBatch(); return; }
@@ -2282,7 +2461,7 @@ async function applyLocation(location) {
     state.locationSearchStatus = "error";
     state.locationSearchNotice = `Could not update readings for ${selected.name}; the previous location remains active.`;
     render();
-    showToast("Location update was unavailable; retained the previous weather readings.");
+    showToast("We couldn't get the weather for that place, so the previous readings are kept.");
     return;
   }
 
@@ -2325,7 +2504,7 @@ async function refreshEnvironment(location = state.selectedLocation, { announce 
   } catch {
     if (requestVersion !== state.environmentRequestVersion || locationVersion !== state.locationVersion) return false;
     render();
-    if (announce) showToast("Environment API was unavailable; retained the last labelled reading set.");
+    if (announce) showToast("We couldn't refresh the weather, so the last readings are shown.");
     return false;
   }
 }
@@ -2457,7 +2636,7 @@ async function generateRoutine({ reportedConditions = null } = {}) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!response.ok) throw new Error("Routine API is unavailable");
+    if (!response.ok) { const failure = new Error("Routine API is unavailable"); failure.status = response.status; throw failure; }
     const payload = await response.json();
     if (requestVersion !== state.routineRequestVersion || locationVersion !== state.locationVersion) return;
     state.generatedRoutine = payload.routine || null;
@@ -2479,22 +2658,23 @@ async function generateRoutine({ reportedConditions = null } = {}) {
     render();
     refreshRoutineContext();
     if (payload.status === "needs_conditions") {
-      showToast("Live readings are unavailable. Choose today's conditions to continue.");
+      showToast("We couldn't get today's weather. Tell us the conditions to continue.");
     } else if (payload.status === "cleared") {
-      showToast("Grounded research preview cleared the configured gates.");
+      showToast("Your routine is ready.");
     } else if (payload.status === "medical_redirect") {
-      showToast("The request was redirected for clinical assessment.");
+      showToast("Please get your skin checked before starting a routine.");
     } else if (payload.synthesisStatus === "quota_unavailable") {
-      showToast("Live synthesis unavailable; showing a generic research preview.");
+      showToast("Your routine is ready. Some personalised parts are unavailable right now.");
     } else {
-      showToast("Generic research preview returned; review the gate status before relying on it.");
+      showToast("Your routine is ready.");
     }
-  } catch {
+  } catch (failure) {
     if (requestVersion !== state.routineRequestVersion || locationVersion !== state.locationVersion) return;
     state.generatedRoutine = profileRoutines[state.concern] || profileRoutines.acne;
     state.routineMeta = {
       status: "review_required",
       mode: "local",
+      errorKind: failure?.status === 429 || failure?.status === 503 ? "busy" : failure?.status === 400 ? "invalid" : "unreachable",
       safety: { status: "pending", checks: [], flags: [] },
       notices: ["The server could not be reached. This is a local generic research preview."],
     };
@@ -2502,7 +2682,7 @@ async function generateRoutine({ reportedConditions = null } = {}) {
     state.symptoms = "";
     recordRunSummary(state.routineMeta, location);
     render();
-    showToast("Server unavailable; retained a local generic research preview.");
+    showToast(state.routineMeta?.errorKind === "busy" ? "Too many requests just now. Please wait a minute and try again." : "We couldn't reach DermaSynth. Check your connection and try again.");
   }
 }
 
