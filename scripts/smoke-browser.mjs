@@ -205,11 +205,18 @@ for (const width of [375, 1280]) {
     expect((await page.locator(".my-product").first().innerText()).includes("My cleanser"), "Product name not shown on the step.");
   });
   await check(`${label}-product-check`, `${label}: "Check a product" reads an ingredient list`, async () => {
-    await page.locator(".product-card summary").click();
+    expect(await page.locator("#pc-text").isVisible(), "The product check is not visible without a click.");
     await page.locator("#pc-text").fill("Aqua, Glycerin, Niacinamide, Unknownium Extract");
     await page.locator('[data-action="pc-run"]').click();
     await page.waitForSelector(".pc-verdict", { timeout: 10000 });
     expect(/1 of 3 ingredients/.test(await page.locator(".pc-note").innerText()), "Unrecognised ingredient not reported.");
+  });
+  await check(`${label}-product-example`, `${label}: "Check my product" is one tap from the summary and the example runs`, async () => {
+    await page.locator('[data-action="pc-focus"]').click();
+    await page.waitForTimeout(700);
+    expect(await page.evaluate(() => document.activeElement?.id) === "pc-text", "The ingredient box was not focused.");
+    await page.locator('[data-action="pc-example"]').click();
+    await page.waitForSelector(".pc-result.is-good", { timeout: 10000 });
   });
   await check(`${label}-checkin`, `${label}: the one-tap check-in is sent`, async () => {
     const posted = page.waitForRequest((r) => r.url().endsWith("/api/feedback") && r.method() === "POST");

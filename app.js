@@ -1415,7 +1415,7 @@ function todayOneLine(meta, routine) {
 function heroCard(meta, routine) {
   const line = todayOneLine(meta, routine);
   if (!line) return "";
-  return `<section class="hero-line" style="view-transition-name: hero-line" aria-labelledby="hero-line-title"><p class="hero-kicker" id="hero-line-title">${icon("sparkles", 13)} Today in one line</p><p class="hero-text">${escapeHtml(line)}</p><div class="hero-actions"><button type="button" class="pill-button" data-action="story-open">${icon("share", 14)} Share as story</button><button type="button" class="pill-button" data-action="reminders">${icon("bell", 14)} Add reminders</button></div></section>`;
+  return `<section class="hero-line" style="view-transition-name: hero-line" aria-labelledby="hero-line-title"><p class="hero-kicker" id="hero-line-title">${icon("sparkles", 13)} Today in one line</p><p class="hero-text">${escapeHtml(line)}</p><div class="hero-actions"><button type="button" class="pill-button is-primary" data-action="pc-focus">${icon("layers", 14)} Check a product you own</button><button type="button" class="pill-button" data-action="story-open">${icon("share", 14)} Share as story</button><button type="button" class="pill-button" data-action="reminders">${icon("bell", 14)} Add reminders</button></div></section>`;
 }
 
 // 4. UV timeline: today's hourly UV with the sunscreen window shaded.
@@ -1513,26 +1513,56 @@ async function sendCheckin(about) {
 }
 
 // 5. Check my product.
+function productCheckExample() {
+  const entries = state.routineMeta?.ingredientCandidates?.entries || [];
+  const chosen = entries.find((e) => e.phase === "am" && e.categoryId !== "daytime-photoprotection") || entries[0];
+  return ["Aqua", "Glycerin", chosen?.displayName, "Butylene Glycol", "Panthenol", "Phenoxyethanol"].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(", ");
+}
+
+function productCheckTone(r) {
+  if (!r) return "neutral";
+  if (r.cautions?.some((c) => c.level === "stop")) return "stop";
+  if (r.conflicts?.length || r.cautions?.some((c) => c.level === "warn")) return "warn";
+  if (r.fits?.length) return "good";
+  return "neutral";
+}
+
 function productCheckCard(meta) {
   if (!meta || meta.status !== "cleared") return "";
   const pc = state.productCheck || {};
   const r = pc.result;
-  const resultHtml = r ? `<div class="pc-result" aria-live="polite"><p class="pc-verdict">${escapeHtml(r.verdict)}</p>${r.fits?.length ? `<ul class="pc-list is-good">${r.fits.map((f) => `<li>${icon("check", 13)} ${escapeHtml(f.text)}</li>`).join("")}</ul>` : ""}${r.conflicts?.length ? `<ul class="pc-list is-warn">${r.conflicts.map((c) => `<li>${escapeHtml(c.text)}</li>`).join("")}</ul>` : ""}${r.cautions?.length ? `<ul class="pc-list">${r.cautions.map((c) => `<li class="is-${escapeHtml(c.level)}">${escapeHtml(c.text)}</li>`).join("")}</ul>` : ""}${r.recognised?.length ? `<p class="pc-found">Recognised: ${escapeHtml(r.recognised.map((x) => x.name).join(", "))}.</p>` : ""}${r.note ? `<p class="pc-note">${escapeHtml(r.note)}</p>` : ""}</div>` : "";
-  return `<section class="product-card" aria-labelledby="pc-title"><details ${pc.open ? "open" : ""} data-action-toggle="product-check"><summary id="pc-title">${icon("layers", 15)} Check a product you own</summary><p class="pc-help">Paste the ingredient list from the label. DermaSynth checks it against today's routine: which step it fits, and whether it clashes with anything.</p><label class="sr-only" for="pc-text">Ingredient list</label><textarea id="pc-text" data-action="pc-text" rows="4" maxlength="4000" placeholder="Aqua, Glycerin, Niacinamide, Sodium Hyaluronate, …">${escapeHtml(pc.text || "")}</textarea><div class="form-actions"><button type="button" class="primary-button" data-action="pc-run" ${pc.status === "loading" ? "disabled" : ""}>${pc.status === "loading" ? "Checking…" : "Check this product"}</button></div>${pc.status === "error" ? `<p class="pc-note">${escapeHtml(pc.error || "The check couldn't run. Try again.")}</p>` : ""}${resultHtml}</details></section>`;
+  const tone = productCheckTone(r);
+  const toneIcon = { good: "check", warn: "info", stop: "shield", neutral: "info" }[tone];
+  const group = (title, items, cls = "") => (items.length ? `<div class="pc-group"><p class="pc-group-title">${escapeHtml(title)}</p><ul class="pc-list ${cls}">${items.join("")}</ul></div>` : "");
+  const resultHtml = r ? `<div class="pc-result is-${tone}" aria-live="polite"><p class="pc-verdict">${icon(toneIcon, 17)} <span>${escapeHtml(r.verdict)}</span></p>${group("Fits your routine", (r.fits || []).map((f) => `<li>${icon("check", 13)} ${escapeHtml(f.text)}</li>`), "is-good")}${group("Clashes with today's routine", (r.conflicts || []).map((c) => `<li>${escapeHtml(c.text)}</li>`), "is-warn")}${group("Good to know", (r.cautions || []).map((c) => `<li class="is-${escapeHtml(c.level)}">${escapeHtml(c.text)}</li>`))}${r.recognised?.length ? `<p class="pc-found">Recognised: ${escapeHtml(r.recognised.map((x) => x.name).join(", "))}.</p>` : ""}${r.note ? `<p class="pc-note">${escapeHtml(r.note)}</p>` : ""}</div>` : "";
+  const busy = pc.status === "loading";
+  return `<section class="product-card" id="product-check" style="view-transition-name: product-card" aria-labelledby="pc-title"><div class="pc-head"><span class="pc-badge" aria-hidden="true">${icon("layers", 20)}</span><div><h3 id="pc-title">Already have a product? Check it here</h3><p class="pc-help">Paste the ingredient list from the label. DermaSynth tells you which of today's steps it can fill, and whether it clashes with anything in your routine.</p></div></div><label class="sr-only" for="pc-text">Ingredient list from the product label</label><textarea id="pc-text" data-action="pc-text" rows="4" maxlength="4000" placeholder="Ingredients: Aqua, Glycerin, Niacinamide, Sodium Hyaluronate, …">${escapeHtml(pc.text || "")}</textarea><div class="pc-actions"><button type="button" class="primary-button" data-action="pc-run" ${busy ? "disabled" : ""}>${icon("check", 15)} ${busy ? "Checking…" : "Check this product"}</button><button type="button" class="ghost-button" data-action="pc-example" ${busy ? "disabled" : ""}>Try an example</button>${r ? `<button type="button" class="text-button" data-action="pc-clear">Check another</button>` : ""}</div><p class="pc-tip">Tip: the list is usually on the back of the box or bottle, after "Ingredients".</p>${pc.status === "error" ? `<p class="pc-note">${escapeHtml(pc.error || "The check couldn't run. Try again.")}</p>` : ""}${resultHtml}</section>`;
+}
+
+function focusProductCheck() {
+  const card = document.querySelector("#product-check");
+  if (!card) return;
+  card.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+  setTimeout(() => document.querySelector("#pc-text")?.focus({ preventScroll: true }), prefersReducedMotion() ? 0 : 450);
 }
 
 async function runProductCheck() {
-  const text = document.querySelector("#pc-text")?.value || state.productCheck?.text || "";
-  state.productCheck = { ...(state.productCheck || {}), open: true, text, status: "loading", error: "" };
+  const text = state.productCheck?.text || document.querySelector("#pc-text")?.value || "";
+  if (!text.trim()) {
+    state.productCheck = { text: "", status: "error", error: "Paste the ingredient list from the label first, or press Try an example." };
+    renderAnimated().then(() => document.querySelector("#pc-text")?.focus({ preventScroll: true }));
+    return;
+  }
+  state.productCheck = { ...(state.productCheck || {}), text, status: "loading", error: "" };
   renderAnimated();
   const entries = (state.routineMeta?.ingredientCandidates?.entries || []).map((e) => ({ ingredientId: e.ingredientId, displayName: e.displayName, phase: e.phase, categoryId: e.categoryId }));
   try {
     const response = await fetch("/api/check-product", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, routine: { entries, steps: currentStepKeys(), concern: state.concern, reactivityLevel: state.routineMeta?.routine?.generation?.reactivityLevel || state.reactivityLevel || "low" } }) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data?.error || "The check couldn't run.");
-    state.productCheck = { open: true, text, status: "done", result: data };
+    state.productCheck = { text, status: "done", result: data };
   } catch (error) {
-    state.productCheck = { open: true, text, status: "error", error: error instanceof Error ? error.message : "The check couldn't run." };
+    state.productCheck = { text, status: "error", error: error instanceof Error ? error.message : "The check couldn't run." };
   }
   renderAnimated();
 }
@@ -2019,7 +2049,7 @@ function consumerResult(routine, meta, running) {
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
   const reviewNote = meta.status === "cleared" ? "" : `<p class="consumer-status is-warn" role="status">${icon("info", 13)} Some checks asked for review, so treat this routine with extra care.</p>`;
   state.stepCounter = 0;
-  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${meta.status === "cleared" ? heroCard(meta, routine) : ""}${conditionsSummaryCard(meta)}${compareCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>${checkinCard(meta)}${tomorrowCard()}${productCheckCard(meta)}</div>`;
+  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${meta.status === "cleared" ? heroCard(meta, routine) : ""}${conditionsSummaryCard(meta)}${compareCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>${productCheckCard(meta)}${checkinCard(meta)}${tomorrowCard()}</div>`;
 }
 
 function synthesizedRoutineCard(routine, meta) {
@@ -2699,6 +2729,9 @@ document.addEventListener("click", (event) => {
   if (action === "clear-my-routine") { clearMyRoutine(); return; }
   if (action === "edit-form") { state.formCollapsed = false; renderAnimated().then(() => document.querySelector("#routine-preview")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" })); return; }
   if (action === "pc-run") { runProductCheck(); return; }
+  if (action === "pc-focus") { focusProductCheck(); return; }
+  if (action === "pc-example") { state.productCheck = { text: productCheckExample() }; runProductCheck(); return; }
+  if (action === "pc-clear") { state.productCheck = { text: "" }; renderAnimated().then(() => document.querySelector("#pc-text")?.focus({ preventScroll: true })); return; }
   if (action === "checkin" || action === "checkin-follow") {
     const about = target.dataset.about === "yesterday" ? "yesterday" : "today";
     const draft = state.checkinDraft?.about === about ? { ...state.checkinDraft } : { about };
@@ -2812,7 +2845,7 @@ document.addEventListener("input", (event) => {
     return;
   }
   if (target.dataset.action === "pc-text") {
-    state.productCheck = { ...(state.productCheck || {}), open: true, text: target.value.slice(0, 4000) };
+    state.productCheck = { ...(state.productCheck || {}), text: target.value.slice(0, 4000) };
     return;
   }
   if (target.dataset.action === "my-product" && state.myRoutine) {
@@ -3407,9 +3440,6 @@ function gptTag(item) {
 
 
 state.myRoutine = readStore(MY_ROUTINE_KEY, null);
-document.addEventListener("toggle", (event) => {
-  if (event.target?.dataset?.actionToggle === "product-check") state.productCheck = { ...(state.productCheck || {}), open: event.target.open };
-}, true);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && document.querySelector("#story-modal")) { event.preventDefault(); closeStory(); }
   // Keep keyboard focus inside the story dialog while it is open.

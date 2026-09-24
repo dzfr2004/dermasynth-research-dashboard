@@ -1,6 +1,6 @@
 # Browser smoke test
 
-Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, axe-core WCAG 2.1 A/AA, serious and critical only). Result: **52/52 passed**.
+Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, axe-core WCAG 2.1 A/AA, serious and critical only). Result: **54/54 passed**.
 
 | Check | Result |
 | --- | --- |
@@ -23,6 +23,7 @@ Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, ax
 | phone: the form folds into "Edit my skin details" and the result is in view | passed |
 | phone: the routine can be saved as "my routine" with product names | passed |
 | phone: "Check a product" reads an ingredient list | passed |
+| phone: "Check my product" is one tap from the summary and the example runs | passed |
 | phone: the one-tap check-in is sent | passed |
 | phone: reminders download as a calendar file | passed |
 | phone: the story image is 1080 x 1920 and the dialog closes with Escape | passed |
@@ -49,6 +50,7 @@ Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, ax
 | desktop: the form folds into "Edit my skin details" and the result is in view | passed |
 | desktop: the routine can be saved as "my routine" with product names | passed |
 | desktop: "Check a product" reads an ingredient list | passed |
+| desktop: "Check my product" is one tap from the summary and the example runs | passed |
 | desktop: the one-tap check-in is sent | passed |
 | desktop: reminders download as a calendar file | passed |
 | desktop: the story image is 1080 x 1920 and the dialog closes with Escape | passed |
