@@ -8,7 +8,7 @@
 - 21 source-mapped, category-only cards covering all seven research contexts in the separate `demo-category-cue-v1` namespace; they remain pending clinical review and cannot activate strict CUE, GPT synthesis, ingredient selection, or a routine.
 - Research Atlas search using Pinecone dense retrieval fused with local BM25 reciprocal-rank fusion.
 - Location-aware environmental context, exact Shapley contributions for the additive environmental surrogate, and a PEG-style explanation.
-- A deterministic batch path with CSV and audit-JSON export.
+- "Check a product": paste a label's ingredient list and see which of today's steps it fits, any clash with today's routine, and safety cautions (the bulk/cohort batch path was removed in September 2026).
 - Reproducible implementation, retrieval, and safety regression reports.
 
 ## Suggested demo sequence
@@ -22,7 +22,7 @@
    - the labelled AI category rationale surface, if the strict gate and API billing allow it, with deterministic safety remaining final authority;
    - the environmental contribution/PEG explanation;
    - the explainable run report, then choose **Print / Save PDF**.
-5. In **Cohort Analysis**, import a de-identified CSV with `profile ID, concern`, confirm the acknowledgement, run the deterministic batch, then export CSV and audit JSON.
+5. Under the routine, open **Check a product you own**, paste an ingredient list (for example `Aqua, Glycerin, Niacinamide, Salicylic Acid`) and show the step fit, clash and caution results.
 6. Open **Evaluation** to show the implementation suite, the 30-query retrieval and 50-case safety packs, and the 7/7 non-clinical Context Coverage Map.
 7. Optionally open **Reviewer Queue** only in a locally configured session to demonstrate bounded annotations; it is not proof of a completed clinical audit.
 

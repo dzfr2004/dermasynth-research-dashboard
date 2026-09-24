@@ -1114,60 +1114,6 @@ function synthesisFallback(error) {
   };
 }
 
-function bulkResultFor({ profile, index, environment, retrieval, researchEvidence, requestId }) {
-  const startedAt = new Date();
-  const firstPass = firstSafetyPass({ concern: profile.concern, environment });
-  const routine = templateRoutine(profile.concern, { environment, evidence: [] });
-  const secondPass = secondSafetyPass(routine, { concern: profile.concern, environment, allowedEvidenceIds: [] });
-  const safety = combineSafety(firstPass, secondPass);
-  const explainability = buildEnvironmentalExplainability({ concern: profile.concern, environment });
-  const strictGatePassed = Boolean(retrieval?.gate?.passed);
-  const status = strictGatePassed && safety.status === "cleared" ? "Cleared" : "Review";
-  const stages = [
-    stage("input", "normalised", Date.now(), { profile: profile.profile }),
-    stage("environment", environment?.mode || "unavailable", Date.now()),
-    stage("retrieval", retrieval?.mode || "not_run", Date.now(), { sufficiencyScore: retrieval?.sufficiencyScore ?? 0 }),
-    stage("research_knowledge", researchEvidence?.mode || "not_run", Date.now(), {
-      ingredientCount: researchEvidence?.coverage?.uniqueIngredients ?? 0,
-    }),
-    stage("first_safety", firstPass.status, Date.now(), { ruleIds: firstPass.rules.map((rule) => rule.id) }),
-    stage("second_safety", secondPass.status, Date.now(), { ruleIds: secondPass.rules.map((rule) => rule.id) }),
-  ];
-  const ingredientResearch = ingredientResearchForConcern(profile.concern, { exposeCandidates: true });
-  const runReport = buildRunReport({
-    requestId: `${requestId}:row-${index + 1}`,
-    startedAt,
-    profile: profile.profile,
-    concern: profile.concern,
-    symptomsProvided: false,
-    requestedLocation: environment?.location || DEFAULT_LOCATION,
-    environment,
-    retrieval,
-    safety,
-    stages,
-    mode: "deterministic-research-batch",
-    status: status === "Cleared" ? "cleared" : "review_required",
-    synthesisStatus: "not_requested",
-    ingredientResearch,
-    researchEvidence,
-    explainability,
-    aiCategoryRationale: aiCategoryRationalePayload(routine),
-  });
-  return {
-    profileId: profile.id || `SP-${String(2000 + index).padStart(4, "0")}`,
-    profile: profile.profile,
-    concern: profile.concern,
-    sufficiencyScore: Number(retrieval?.sufficiencyScore || 0),
-    evidenceGatePassed: strictGatePassed,
-    researchEvidenceCount: researchEvidence?.coverage?.queryCoverage ?? 0,
-    researchSourceCount: researchEvidence?.coverage?.sourceRecords ?? 0,
-    safetyStatus: safety.status,
-    topDriver: explainability.dominantFeature?.label || "No environmental signal",
-    status,
-    runReport,
-  };
-}
-
 function stage(id, status, startedAt, detail = {}) {
   return {
     id,
@@ -1947,70 +1893,6 @@ async function routeApi(request, response, url, requestId) {
     } finally {
       release();
     }
-  }
-
-  if (request.method === "POST" && url.pathname === "/api/bulk") {
-    const input = await readJson(request);
-    if (!Array.isArray(input.profiles)) {
-      throw new HttpError(400, "profiles must be an array.");
-    }
-    if (input.profiles.length > 100) {
-      throw new HttpError(400, "A batch may contain at most 100 profiles.");
-    }
-
-    const profiles = input.profiles.map((profile, index) => {
-      if (!profile || typeof profile !== "object" || Array.isArray(profile)) {
-        throw new HttpError(400, `Invalid profile at row ${index + 1}.`);
-      }
-      const id = optionalText(profile.id, "profile id", 80) || `SP-${String(2000 + index).padStart(4, "0")}`;
-      const concern = requiredConcern(optionalText(profile.concern, "profile concern", 80) || "acne");
-      const profileCode = optionalText(profile.profile, "skin profile", 40).toLowerCase() || "combination";
-      if (!ALLOWED_PROFILES.has(profileCode)) {
-        throw new HttpError(400, `Invalid skin profile at row ${index + 1}.`);
-      }
-      return { id, concern, profile: profileCode };
-    });
-
-    const location = input.location === undefined || input.location === null ? DEFAULT_LOCATION : routineLocation({ location: input.location });
-    const environment = await getEnvironment(config, location);
-    const concernContexts = [...new Set(profiles.map((profile) => profile.concern))];
-    const byConcern = new Map(await Promise.all(concernContexts.map(async (concern) => {
-      const [retrieval, researchEvidence] = await Promise.all([
-        retrieveEvidence({ config, profile: "combination", concern, environment }),
-        retrieveResearchEvidence({ config, concern }),
-      ]);
-      return [concern, { retrieval, researchEvidence }];
-    })));
-    const results = profiles.map((profile, index) => {
-      const context = byConcern.get(profile.concern);
-      return bulkResultFor({
-        profile,
-        index,
-        environment,
-        retrieval: context?.retrieval || notRunRetrieval(),
-        researchEvidence: context?.researchEvidence || notRunResearchEvidence(),
-        requestId,
-      });
-    });
-    const cleared = results.filter((item) => item.status === "Cleared").length;
-    const averageSufficiency = results.length
-      ? Number((results.reduce((sum, item) => sum + item.sufficiencyScore, 0) / results.length).toFixed(2))
-      : 0;
-    return sendJson(response, 200, {
-      results,
-      summary: {
-        total: results.length,
-        cleared,
-        review: results.length - cleared,
-        averageSufficiency,
-        researchEvidenceRecords: results.reduce((sum, item) => sum + item.researchEvidenceCount, 0),
-        environmentMode: environment.mode,
-      },
-      environment: environmentProvenance(environment),
-      mode: "deterministic-research-batch",
-      notices: ["Bulk analysis executes the deterministic environment, evidence-sufficiency, non-clinical research-atlas, safety, and explainability paths for each concern. It does not fan out live LLM requests (so no CUE is computed) or generate individual treatment advice."],
-      requestId,
-    }, requestId);
   }
 
   return sendJson(response, 404, { error: "API route not found", requestId }, requestId);

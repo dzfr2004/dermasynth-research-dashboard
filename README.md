@@ -67,7 +67,6 @@ npm run verify:demo-pinecone
 - **GPT context for every step and ingredient:** after a routine is shown, the browser asks `/api/ai/routine-context` for plain-language context. The server writes it with GPT from that run's own facts (readings, the rule behind each step, the retrieved pool and score comparison, the verified safety card, the EWG reference), checks every item with CUE, regenerates failing items once and keeps the score-based text for anything still below the threshold.
 - **OpenAI client (`lib/openai.mjs`):** every GPT call falls back through `OPENAI_FALLBACK_MODELS` when `OPENAI_MODEL` is not available to the key, retries without the reasoning setting if a model rejects it, uses `OPENAI_TIMEOUT_MS`, and logs failures to `data/logs/provider-errors.jsonl`. `GET /api/health` shows the model in use and the last error.
 - **Selection log:** every run appends a JSONL record (`data/logs/selection-log.jsonl`, not committed). `npm run report:selection-log` reports acceptance, rejection and fallback rates, agreement between the model and the candidate score, whether picks change with the environment, safety removals and CUE outcomes.
-- **Bulk analysis:** the deterministic batch path (up to 100 profiles) runs environment, evidence-sufficiency, research-atlas, safety and environmental explanation. It does not call the model, so it has no CUE.
 
 ### Commands added in September 2026
 
@@ -212,6 +211,7 @@ Technical failures are shown to consumers in plain words; configuration details 
 - Every step always has a rule-based reason. The Expert view toggle on the routine card shows the rule-based and GPT versions side by side, with CUE scores.
 - CUE against people: `npm run cue:sheet` builds a blinded rating sheet from logged drafts; raters fill it; `npm run eval:cue-human` reports agreement and Cohen's kappa. Steps are in [data/evaluation/cue-rating](data/evaluation/cue-rating/README.md).
 - `npm run eval:gpt-layer` (part of `npm test`) checks these contracts offline against a mock of the OpenAI API.
+- **Output schema contract (C2):** every GPT reply is checked against the schema that was sent (`lib/schema-check.mjs`); a reply that is not JSON, misses a field, has a wrong type or an extra field counts as a failed call and the rule-based result is used. `npm run eval:gpt-schemas` (part of `npm test`) checks that each of the 7 schemas is accepted by OpenAI strict mode, matches the committed snapshot (`data/evaluation/fixtures/gpt-schemas.snapshot.json`), that matching replies are used and malformed ones rejected, and that no new GPT call is left untested. After a deliberate schema change, run `npm run eval:gpt-schemas -- --update`.
 
 ## When live weather is unavailable
 
@@ -256,7 +256,6 @@ Integrated Pinecone indexes accept text records in batches of up to 96; this pro
 | `POST /api/outlook` | Today's UV timing and hourly UV, and tomorrow's forecast and routine changes (live mode with Open-Meteo). |
 | `POST /api/check-product` | Checks a pasted ingredient list (up to 4,000 characters) against today's routine. Deterministic; nothing stored. |
 | `POST /api/feedback` | Appends one anonymous check-in (`rating` good/ok/bad, optional `followed` yes/partly/no, `about` today/yesterday). |
-| `POST /api/bulk` | Deterministic cohort-preview processing with up to 100 profiles. |
 
 Static serving is allowlisted to the public frontend files, so configuration, server source, and `.env` are not web-accessible.
 

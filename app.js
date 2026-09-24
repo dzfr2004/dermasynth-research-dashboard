@@ -306,9 +306,6 @@ const state = {
   routineRequestVersion: 0,
   lastUpdated: "demo",
   reasonOpen: false,
-  bulkConfirmed: false,
-  bulkFeedback: { tone: "neutral", message: "No file imported in this browser session." },
-  bulkReport: null,
   knowledgeExplorer: null,
   knowledgeStatus: "idle",
   knowledgeNotice: "",
@@ -330,13 +327,6 @@ const state = {
     notice: "Enter the local reviewer token only for this browser session. It is never stored in browser storage.",
   },
   explainability: null,
-  bulkRows: [
-    ["SP-0142", "Breakout-prone appearance", "—", "Awaiting run"],
-    ["SP-0143", "Barrier comfort", "—", "Awaiting run"],
-    ["SP-0144", "Uneven tone", "—", "Awaiting run"],
-    ["SP-0145", "Oil / shine", "—", "Awaiting run"],
-    ["SP-0146", "Texture appearance", "—", "Awaiting run"],
-  ],
 };
 
 function activeEnvironment() {
@@ -746,7 +736,6 @@ function metricStrip() {
     ["Safety", routineStatusLabel(), meta?.safety?.postSelection?.removed?.length ? `${meta.safety.postSelection.removed.length} removed by final rescan` : "Deterministic passes + final rescan"],
     ["Environment", activeEnvironment().mode || "demo", environmentSourceLabel()],
     ["Retrieval", meta?.grounding?.evidenceCount ?? "—", meta?.grounding?.scoreType || "Awaiting index"],
-    ["Profiles", String(state.bulkRows.length), "Deterministic batch preview"],
   ];
   return `<section class="panel metric-strip" aria-label="Model quality overview">${metrics.map(([label, value, foot]) => `<div class="metric"><span class="metric-label">${escapeHtml(label)}</span><strong class="metric-value">${escapeHtml(value)}</strong><span class="metric-foot">${escapeHtml(foot)}</span></div>`).join("")}</section>`;
 }
@@ -2486,123 +2475,12 @@ async function refreshExplainability({ shouldRender = true } = {}) {
   if (shouldRender) render();
 }
 
-function csvRecords(text) {
-  const rows = [];
-  let row = [];
-  let value = "";
-  let quoted = false;
-  const source = String(text || "").replace(/^\uFEFF/, "");
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index];
-    if (character === '"') {
-      if (quoted && source[index + 1] === '"') { value += '"'; index += 1; } else quoted = !quoted;
-    } else if (character === "," && !quoted) { row.push(value.trim()); value = ""; } else if ((character === "\n" || character === "\r") && !quoted) {
-      if (character === "\r" && source[index + 1] === "\n") index += 1;
-      row.push(value.trim());
-      if (row.some(Boolean)) rows.push(row);
-      row = [];
-      value = "";
-    } else value += character;
-  }
-  if (quoted) return { error: "The CSV has an unmatched quote." };
-  row.push(value.trim());
-  if (row.some(Boolean)) rows.push(row);
-  return { rows };
-}
 
-function bulkConcernCode(value) {
-  const normalized = String(value || "").trim().toLowerCase().replace(/[^a-z]+/g, " ").trim();
-  const aliases = {
-    acne: ["acne", "breakout", "breakouts", "breakout prone"],
-    barrier: ["barrier"],
-    pigment: ["pigment", "uneven tone", "hyperpigmentation"],
-    dryness: ["dry", "dryness", "dry feeling"],
-    oil: ["oil", "oily", "shine", "oil shine"],
-    sensitivity: ["sensitive", "sensitivity"],
-    texture: ["texture"],
-  };
-  return Object.entries(aliases).find(([, terms]) => terms.some((term) => normalized === term || normalized.includes(term)))?.[0] || "acne";
-}
 
-function bulkConcernLabel(value) {
-  return concernLabelFromId(bulkConcernCode(value));
-}
 
-function parseCsv(text) {
-  const parsed = csvRecords(text);
-  if (parsed.error) return { rows: [], skipped: 0, capped: false, error: parsed.error };
-  const sourceRows = parsed.rows || [];
-  const first = sourceRows[0] || [];
-  const hasHeader = /profile|id|concern/i.test(first.join(" "));
-  let skipped = 0;
-  const usable = sourceRows.slice(hasHeader ? 1 : 0).filter((row) => {
-    if (!String(row[0] || "").trim()) { skipped += 1; return false; }
-    return true;
-  });
-  const capped = usable.length > 100;
-  const rows = usable.slice(0, 100).map((row, index) => {
-    const id = String(row[0]).replace(/[\r\n]/g, " ").trim().slice(0, 64);
-    const concern = bulkConcernLabel(row[1]);
-    return [id, concern, "—", "Awaiting run"];
-  });
-  return { rows, skipped, capped, headerDetected: hasHeader, error: "" };
-}
 
-function quoteCsv(value) {
-  return `"${String(value ?? "").replaceAll('"', '""')}"`;
-}
 
-function downloadCsv() {
-  const results = Array.isArray(state.bulkReport?.results) ? state.bulkReport.results : [];
-  const content = results.length
-    ? [
-      "profile_id,skin_profile,concern,evidence_sufficiency_score,evidence_gate_passed,research_evidence_records,research_source_records,safety_status,top_environmental_driver,status",
-      ...results.map((item) => [
-        item.profileId,
-        item.profile,
-        concernLabelFromId(item.concern),
-        safelyNumber(item.sufficiencyScore),
-        item.evidenceGatePassed,
-        item.researchEvidenceCount,
-        item.researchSourceCount,
-        item.safetyStatus,
-        item.topDriver,
-        item.status,
-      ].map(quoteCsv).join(",")),
-    ].join("\n")
-    : ["profile_id,concern,evidence_sufficiency_score,status", ...state.bulkRows.map((row) => row.map(quoteCsv).join(","))].join("\n");
-  const url = URL.createObjectURL(new Blob([content], { type: "text/csv" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "dermasynth-batch-preview.csv";
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-  showToast(results.length ? "Batch research summary CSV exported." : "Deterministic batch preview CSV exported.");
-}
 
-function downloadBatchAudit() {
-  const report = state.bulkReport;
-  if (!report?.results?.length) {
-    showToast("Run the deterministic batch before exporting its audit log.");
-    return;
-  }
-  const content = JSON.stringify({
-    exportedAt: new Date().toISOString(),
-    scope: "Non-clinical, de-identified research batch export. It includes environment, retrieval, safety, and explainability traces; no free-text symptoms are collected.",
-    ...report,
-  }, null, 2);
-  const url = URL.createObjectURL(new Blob([content], { type: "application/json" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "dermasynth-batch-research-audit.json";
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-  showToast("Structured batch safety and research audit exported.");
-}
 
 function exportCurrentRun() {
   const report = state.routineMeta?.runReport;
@@ -2754,41 +2632,6 @@ function resetPreviewForInputChange() {
   state.runStatus = "idle";
 }
 
-function importBulkFile(file) {
-  if (!file) return;
-  if (!/\.csv$/i.test(file.name) && file.type !== "text/csv") {
-    state.bulkFeedback = { tone: "warning", message: "Choose a CSV file for this prototype." };
-    render();
-    return;
-  }
-  if (file.size > 1024 * 1024) {
-    state.bulkFeedback = { tone: "warning", message: "This prototype accepts CSV files up to 1 MB." };
-    render();
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = () => {
-    const parsed = parseCsv(String(reader.result || ""));
-    if (parsed.error) {
-      state.bulkFeedback = { tone: "warning", message: parsed.error };
-    } else if (!parsed.rows.length) {
-      state.bulkFeedback = { tone: "warning", message: "No usable rows found. Each row needs a profile ID in the first column." };
-    } else {
-      state.bulkRows = parsed.rows;
-      state.bulkReport = null;
-      state.bulkConfirmed = false;
-      const notices = [parsed.headerDetected ? "header detected" : "no header detected", parsed.skipped ? `${parsed.skipped} blank-ID row${parsed.skipped === 1 ? "" : "s"} skipped` : "all rows usable", parsed.capped ? "capped at 100 rows" : "within 100-row limit"];
-      state.bulkFeedback = { tone: "success", message: `Imported ${parsed.rows.length} local row${parsed.rows.length === 1 ? "" : "s"}: ${notices.join("; ")}.` };
-    }
-    render();
-    showToast(state.bulkFeedback.message);
-  };
-  reader.onerror = () => {
-    state.bulkFeedback = { tone: "warning", message: "The selected file could not be read in this browser." };
-    render();
-  };
-  reader.readAsText(file);
-}
 
 function moveForecastHover(event) {
   if (!(event.target instanceof Element)) { hideForecastHover(); return; }
@@ -2894,9 +2737,6 @@ document.addEventListener("click", (event) => {
   if (action === "toggle-why") { const key = target.dataset.key; const opening = !state.openWhy[key]; state.openWhy = { ...state.openWhy, [key]: opening }; state.whyJustOpened = opening ? key : ""; renderAnimated().then(() => { state.whyJustOpened = ""; document.querySelector(`[data-action="toggle-why"][data-key="${CSS.escape(key)}"]`)?.focus({ preventScroll: true }); }); return; }
   if (action === "submit-conditions") { generateRoutine({ reportedConditions: state.reportedConditions }); return; }
   if (action === "reason") { state.reasonOpen = !state.reasonOpen; render(); return; }
-  if (action === "batch") { runBatch(); return; }
-  if (action === "export") { downloadCsv(); return; }
-  if (action === "export-batch-audit") { downloadBatchAudit(); return; }
   if (action === "print-research-report") { printResearchReport(); return; }
   if (action === "export-current-run") { exportCurrentRun(); return; }
   if (action === "export-run-history") { exportRunHistory(); return; }
@@ -2961,10 +2801,6 @@ document.addEventListener("change", (event) => {
     resetPreviewForInputChange();
     render();
   }
-  if (target.dataset.action === "upload" && target.files?.[0]) {
-    importBulkFile(target.files[0]);
-  }
-  if (target.dataset.action === "bulk-confirm") { state.bulkConfirmed = target.checked; render(); }
   if (target.dataset.action === "reviewer-source") { state.reviewer.selectedSourceId = target.value; render(); }
   if (target.dataset.action === "reviewer-action") { state.reviewer.action = target.value; render(); }
 });
@@ -3569,62 +3405,6 @@ function gptTag(item) {
   return `<span class="ingredient-rationale-tag">${icon("sparkles", 11)} GPT${escapeHtml(cue)}${model}</span>`;
 }
 
-async function runBatch() {
-  if (!state.bulkConfirmed) {
-    showToast("Confirm that the rows are de-identified before running the batch preview.");
-    return;
-  }
-  const profiles = state.bulkRows.map(([id, concern]) => ({ id, concern: bulkConcernCode(concern), profile: "combination" }));
-  try {
-    const response = await fetch("/api/bulk", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ profiles, location: locationPayload() }),
-    });
-    if (!response.ok) throw new Error("Bulk API is unavailable");
-    const payload = await response.json();
-    const results = Array.isArray(payload.results) ? payload.results : [];
-    state.bulkRows = results.map((item) => [item.profileId, concernLabelFromId(item.concern), safelyNumber(item.sufficiencyScore), item.status]);
-    state.bulkReport = {
-      mode: payload.mode || "deterministic-research-batch",
-      summary: payload.summary || {},
-      environment: payload.environment || null,
-      notices: payload.notices || [],
-      results,
-    };
-    state.bulkFeedback = { tone: "success", message: `Processed ${payload.summary?.total ?? state.bulkRows.length} de-identified profiles through environment, retrieval, research-atlas, safety, and explainability checks.` };
-    render();
-    showToast(state.bulkFeedback.message);
-  } catch {
-    state.bulkReport = null;
-    state.bulkRows = state.bulkRows.map(([id, concern]) => [id, concern, "—", "Unavailable"]);
-    state.bulkFeedback = { tone: "warning", message: "Bulk endpoint unavailable; no synthetic scores were substituted." };
-    render();
-    showToast("Bulk analysis is unavailable; no fabricated batch result was shown.");
-  }
-}
-
-document.addEventListener("dragover", (event) => {
-  const zone = event.target.closest("[data-dropzone]");
-  if (!zone) return;
-  event.preventDefault();
-  zone.classList.add("is-over");
-});
-
-document.addEventListener("dragleave", (event) => {
-  const zone = event.target.closest("[data-dropzone]");
-  if (zone) zone.classList.remove("is-over");
-});
-
-document.addEventListener("drop", (event) => {
-  const zone = event.target.closest("[data-dropzone]");
-  if (!zone) return;
-  event.preventDefault();
-  zone.classList.remove("is-over");
-  const file = event.dataTransfer?.files?.[0];
-  if (!file) return;
-  importBulkFile(file);
-});
 
 state.myRoutine = readStore(MY_ROUTINE_KEY, null);
 document.addEventListener("toggle", (event) => {

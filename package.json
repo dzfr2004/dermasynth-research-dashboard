@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "node --watch server.mjs",
     "start": "node server.mjs",
-    "check": "node --check app.js && node --check server.mjs && node --check lib/environment.mjs && node --check lib/explainability.mjs && node --check lib/ingredient-selection.mjs && node --check scripts/promote-signedoff-corpus.mjs && node --check scripts/reindex-approved-knowledge-base.mjs && node --check scripts/fit-environmental-surrogate.mjs && node --check lib/candidate-retrieval.mjs && node --check lib/cue.mjs && node --check lib/post-selection-safety.mjs && node --check lib/peg.mjs && node --check labelling.js && node --check lib/triage.mjs && node --check lib/triage-llm.mjs && node --check lib/personalisation.mjs && node --check lib/open-meteo.mjs && node --check lib/outlook.mjs && node --check lib/plain-language.mjs && node --check lib/uv.mjs && node --check lib/product-check.mjs && node --check scripts/evaluate-impact.mjs && node --check scripts/report-feedback.mjs",
-    "test": "npm run check && npm run verify:ingredient-kb && npm run verify:demo-kb && npm run eval:study && npm run eval:retrieval && npm run eval:safety-50 && npm run eval:ingredient-selection && npm run eval:category-coverage && npm run eval:triage && npm run eval:safety-extended && npm run eval:input-sensitivity:quick && npm run eval:gpt-layer && npm run eval:outlook && npm run eval:impact && npm run test:browser",
+    "check": "node --check app.js && node --check server.mjs && node --check lib/environment.mjs && node --check lib/explainability.mjs && node --check lib/ingredient-selection.mjs && node --check scripts/promote-signedoff-corpus.mjs && node --check scripts/reindex-approved-knowledge-base.mjs && node --check scripts/fit-environmental-surrogate.mjs && node --check lib/candidate-retrieval.mjs && node --check lib/cue.mjs && node --check lib/post-selection-safety.mjs && node --check lib/peg.mjs && node --check labelling.js && node --check lib/triage.mjs && node --check lib/triage-llm.mjs && node --check lib/personalisation.mjs && node --check lib/open-meteo.mjs && node --check lib/outlook.mjs && node --check lib/plain-language.mjs && node --check lib/uv.mjs && node --check lib/product-check.mjs && node --check scripts/evaluate-impact.mjs && node --check scripts/report-feedback.mjs && node --check lib/schema-check.mjs && node --check scripts/evaluate-gpt-schemas.mjs",
+    "test": "npm run check && npm run verify:ingredient-kb && npm run verify:demo-kb && npm run eval:study && npm run eval:retrieval && npm run eval:safety-50 && npm run eval:ingredient-selection && npm run eval:category-coverage && npm run eval:triage && npm run eval:safety-extended && npm run eval:input-sensitivity:quick && npm run eval:gpt-layer && npm run eval:gpt-schemas && npm run eval:outlook && npm run eval:impact && npm run test:browser",
     "db:migrate": "node scripts/migrate-db.mjs",
     "db:seed": "node scripts/seed-ingredient-db.mjs --fresh",
     "db:seed-approved": "node scripts/seed-ingredient-db.mjs --fresh --state approved",
@@ -60,7 +60,8 @@
     "eval:outlook": "node scripts/evaluate-outlook.mjs",
     "kb:rebuild": "node scripts/kb-rebuild.mjs",
     "eval:impact": "node scripts/evaluate-impact.mjs",
-    "report:feedback": "node scripts/report-feedback.mjs"
+    "report:feedback": "node scripts/report-feedback.mjs",
+    "eval:gpt-schemas": "node scripts/evaluate-gpt-schemas.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1"

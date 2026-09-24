@@ -1,0 +1,241 @@
+{
+  "triage_second_opinion": {
+    "type": "object",
+    "properties": {
+      "category": {
+        "type": "string",
+        "enum": [
+          "none",
+          "possible allergic reaction",
+          "possible infection",
+          "acute skin reaction",
+          "possible reaction to a product",
+          "needs clinical assessment",
+          "urgent"
+        ]
+      },
+      "needs_professional_care": {
+        "type": "boolean"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "category",
+      "needs_professional_care",
+      "reason"
+    ]
+  },
+  "dermasynth_category_selection": {
+    "type": "object",
+    "properties": {
+      "evidence_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "include_hydration": {
+        "type": "boolean"
+      },
+      "rationale_tags": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "environment_context",
+            "eligible_evidence",
+            "fixed_category_structure",
+            "conservative_hydration"
+          ]
+        }
+      }
+    },
+    "required": [
+      "evidence_ids",
+      "include_hydration",
+      "rationale_tags"
+    ]
+  },
+  "ingredient_selection": {
+    "type": "object",
+    "properties": {
+      "selections": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string"
+            },
+            "ingredientId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "category",
+            "ingredientId"
+          ]
+        }
+      }
+    },
+    "required": [
+      "selections"
+    ]
+  },
+  "routine_context": {
+    "type": "object",
+    "properties": {
+      "ingredients": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "what_it_is": {
+              "type": "string"
+            },
+            "why_step": {
+              "type": "string"
+            },
+            "why_today": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key",
+            "what_it_is",
+            "why_step",
+            "why_today"
+          ]
+        }
+      },
+      "steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "key",
+            "text"
+          ]
+        }
+      }
+    },
+    "required": [
+      "ingredients",
+      "steps"
+    ]
+  },
+  "cue_verdicts": {
+    "type": "object",
+    "properties": {
+      "verdicts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "index": {
+              "type": "integer"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "supported": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "index",
+            "reason",
+            "supported"
+          ]
+        }
+      }
+    },
+    "required": [
+      "verdicts"
+    ]
+  },
+  "cue_batch_verdicts": {
+    "type": "object",
+    "properties": {
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "verdicts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "index": {
+                    "type": "integer"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "supported": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "index",
+                  "reason",
+                  "supported"
+                ]
+              }
+            }
+          },
+          "required": [
+            "id",
+            "verdicts"
+          ]
+        }
+      }
+    },
+    "required": [
+      "items"
+    ]
+  },
+  "ingredient_rationales": {
+    "type": "object",
+    "properties": {
+      "rationales": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "text"
+          ]
+        }
+      }
+    },
+    "required": [
+      "rationales"
+    ]
+  }
+}

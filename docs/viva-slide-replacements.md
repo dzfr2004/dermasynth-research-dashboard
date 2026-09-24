@@ -164,7 +164,7 @@ The delivered app has **seven tabs**, and "Dynamic Routine Simulator" oversells 
 **Module 3 heading**
 
 > FIND: `Module 3 - Bulk Analysis Suite`
-> REPLACE: `Cohort Analysis — deterministic de-identified batch (up to 100 profiles, CSV + audit JSON)`
+> REPLACE: `Check my product — paste a label's ingredient list; DermaSynth shows which of today's steps it fits, any clash with today's routine, and safety cautions`
 
 **[add] name the other four tabs** so "seven modules" lands:
 

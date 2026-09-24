@@ -37,7 +37,7 @@ const server = http.createServer(async (req, res) => {
     const retry = seen.filter((s) => s.name === "routine_context").length > 1;
     out = {
       steps: (input.steps || []).map((s) => ({ key: s.key, text: `${s.step} is part of the ${s.phase} routine today because ${s.rule}` })),
-      ingredients: (input.ingredients || []).map((i) => ({ key: i.key, why_step: `${i.step} is in the ${i.phase} routine today.`, what_it_is: retry ? "x" : `${i.ingredient} is ${i.what_it_is_plain || "an approved ingredient"}.`, why_today: `${i.step} suits you today because ${i.step_rule}`, safety: i.safety_plain || "No safety summary is recorded for it yet." })),
+      ingredients: (input.ingredients || []).map((i) => ({ key: i.key, why_step: `${i.step} is in the ${i.phase} routine today.`, what_it_is: retry ? "x" : `${i.ingredient} is ${i.what_it_is_plain || "an approved ingredient"}.`, why_today: `${i.step} suits you today because ${i.step_rule}` })),
     };
   }
   if (name === "cue_batch_verdicts") out = { items: input.items.map((it) => ({ id: it.id, verdicts: it.statements.map((s) => ({ index: s.index, supported: !String(it.id).startsWith("ing:") || !behaviour.rejectIngredients, reason: "mock" })) })) };
