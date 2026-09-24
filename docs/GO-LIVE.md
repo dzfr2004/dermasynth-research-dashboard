@@ -102,6 +102,20 @@ EWG scores are already recorded (checked 2026-09-23) in
 `data/evidence/cir-ewg/ewg-reference-context.verified.batch8.v1.jsonl`.
 Re-check them before citing individual values.
 
+## 6. Check-ins during the user test
+
+Check-ins are written to `data/logs/feedback.jsonl` (not committed). After a
+test session:
+
+```sh
+npm run report:feedback                      # all check-ins
+npm run report:feedback -- --since=2026-10-01
+```
+
+The summary is in `data/evaluation/reports/feedback.latest.md`. It is
+self-reported and uncontrolled: use it for acceptability and adherence, not
+effectiveness.
+
 ## Rollback
 
 ```sh

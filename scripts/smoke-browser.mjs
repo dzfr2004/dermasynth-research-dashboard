@@ -65,6 +65,7 @@ const child = spawn(process.execPath, ["server.mjs"], {
     IQAIR_API_KEY: "",
     PINECONE_API_KEY: "",
     PINECONE_INDEX: "",
+    FEEDBACK_LOG_PATH: "tmp/smoke-feedback.jsonl",
   },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -98,7 +99,7 @@ const CONFIG_LEAK = /\.env\b|LIVE_SERVICES_ENABLED|OPENAI_API_KEY|OPENWEATHER_AP
 
 async function openPage(width) {
   // bypassCSP only so the axe script can be injected; the app itself is unchanged.
-  const context = await browser.newContext({ viewport: { width, height: width < 500 ? 812 : 900 }, bypassCSP: true });
+  const context = await browser.newContext({ viewport: { width, height: width < 500 ? 812 : 900 }, bypassCSP: true, acceptDownloads: true });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -186,11 +187,64 @@ for (const width of [375, 1280]) {
     const leak = text.match(CONFIG_LEAK);
     expect(!leak, `Found "${leak?.[0]}".`);
   });
+  await check(`${label}-one-line`, `${label}: "Today in one line" summarises the day above the routine`, async () => {
+    const text = (await page.locator(".hero-text").innerText()).trim();
+    expect(text.length > 15 && /sunscreen|UV/i.test(text), `Summary missing or unexpected: "${text}"`);
+  });
+  await check(`${label}-collapsed`, `${label}: the form folds into "Edit my skin details" and the result is in view`, async () => {
+    expect(await page.locator(".form-panel.is-collapsed").count() === 1, "Form did not collapse.");
+    const top = await page.locator("#routine-result").evaluate((el) => el.getBoundingClientRect().top);
+    expect(top < 400, `Result starts ${Math.round(top)} px down the screen.`);
+  });
+  await check(`${label}-my-routine`, `${label}: the routine can be saved as "my routine" with product names`, async () => {
+    await page.locator('[data-action="save-my-routine"]').click();
+    await page.waitForTimeout(500);
+    await page.locator('[data-action="my-product"]').first().fill("My cleanser");
+    await page.locator('[data-action="products-done"]').click();
+    await page.waitForTimeout(500);
+    expect((await page.locator(".my-product").first().innerText()).includes("My cleanser"), "Product name not shown on the step.");
+  });
+  await check(`${label}-product-check`, `${label}: "Check a product" reads an ingredient list`, async () => {
+    await page.locator(".product-card summary").click();
+    await page.locator("#pc-text").fill("Aqua, Glycerin, Niacinamide, Unknownium Extract");
+    await page.locator('[data-action="pc-run"]').click();
+    await page.waitForSelector(".pc-verdict", { timeout: 10000 });
+    expect(/1 of 3 ingredients/.test(await page.locator(".pc-note").innerText()), "Unrecognised ingredient not reported.");
+  });
+  await check(`${label}-checkin`, `${label}: the one-tap check-in is sent`, async () => {
+    const posted = page.waitForRequest((r) => r.url().endsWith("/api/feedback") && r.method() === "POST");
+    await page.locator('[data-action="checkin"][data-value="good"]').click();
+    await page.locator('[data-action="checkin-follow"][data-value="partly"]').click();
+    const body = JSON.parse((await posted).postData() || "{}");
+    expect(body.rating === "good" && body.followed === "partly", "Check-in body wrong.");
+    await page.waitForSelector(".checkin-card.is-done", { timeout: 5000 });
+  });
+  await check(`${label}-reminders`, `${label}: reminders download as a calendar file`, async () => {
+    const [download] = await Promise.all([page.waitForEvent("download"), page.locator('[data-action="reminders"]').click()]);
+    expect(download.suggestedFilename() === "dermasynth-reminders.ics", "Wrong file name.");
+    const text = await readFile(await download.path(), "utf8");
+    expect(text.startsWith("BEGIN:VCALENDAR") && text.includes("BEGIN:VEVENT"), "Not a calendar file.");
+  });
+  await check(`${label}-story`, `${label}: the story image is 1080 x 1920 and the dialog closes with Escape`, async () => {
+    await page.locator('[data-action="story-open"]').click();
+    await page.waitForSelector(".story-preview", { timeout: 10000 });
+    await page.waitForFunction(() => document.querySelector(".story-preview")?.naturalWidth > 0);
+    const size = await page.locator(".story-preview").evaluate((img) => [img.naturalWidth, img.naturalHeight]);
+    expect(size[0] === 1080 && size[1] === 1920, `Image is ${size.join(" x ")}.`);
+    await page.waitForTimeout(800); // let the dialog finish its entrance before checking contrast
+    const violations = await axeViolations(page);
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+    expect(await page.locator("#story-modal").count() === 0, "Dialog did not close.");
+    expect(!violations.length, violations.join("; "));
+  });
   await check(`${label}-result-a11y`, `${label}: the routine result has no serious accessibility violations`, async () => {
     const violations = await axeViolations(page);
     expect(!violations.length, violations.join("; "));
   });
   await check(`${label}-redirect`, `${label}: symptoms that need care show the check-up screen and no routine`, async () => {
+    await page.locator('[data-action="edit-form"]').click();
+    await page.waitForSelector("#symptoms", { timeout: 5000 });
     await page.fill("#symptoms", "my lips started swelling after a new cream");
     await page.locator('[data-action="simulate"]').first().click();
     await page.waitForSelector(".clinical-redirect", { timeout: 15000 });

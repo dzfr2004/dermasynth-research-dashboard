@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { resolve } from "node:path";
 import { createConfig, loadDotEnv, publicConfigStatus } from "./lib/config.mjs";
-import { buildOutlook } from "./lib/outlook.mjs";
+import { buildOutlook, readingChanges, tomorrowChanges } from "./lib/outlook.mjs";
+import { checkProduct } from "./lib/product-check.mjs";
 import { CONCERN_WORDS } from "./lib/plain-language.mjs";
 import { DEFAULT_LOCATION, getEnvironment, reverseLocation, getEnvironmentForecast, parseReportedConditions, providerReliabilitySnapshot, REPORTED_CONDITION_OPTIONS, reportedConditionsEnvironment, searchLocations } from "./lib/environment.mjs";
 import { llmTriageSecondOpinion } from "./lib/triage-llm.mjs";
@@ -27,6 +28,7 @@ import { buildEnvironmentalExplainability } from "./lib/explainability.mjs";
 import {
   ALLOWED_FINISH_PREFERENCES,
   ALLOWED_EXPOSURE_CONTEXTS,
+  ALLOWED_CONCERNS,
   ALLOWED_PROFILES,
   ALLOWED_REACTIVITY_LEVELS,
   CONCERN_CATALOG,
@@ -47,7 +49,7 @@ import { buildIngredientEvidenceCorpus } from "./lib/ingredient-evidence-corpus.
 import { postSelectionSafetyPass } from "./lib/post-selection-safety.mjs";
 import { effectiveReactivity } from "./lib/personalisation.mjs";
 import { buildTwoLevelExplanation, slotReasonText } from "./lib/peg.mjs";
-import { appendContextLog, appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
+import { appendContextLog, appendFeedback, appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
 import { getRuntimePolicy } from "./lib/policy-store.mjs";
 import { getIngredientEvidenceNote } from "./lib/ingredient-evidence-notes.mjs";
 import {
@@ -128,6 +130,7 @@ const publicFiles = new Map([
   ["/app.js", { path: "app.js", contentType: "text/javascript; charset=utf-8" }],
   ["/styles.css", { path: "styles.css", contentType: "text/css; charset=utf-8" }],
   ["/assets/dermasynth-mark.svg", { path: "assets/dermasynth-mark.svg", contentType: "image/svg+xml" }],
+  ["/manifest.webmanifest", { path: "manifest.webmanifest", contentType: "application/manifest+json; charset=utf-8" }],
   ["/labelling", { path: "labelling.html", contentType: "text/html; charset=utf-8" }],
   ["/labelling.html", { path: "labelling.html", contentType: "text/html; charset=utf-8" }],
   ["/labelling.js", { path: "labelling.js", contentType: "text/javascript; charset=utf-8" }],
@@ -153,7 +156,7 @@ function securityHeaders(requestId) {
     "cross-origin-opener-policy": "same-origin",
     // The dashboard uses one deliberate inline width style for a visual-only
     // environmental bar. Scripts remain restricted to the local static file.
-    "content-security-policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';",
+    "content-security-policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self';",
   };
 }
 
@@ -1194,7 +1197,42 @@ async function handleRoutine(input, requestId, cancel = null) {
   recordRunOutcome(degraded);
   // F1: the degraded status goes into the selection log with the run.
   if (__selectionLog) await appendSelectionLog(config, { ...__selectionLog, degraded: { status: degraded.status, reasons: degraded.reasons.map((reason) => reason.id) } });
-  return { ...result, gpt: { active: gptActive, budget: budgetSummary(budget) }, degraded };
+  return { ...result, gpt: { active: gptActive, budget: budgetSummary(budget) }, degraded, compare: compareRoutine(input?.compare, result) };
+}
+
+const STEP_KEY = /^(am|pm):[a-z-]{3,40}$/;
+const cleanSteps = (value) => (Array.isArray(value) ? value : []).slice(0, 16).map(String).filter((s) => STEP_KEY.test(s));
+
+// Improvements 6 and 7: today's routine against the user's usual routine and
+// against the last routine this browser saw (both sent by the browser, which
+// stores them; the server keeps nothing).
+function compareRoutine(compare, result) {
+  if (!compare || typeof compare !== "object" || !result?.routine || result.status === "medical_redirect") return null;
+  const routine = result.routine;
+  const readings = result.environment?.readings || {};
+  const out = {};
+  const usual = cleanSteps(compare.usualSteps);
+  if (usual.length) {
+    const diff = tomorrowChanges({ todaySteps: usual, tomorrowRoutine: routine, readings, when: "today" });
+    out.vsUsual = { changes: diff.changes.filter((c) => c.change !== "kept"), sameAsUsual: diff.same };
+  }
+  const previous = compare.previous && typeof compare.previous === "object" ? compare.previous : null;
+  const previousSteps = cleanSteps(previous?.steps);
+  if (previousSteps.length) {
+    const prevReadings = {};
+    for (const key of ["uvi", "uviMaxToday", "humidity", "pm25", "temperature"]) {
+      const v = Number(previous.readings?.[key]);
+      if (previous.readings?.[key] !== null && previous.readings?.[key] !== undefined && Number.isFinite(v)) prevReadings[key] = v;
+    }
+    const diff = tomorrowChanges({ todaySteps: previousSteps, tomorrowRoutine: routine, readings, when: "today" });
+    out.vsPrevious = {
+      at: typeof previous.at === "string" ? previous.at.slice(0, 40) : null,
+      changes: diff.changes.filter((c) => c.change !== "kept"),
+      same: diff.same,
+      readingChanges: readingChanges(prevReadings, readings),
+    };
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 // F1: in-process counters, exposed in /api/health so a monitor can alert on a
@@ -1827,6 +1865,43 @@ async function routeApi(request, response, url, requestId) {
     // Rounded to ~1 km before leaving the server.
     const name = await reverseLocation(config, Math.round(lat * 100) / 100, Math.round(lon * 100) / 100);
     return sendJson(response, 200, { name, requestId }, requestId);
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/check-product") {
+    enforceLocationSearchRateLimit(request);
+    const input = await readJson(request);
+    const text = String(input?.text || "").slice(0, 4000);
+    if (text.trim().length < 3) throw new HttpError(400, "Paste the product's ingredient list.");
+    const routine = input?.routine && typeof input.routine === "object" ? input.routine : {};
+    const entries = (Array.isArray(routine.entries) ? routine.entries : []).slice(0, 12).map((e) => ({
+      ingredientId: String(e?.ingredientId || "").slice(0, 60), displayName: String(e?.displayName || "").slice(0, 80),
+      phase: e?.phase === "pm" ? "pm" : "am", categoryId: String(e?.categoryId || "").slice(0, 60),
+    })).filter((e) => /^[a-z0-9-]+$/.test(e.ingredientId));
+    const result = checkProduct({
+      text,
+      repository: knowledgeRepo(),
+      routine: { entries, steps: cleanSteps(routine.steps), concern: String(routine.concern || "").slice(0, 30), reactivityLevel: String(routine.reactivityLevel || "").slice(0, 12) },
+    });
+    return sendJson(response, 200, { ...result, requestId }, requestId);
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/feedback") {
+    enforceLocationSearchRateLimit(request);
+    const input = await readJson(request);
+    const rating = ["good", "ok", "bad"].includes(input?.rating) ? input.rating : null;
+    if (!rating) throw new HttpError(400, "Choose how your skin felt.");
+    const followed = ["yes", "partly", "no"].includes(input?.followed) ? input.followed : null;
+    const record = {
+      at: new Date().toISOString(),
+      runId: /^[0-9a-f-]{8,40}$/i.test(String(input?.runId || "")) ? String(input.runId) : null,
+      about: input?.about === "yesterday" ? "yesterday" : "today",
+      rating,
+      followed,
+      profile: ALLOWED_PROFILES.has(input?.profile) ? input.profile : null,
+      concern: ALLOWED_CONCERNS.has(input?.concern) ? input.concern : null,
+    };
+    await appendFeedback(config, record);
+    return sendJson(response, 200, { saved: true, requestId }, requestId);
   }
 
   if (request.method === "POST" && url.pathname === "/api/outlook") {

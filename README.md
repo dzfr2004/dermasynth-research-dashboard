@@ -184,12 +184,25 @@ Technical failures are shown to consumers in plain words; configuration details 
 
 ## Consumer explanations, timing and tomorrow
 
-- **Why? panel:** each ingredient shows *What it is*, *Why today*, *Is it safe?* and *On labels*. The rule-based version is built from fixed plain-language facts (`lib/plain-language.mjs`: class definitions, the verified safety card, INCI names). With GPT on, GPT rewrites the first three fields in friendlier words using only those facts, and CUE checks the result against them; anything below the threshold falls back to the rule-based text.
+- **Why? panel:** each ingredient shows *What it is*, *Why today*, *On labels* and *References* (up to three studies or reviews, cited journal-style). The rule-based version is built from fixed plain-language facts (`lib/plain-language.mjs`: class definitions, the verified safety card, INCI names). With GPT on, GPT rewrites the first two fields in friendlier words using only those facts, and CUE checks the result against them; anything below the threshold falls back to the rule-based text.
 - **Timing:** the Today card and the sunscreen step show when UV is at or above the level that adds sun protection today, and the peak.
 - **Tomorrow:** the forecast in plain words and how tomorrow's routine differs from today's (same routine rules run on tomorrow's forecast).
 - **Location:** on a first visit the browser asks for the current location (rounded to about 1 km, remembered in the browser); Kuala Lumpur is used if the user declines. With an OpenWeather key the place is named; otherwise it shows as "Your location".
 - **Keyless data:** in live mode, Open-Meteo (open-meteo.com, CC BY 4.0) fills any reading OpenWeather or IQAir cannot supply and provides the hourly UV and next-day forecast. `OPEN_METEO_ENABLED=false` turns it off.
 - **Motion:** state changes morph with the View Transitions API and spring easing; a new routine plays a staggered entrance; everything is instant for users who ask for reduced motion.
+
+## Making the result useful day to day
+
+- **Today in one line:** a single sentence above the routine with the day's decisions (sunscreen and when UV peaks, antioxidant for haze, lighter or richer moisturiser, extra-gentle days).
+- **Peak UV:** in live mode the sunscreen decision uses the higher of the current UV and today's forecast maximum (`lib/uv.mjs`), so a routine built at 7 am on a UV 11 day includes sunscreen. Without a forecast the current reading is used, as before.
+- **UV chart:** the Today card shows today's hourly UV with the sunscreen window shaded and "now" marked.
+- **Phones:** after a routine is built the page scrolls to it and the form folds into one line with "Edit my skin details".
+- **My routine:** users can save a routine as their usual one and type the product they use for each step (kept in the browser only). Later runs show what changed from the usual routine and, from a routine more than 3 hours old, what changed since last time (steps and readings).
+- **Check a product:** paste a label's ingredient list; `POST /api/check-product` (`lib/product-check.mjs`) says which of today's steps it fits, whether it clashes with today's routine (same incompatibility matrix), and cautions (prescription-only, excluded, strong exfoliant for reactive skin, sun-sensitising). Ingredients not in the knowledge base are listed as not checked, never guessed. No GPT, nothing stored.
+- **Reminders:** "Add reminders" downloads a calendar file (`.ics`): a sunscreen top-up at today's UV peak, the evening routine at 9 pm and tomorrow's morning routine at 7 am with tomorrow's changes. The app also has a web manifest, so it can be added to a phone's home screen.
+- **Check-in:** "How does your skin feel?" (good, okay, not good) and "Did you follow it?", asked about today's routine and, on the next visit, about the previous day's. `POST /api/feedback` appends an anonymous line (answer, skin type, concern, run id; no location or free text) to `data/logs/feedback.jsonl` (`FEEDBACK_LOG_PATH`). `npm run report:feedback` summarises it for the user study.
+- **Share as story:** a 1080 × 1920 image (Instagram Story size) of the day's plan, drawn in the browser and shared with the phone's share sheet or saved as `dermasynth-today.png`. Nothing is uploaded.
+- `npm run eval:impact` (part of `npm test`) tests the product check, the peak-UV rule and the change wording.
 
 ## GPT layer: live evidence, budget and fallbacks
 
@@ -240,6 +253,9 @@ Integrated Pinecone indexes accept text records in batches of up to 96; this pro
 | `GET /api/locations?q=...` | Server-side city/area lookup. Returns at most five sanitised location candidates, applies a local 20-searches-per-minute guard, and never exposes the OpenWeather key. |
 | `GET /api/environment` | Live/degraded/demo environmental telemetry. Optional `lat`, `lon`, and `location` query values are bounded. |
 | `POST /api/routine` | Safety-gated routine preview with `profile`, `concern`, optional `symptoms`, and an optional bounded `location` object (`name`, `lat`, `lon`). The routine contains structured category-only `am`/`pm` steps and backward-compatible `steps`, plus `ingredientCandidates` when the approved registry is enabled and the result clears safety, `grounding`, `ingredientResearch`, `runReport`, `outputMode`, and safe `synthesisStatus` fields. |
+| `POST /api/outlook` | Today's UV timing and hourly UV, and tomorrow's forecast and routine changes (live mode with Open-Meteo). |
+| `POST /api/check-product` | Checks a pasted ingredient list (up to 4,000 characters) against today's routine. Deterministic; nothing stored. |
+| `POST /api/feedback` | Appends one anonymous check-in (`rating` good/ok/bad, optional `followed` yes/partly/no, `about` today/yesterday). |
 | `POST /api/bulk` | Deterministic cohort-preview processing with up to 100 profiles. |
 
 Static serving is allowlisted to the public frontend files, so configuration, server source, and `.env` are not web-accessible.

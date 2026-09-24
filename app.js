@@ -598,6 +598,9 @@ function icon(name, size = 18, stroke = 1.8) {
     download: '<path d="M12 3v12M7 11l5 5 5-5"/><path d="M5 21h14"/>',
     file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"/><path d="M14 2v6h6M8 13h8M8 17h5"/>',
     arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    share: '<path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>',
+    bell: '<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16Z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+    sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
   };
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.info}</svg>`;
 }
@@ -1279,7 +1282,7 @@ function conditionsSummaryCard(meta) {
   const r = environment?.readings || {};
   const fmt = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v).toFixed(d) : "—");
   const items = [
-    ["UV", fmt(r.uvi, 1), "", uvBand(r.uvi)],
+    ["UV now", fmt(r.uvi, 1), "", Number(r.uviMaxToday) > Number(r.uvi) ? { ...uvBand(r.uviMaxToday), label: `peaks at ${Math.round(Number(r.uviMaxToday))} today` } : uvBand(r.uvi)],
     ["Humidity", fmt(r.humidity), "%", humidityBand(r.humidity)],
     ["Haze (PM2.5)", fmt(r.pm25), "µg/m³", hazeBand(r.pm25)],
     ["Temperature", fmt(r.temperature), "°C", temperatureBand(r.temperature)],
@@ -1287,7 +1290,7 @@ function conditionsSummaryCard(meta) {
   const source = environment?.mode === "live" ? "Live readings" : environment?.mode === "user_reported" ? "Conditions you reported" : environment?.mode === "degraded" ? "Some live readings missing" : "Sample weather (not live)";
   const outlookToday = state.outlook?.data?.today;
   const timingLine = outlookToday?.text ? `<p class="today-timing">${icon("sun", 13)} ${escapeHtml(outlookToday.text)}${outlookToday.sunTip ? ` ${escapeHtml(outlookToday.sunTip)}` : ""}</p>` : "";
-  return `<section class="today-card" style="view-transition-name: today-card" aria-labelledby="today-title"><div class="today-head"><h3 id="today-title">${icon("pin", 15)} ${locationLabel() === "Your location" ? "Today near you" : `Today in ${escapeHtml(locationLabel())}`}</h3><span>${escapeHtml(source)}</span></div><dl class="today-grid">${items.map(([label, value, unit, band]) => `<div class="today-item ${band ? `is-${band.tone}` : ""}"><dt>${escapeHtml(label)}</dt><dd><strong>${escapeHtml(value)}</strong>${unit && value !== "—" ? `<small>${escapeHtml(unit)}</small>` : ""}${band ? `<span>${escapeHtml(band.label)}</span>` : ""}</dd></div>`).join("")}</dl>${timingLine}</section>`;
+  return `<section class="today-card" style="view-transition-name: today-card" aria-labelledby="today-title"><div class="today-head"><h3 id="today-title">${icon("pin", 15)} ${locationLabel() === "Your location" ? "Today near you" : `Today in ${escapeHtml(locationLabel())}`}</h3><span>${escapeHtml(source)}</span></div><dl class="today-grid">${items.map(([label, value, unit, band]) => `<div class="today-item ${band ? `is-${band.tone}` : ""}"><dt>${escapeHtml(label)}</dt><dd><strong>${escapeHtml(value)}</strong>${unit && value !== "—" ? `<small>${escapeHtml(unit)}</small>` : ""}${band ? `<span>${escapeHtml(band.label)}</span>` : ""}</dd></div>`).join("")}</dl>${uvTimeline()}${timingLine}</section>`;
 }
 
 // ---- Timing and tomorrow (forecast, /api/outlook) ----------------------------
@@ -1367,7 +1370,643 @@ function consumerStepItem(step, phase, entries, meta) {
   const open = Boolean(state.openWhy?.[key]);
   const panelId = `why-${phase}-${step.id}`;
   const stepIndex = (state.stepCounter = (state.stepCounter || 0) + 1);
-  return `<li class="consumer-step" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : `<span class="consumer-ingredient">${escapeHtml(plain.what)}</span>`}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing">${icon("sun", 12)} ${escapeHtml(timing)}</p>` : ""}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : "Why?"}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry) : ""}</div>` : ""}</li>`;
+  const mine = state.editingProducts ? "" : productNameFor(key);
+  return `<li class="consumer-step" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : `<span class="consumer-ingredient">${escapeHtml(plain.what)}</span>`}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing">${icon("sun", 12)} ${escapeHtml(timing)}</p>` : ""}${productInput(key, plain.name)}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : "Why?"}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry) : ""}</div>` : ""}</li>`;
+}
+
+// ---- Impact features (1-10) -----------------------------------------------
+const MY_ROUTINE_KEY = "dermasynth.my-routine.v1";
+const LAST_ROUTINE_KEY = "dermasynth.last-routine.v1";
+const CHECKIN_KEY = "dermasynth.checkins.v1";
+
+function readStore(key, fallback) {
+  try { const value = JSON.parse(window.localStorage.getItem(key) || "null"); return value ?? fallback; } catch { return fallback; }
+}
+function writeStore(key, value) {
+  try { window.localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+}
+
+function currentStepKeys(routine = state.generatedRoutine) {
+  return [...(routine?.am || []).map((s) => `am:${s.id}`), ...(routine?.pm || []).map((s) => `pm:${s.id}`)];
+}
+
+// 1. Today in one line: the day's decisions, from facts the run computed.
+function planningUv(readings = {}) {
+  const now = Number(readings.uvi);
+  const peak = Number(readings.uviMaxToday);
+  const values = [now, peak].filter((v) => Number.isFinite(v));
+  return values.length ? Math.max(...values) : null;
+}
+
+function todayOneLine(meta, routine) {
+  const readings = meta?.environment?.readings || {};
+  const steps = new Set(currentStepKeys(routine).map((k) => k.split(":")[1]));
+  const parts = [];
+  const uv = planningUv(readings);
+  const peakTime = state.outlook?.data?.today?.window?.peak?.time;
+  const hour = (time) => { const h = Number(String(time || "").slice(11, 13)); return Number.isFinite(h) ? (h === 12 ? "noon" : h < 12 ? `${h} am` : `${h - 12} pm`) : ""; };
+  if (steps.has("daytime-photoprotection")) {
+    const when = peakTime ? ` around ${hour(peakTime)}` : "";
+    parts.push(uv !== null && uv >= 6 ? `sunscreen is a must (UV ${Math.round(uv)}${when})` : `wear sunscreen when you go out (UV up to ${uv === null ? "?" : Math.round(uv)})`);
+  } else if (uv !== null) {
+    parts.push(`UV stays low today (up to ${Math.round(uv)})`);
+  }
+  if (steps.has("antioxidant-context")) parts.push("add an antioxidant (hazy air)");
+  const guarded = [...(routine?.am || []), ...(routine?.pm || [])].some((s) => (s.ruleIds || []).includes("low-irritation-barrier-guardrail"));
+  const direction = routine?.generation?.textureVote?.direction;
+  if (guarded) parts.push("keep everything extra gentle");
+  else if (direction === "lighter") parts.push("keep your moisturiser light");
+  else if (direction === "richer") parts.push("use your richer moisturiser");
+  if (parts.length < 3 && steps.has("texture-renewal")) parts.push("exfoliate tonight only");
+  if (!parts.length) return "";
+  const text = parts.join(" · ");
+  return text[0].toUpperCase() + text.slice(1) + ".";
+}
+
+function heroCard(meta, routine) {
+  const line = todayOneLine(meta, routine);
+  if (!line) return "";
+  return `<section class="hero-line" style="view-transition-name: hero-line" aria-labelledby="hero-line-title"><p class="hero-kicker" id="hero-line-title">${icon("sparkles", 13)} Today in one line</p><p class="hero-text">${escapeHtml(line)}</p><div class="hero-actions"><button type="button" class="pill-button" data-action="story-open">${icon("share", 14)} Share as story</button><button type="button" class="pill-button" data-action="reminders">${icon("bell", 14)} Add reminders</button></div></section>`;
+}
+
+// 4. UV timeline: today's hourly UV with the sunscreen window shaded.
+function uvTimeline() {
+  const today = state.outlook?.data?.today;
+  const hours = Array.isArray(today?.hourly) ? today.hourly : [];
+  if (hours.length < 6) return "";
+  const w = 320; const h = 96; const padX = 8; const top = 12; const base = 70;
+  const maxUv = Math.max(11, ...hours.map((p) => p.uvi));
+  const x = (time) => padX + (Number(String(time).slice(11, 13)) / 23) * (w - padX * 2);
+  const y = (uvi) => base - (uvi / maxUv) * (base - top);
+  const line = hours.map((p, i) => `${i ? "L" : "M"}${x(p.time).toFixed(1)},${y(p.uvi).toFixed(1)}`).join(" ");
+  const area = `${line} L${x(hours.at(-1).time).toFixed(1)},${base} L${x(hours[0].time).toFixed(1)},${base} Z`;
+  const win = today.window;
+  const winRect = win && win.start && win.end ? `<rect class="uv-window" x="${x(win.start).toFixed(1)}" y="${top + 2}" width="${(x(win.end) - x(win.start)).toFixed(1)}" height="${base - top - 2}" rx="6"/>` : "";
+  const thresholdY = win ? y(win.threshold) : null;
+  const nowX = today.now ? x(today.now) : null;
+  const peak = win?.peak;
+  const label = win?.start && win?.end ? `UV today: ${win.threshold} or higher from ${hourLabel(win.start)} to ${hourLabel(win.end)}, peaking at ${Math.round(peak?.uvi ?? 0)} around ${hourLabel(peak?.time)}.` : "UV today stays low.";
+  return `<figure class="uv-timeline"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(label)}">${winRect}<path class="uv-area" d="${area}"/><path class="uv-line" d="${line}"/>${thresholdY !== null ? `<line class="uv-threshold" x1="${padX}" x2="${w - padX}" y1="${thresholdY.toFixed(1)}" y2="${thresholdY.toFixed(1)}"/>` : ""}${nowX !== null ? `<line class="uv-now" x1="${nowX.toFixed(1)}" x2="${nowX.toFixed(1)}" y1="${top - 8}" y2="${base}"/><text class="uv-now-label" x="${nowX.toFixed(1)}" y="${top - 1}" text-anchor="middle">now</text>` : ""}${peak ? `<circle class="uv-peak" cx="${x(peak.time).toFixed(1)}" cy="${y(peak.uvi).toFixed(1)}" r="3.5"/>` : ""}${["06", "12", "18"].map((hh) => `<text class="uv-axis" x="${x(`2000-01-01T${hh}:00`).toFixed(1)}" y="${h - 8}" text-anchor="middle">${hh === "12" ? "noon" : hh === "06" ? "6 am" : "6 pm"}</text>`).join("")}</svg><figcaption><span class="uv-key is-window"></span> sunscreen matters · <span class="uv-key is-line"></span> UV through the day</figcaption></figure>`;
+}
+function hourLabel(time) {
+  const h = Number(String(time || "").slice(11, 13));
+  if (!Number.isFinite(h)) return "";
+  return h === 0 ? "midnight" : h === 12 ? "noon" : h < 12 ? `${h} am` : `${h - 12} pm`;
+}
+
+// 6 and 7. Compared with your usual routine / since your last routine.
+function compareCard(meta) {
+  const cmp = meta?.compare;
+  const my = state.myRoutine;
+  const blocks = [];
+  if (cmp?.vsUsual && my?.steps?.length) {
+    blocks.push(cmp.vsUsual.sameAsUsual
+      ? `<p class="compare-same">${icon("check", 14)} Same as your usual routine today.</p>`
+      : `<p class="compare-title">Today's changes to your usual routine</p><ul class="tomorrow-changes">${cmp.vsUsual.changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`);
+  }
+  if (cmp?.vsPrevious && !(cmp.vsPrevious.same && !cmp.vsPrevious.readingChanges?.length)) {
+    const when = cmp.vsPrevious.at ? relativeDay(cmp.vsPrevious.at) : "last time";
+    const readings = cmp.vsPrevious.readingChanges?.length ? `<p class="compare-readings">${escapeHtml(cmp.vsPrevious.readingChanges.join(" · "))}.</p>` : "";
+    blocks.push(`<p class="compare-title">Since your routine ${escapeHtml(when)}</p>${readings}${cmp.vsPrevious.same ? `<p class="compare-same">${icon("check", 14)} The routine itself hasn't changed.</p>` : `<ul class="tomorrow-changes">${cmp.vsPrevious.changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`}`);
+  }
+  if (!blocks.length) return "";
+  return `<section class="compare-card" style="view-transition-name: compare-card" aria-label="What changed">${blocks.join("")}</section>`;
+}
+function relativeDay(iso) {
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "last time";
+  const days = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(then).setHours(0, 0, 0, 0)) / 864e5);
+  return days <= 0 ? "earlier today" : days === 1 ? "yesterday" : `${days} days ago`;
+}
+
+function myRoutineControls() {
+  const my = state.myRoutine;
+  const saved = my?.steps?.length;
+  const same = saved && currentStepKeys().join(",") === my.steps.join(",");
+  if (state.editingProducts && saved) return `<div class="my-routine-bar is-editing"><span>Type the product you use for each step (optional). It stays in this browser.</span><button type="button" class="pill-button is-selected" data-action="products-done">${icon("check", 13)} Done</button></div>`;
+  return `<div class="my-routine-bar">${saved ? `<span>${icon("check", 13)} Your usual routine is saved${same ? " (this one)" : ""}.</span>` : `<span>Use this as your usual routine? Tomorrow you'll just see what changes.</span>`}<button type="button" class="pill-button" data-action="save-my-routine">${saved && !same ? "Make this my usual routine" : saved ? "Edit my products" : "Save as my usual routine"}</button>${saved ? `<button type="button" class="text-button" data-action="clear-my-routine">Forget it</button>` : ""}</div>`;
+}
+
+function productNameFor(key) {
+  return state.myRoutine?.products?.[key] || "";
+}
+
+// 9. One-tap check-in.
+function checkinCard(meta) {
+  if (!meta || meta.status !== "cleared") return "";
+  const store = readStore(CHECKIN_KEY, {});
+  const runId = meta.routineContext?.runId || meta.requestId || "";
+  const askYesterday = state.previousForCheckin && !store[`y:${state.previousForCheckin.at}`];
+  const done = store[runId];
+  if (done && !askYesterday) return `<section class="checkin-card is-done" aria-live="polite"><p>${icon("check", 14)} Thanks. Your check-in helps test DermaSynth.</p></section>`;
+  const about = askYesterday ? "yesterday" : "today";
+  const title = askYesterday ? `How did your skin feel after your routine ${escapeHtml(relativeDay(state.previousForCheckin.at))}?` : "How does your skin feel with today's routine?";
+  const chosen = state.checkinDraft?.about === about ? state.checkinDraft : {};
+  return `<section class="checkin-card" aria-labelledby="checkin-title"><p class="checkin-title" id="checkin-title">${title}</p><div class="checkin-options" role="group" aria-label="How your skin felt">${[["good", "🙂", "Good"], ["ok", "😐", "Okay"], ["bad", "🙁", "Not good"]].map(([value, face, label]) => `<button type="button" class="checkin-face ${chosen.rating === value ? "is-selected" : ""}" data-action="checkin" data-about="${about}" data-value="${value}" aria-pressed="${chosen.rating === value}"><span aria-hidden="true">${face}</span>${label}</button>`).join("")}</div>${chosen.rating ? `<div class="checkin-follow" role="group" aria-label="Did you follow the routine"><span>Did you follow it?</span>${[["yes", "Yes"], ["partly", "Partly"], ["no", "No"]].map(([value, label]) => `<button type="button" class="pill-button ${chosen.followed === value ? "is-selected" : ""}" data-action="checkin-follow" data-about="${about}" data-value="${value}" aria-pressed="${chosen.followed === value}">${label}</button>`).join("")}</div>` : ""}<p class="checkin-note">Anonymous: only your answer, skin type and concern are sent.</p></section>`;
+}
+
+async function sendCheckin(about) {
+  const draft = state.checkinDraft;
+  if (!draft?.rating) return;
+  const meta = state.routineMeta;
+  const runId = meta?.routineContext?.runId || meta?.requestId || "";
+  try {
+    await fetch("/api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ runId, about, rating: draft.rating, followed: draft.followed || null, profile: state.profile, concern: state.concern }) });
+  } catch { /* offline: still thank the user */ }
+  const store = readStore(CHECKIN_KEY, {});
+  if (about === "yesterday" && state.previousForCheckin) store[`y:${state.previousForCheckin.at}`] = draft.rating;
+  else store[runId] = draft.rating;
+  writeStore(CHECKIN_KEY, store);
+  state.checkinDraft = null;
+  if (about === "yesterday") state.previousForCheckin = null;
+  renderAnimated();
+  showToast("Thanks for checking in.");
+}
+
+// 5. Check my product.
+function productCheckCard(meta) {
+  if (!meta || meta.status !== "cleared") return "";
+  const pc = state.productCheck || {};
+  const r = pc.result;
+  const resultHtml = r ? `<div class="pc-result" aria-live="polite"><p class="pc-verdict">${escapeHtml(r.verdict)}</p>${r.fits?.length ? `<ul class="pc-list is-good">${r.fits.map((f) => `<li>${icon("check", 13)} ${escapeHtml(f.text)}</li>`).join("")}</ul>` : ""}${r.conflicts?.length ? `<ul class="pc-list is-warn">${r.conflicts.map((c) => `<li>${escapeHtml(c.text)}</li>`).join("")}</ul>` : ""}${r.cautions?.length ? `<ul class="pc-list">${r.cautions.map((c) => `<li class="is-${escapeHtml(c.level)}">${escapeHtml(c.text)}</li>`).join("")}</ul>` : ""}${r.recognised?.length ? `<p class="pc-found">Recognised: ${escapeHtml(r.recognised.map((x) => x.name).join(", "))}.</p>` : ""}${r.note ? `<p class="pc-note">${escapeHtml(r.note)}</p>` : ""}</div>` : "";
+  return `<section class="product-card" aria-labelledby="pc-title"><details ${pc.open ? "open" : ""} data-action-toggle="product-check"><summary id="pc-title">${icon("layers", 15)} Check a product you own</summary><p class="pc-help">Paste the ingredient list from the label. DermaSynth checks it against today's routine: which step it fits, and whether it clashes with anything.</p><label class="sr-only" for="pc-text">Ingredient list</label><textarea id="pc-text" data-action="pc-text" rows="4" maxlength="4000" placeholder="Aqua, Glycerin, Niacinamide, Sodium Hyaluronate, …">${escapeHtml(pc.text || "")}</textarea><div class="form-actions"><button type="button" class="primary-button" data-action="pc-run" ${pc.status === "loading" ? "disabled" : ""}>${pc.status === "loading" ? "Checking…" : "Check this product"}</button></div>${pc.status === "error" ? `<p class="pc-note">${escapeHtml(pc.error || "The check couldn't run. Try again.")}</p>` : ""}${resultHtml}</details></section>`;
+}
+
+async function runProductCheck() {
+  const text = document.querySelector("#pc-text")?.value || state.productCheck?.text || "";
+  state.productCheck = { ...(state.productCheck || {}), open: true, text, status: "loading", error: "" };
+  renderAnimated();
+  const entries = (state.routineMeta?.ingredientCandidates?.entries || []).map((e) => ({ ingredientId: e.ingredientId, displayName: e.displayName, phase: e.phase, categoryId: e.categoryId }));
+  try {
+    const response = await fetch("/api/check-product", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, routine: { entries, steps: currentStepKeys(), concern: state.concern, reactivityLevel: state.routineMeta?.routine?.generation?.reactivityLevel || state.reactivityLevel || "low" } }) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.error || "The check couldn't run.");
+    state.productCheck = { open: true, text, status: "done", result: data };
+  } catch (error) {
+    state.productCheck = { open: true, text, status: "error", error: error instanceof Error ? error.message : "The check couldn't run." };
+  }
+  renderAnimated();
+}
+
+// 8. Reminders as a calendar file.
+function icsDate(localIso) {
+  // "2026-09-24T13:00" -> 20260924T130000 (floating local time)
+  return String(localIso).replace(/[-:]/g, "").slice(0, 13).padEnd(13, "0") + "00";
+}
+function localIsoNow(offsetDays = 0, hour = null) {
+  const d = new Date(Date.now() + offsetDays * 864e5);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hour ?? d.getHours())}:${hour === null ? pad(d.getMinutes()) : "00"}`;
+}
+function icsEscape(text) {
+  return String(text).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+function downloadReminders() {
+  const routine = state.generatedRoutine;
+  const meta = state.routineMeta;
+  if (!routine || !meta) return;
+  const names = (phase) => (routine[phase] || []).map((step, i) => { const entry = (meta.ingredientCandidates?.entries || []).find((e) => e.categoryId === step.id && e.phase === phase); return `${i + 1}. ${plainStep(step).name}${entry ? ` (look for ${entry.displayName})` : ""}${productNameFor(`${phase}:${step.id}`) ? ` - ${productNameFor(`${phase}:${step.id}`)}` : ""}`; }).join("\n");
+  const events = [];
+  const win = state.outlook?.data?.today?.window;
+  const now = localIsoNow();
+  const placeNow = state.outlook?.data?.today?.now || now;
+  if (win?.peak?.time && !win.passed && win.peak.time > placeNow && (routine.am || []).some((s) => s.id === "daytime-photoprotection")) {
+    events.push({ start: win.peak.time, minutes: 15, title: "Top up sunscreen", body: `UV peaks around ${hourLabel(win.peak.time)} (about ${Math.round(win.peak.uvi)}). If you're outside, top up your sunscreen.` });
+  }
+  const evening = localIsoNow(0, 21);
+  if (evening > now) events.push({ start: evening, minutes: 15, title: "Evening skincare routine", body: names("pm") });
+  const tomorrow = state.outlook?.data?.tomorrow;
+  events.push({ start: localIsoNow(1, 7), minutes: 15, title: "Morning skincare routine", body: `${tomorrow?.summary || ""}\n${(tomorrow?.changes || []).filter((c) => c.change !== "kept").map((c) => `- ${c.text}`).join("\n") || "Same routine as today."}\nOpen DermaSynth for today's routine.`.trim() });
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z";
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//DermaSynth//Routine reminders//EN", "CALSCALE:GREGORIAN"];
+  events.forEach((event, i) => {
+    const endDate = new Date(`${event.start}:00`);
+    endDate.setMinutes(endDate.getMinutes() + event.minutes);
+    const pad = (n) => String(n).padStart(2, "0");
+    const end = `${endDate.getFullYear()}${pad(endDate.getMonth() + 1)}${pad(endDate.getDate())}T${pad(endDate.getHours())}${pad(endDate.getMinutes())}00`;
+    lines.push("BEGIN:VEVENT", `UID:dermasynth-${Date.now()}-${i}@local`, `DTSTAMP:${stamp}`, `DTSTART:${icsDate(event.start)}`, `DTEND:${end}`, `SUMMARY:${icsEscape(event.title)}`, `DESCRIPTION:${icsEscape(event.body)}`, "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${icsEscape(event.title)}`, "TRIGGER:PT0M", "END:VALARM", "END:VEVENT");
+  });
+  lines.push("END:VCALENDAR");
+  // RFC 5545: fold lines longer than 75 characters.
+  const folded = lines.flatMap((line) => { const out = []; let rest = line; while (rest.length > 74) { out.push(out.length ? ` ${rest.slice(0, 73)}` : rest.slice(0, 74)); rest = rest.slice(out.length === 1 ? 74 : 73); } out.push(out.length ? ` ${rest}` : rest); return out; });
+  const blob = new Blob([folded.join("\r\n")], { type: "text/calendar" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "dermasynth-reminders.ics";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+  showToast(`${events.length} reminder${events.length === 1 ? "" : "s"} saved. Open the file to add ${events.length === 1 ? "it" : "them"} to your calendar.`);
+}
+
+
+// 6. Saving "my routine" and the product names the user owns.
+function saveMyRoutine() {
+  const steps = currentStepKeys();
+  if (!steps.length) return;
+  const products = {};
+  for (const key of steps) if (state.myRoutine?.products?.[key]) products[key] = state.myRoutine.products[key];
+  state.myRoutine = { steps, products, savedAt: new Date().toISOString(), profile: state.profile, concern: state.concern };
+  writeStore(MY_ROUTINE_KEY, state.myRoutine);
+  state.editingProducts = true;
+  renderAnimated();
+  showToast("Saved as your usual routine. Add the products you use, if you like.");
+}
+
+function clearMyRoutine() {
+  state.myRoutine = null;
+  state.editingProducts = false;
+  try { window.localStorage.removeItem(MY_ROUTINE_KEY); } catch { /* storage unavailable */ }
+  renderAnimated();
+  showToast("Your usual routine was forgotten.");
+}
+
+function productInput(key, label) {
+  if (!state.editingProducts || !state.myRoutine?.steps?.includes(key)) return "";
+  const id = `my-product-${key.replace(":", "-")}`;
+  return `<label class="my-product-field" for="${escapeHtml(id)}"><span>Your product for this step (optional)</span><input id="${escapeHtml(id)}" type="text" maxlength="60" autocomplete="off" data-action="my-product" data-key="${escapeHtml(key)}" value="${escapeHtml(productNameFor(key))}" placeholder="e.g. the brand and name of your ${escapeHtml(label.toLowerCase())}" /></label>`;
+}
+
+// 2. After a routine, the form folds into a one-line summary.
+function collapsedFormPanel() {
+  const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
+  return `<section class="panel form-panel is-collapsed" id="routine-preview"><div class="collapsed-form"><div><p class="collapsed-form-label">About your skin</p><p class="collapsed-form-value">${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><div class="collapsed-form-actions"><button type="button" class="ghost-button" data-action="edit-form">${icon("sliders", 14)} Edit my skin details</button><button type="button" class="text-button" data-action="simulate" ${state.runStatus === "running" || isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 13)} Rebuild</button></div></div></section>`;
+}
+
+function scrollToResult() {
+  const target = document.querySelector("#routine-result");
+  if (!target || window.matchMedia("(min-width: 901px)").matches) return;
+  const top = target.getBoundingClientRect().top;
+  if (top >= 0 && top < window.innerHeight * 0.35) return;
+  target.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+}
+
+// Previous routine (for "changed since last time" and the next-day check-in).
+function previousRoutineForCompare() {
+  const last = readStore(LAST_ROUTINE_KEY, null);
+  if (!last?.steps?.length || last.profile !== state.profile || last.concern !== state.concern) return null;
+  const at = new Date(last.at);
+  if (Number.isNaN(at.getTime())) return null;
+  const sameDay = at.toDateString() === new Date().toDateString();
+  if (sameDay && Date.now() - at.getTime() < 3 * 36e5) return null;
+  return last;
+}
+
+function rememberRoutine(payload) {
+  if (!payload?.routine || payload.status === "medical_redirect" || payload.status === "needs_conditions") return;
+  const last = readStore(LAST_ROUTINE_KEY, null);
+  if (last?.at && new Date(last.at).toDateString() !== new Date().toDateString() && last.status === "cleared") {
+    state.previousForCheckin = { at: last.at };
+  }
+  const r = payload.environment?.readings || {};
+  writeStore(LAST_ROUTINE_KEY, {
+    steps: currentStepKeys(payload.routine),
+    readings: { uvi: r.uvi ?? null, uviMaxToday: r.uviMaxToday ?? null, humidity: r.humidity ?? null, pm25: r.pm25 ?? null, temperature: r.temperature ?? null },
+    at: new Date().toISOString(),
+    profile: state.profile,
+    concern: state.concern,
+    status: payload.status,
+  });
+}
+
+// 10. "Share as story": a 1080 x 1920 Instagram Story image, drawn on a canvas.
+const STORY = Object.freeze({
+  w: 1080, h: 1920, x: 84, safeTop: 250, safeBottom: 1640,
+  bgTop: "#0E3B32", bgBottom: "#1F5A4B", gold: "#E8C77A", cream: "#F5EEDC", mint: "#9FE3CF", deep: "#0B2F28",
+  sans: '"Avenir Next", "SF Pro Display", "Helvetica Neue", Inter, "Segoe UI", system-ui, sans-serif',
+  serif: '"New York", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif',
+});
+
+function storyWrap(ctx, text, maxWidth, maxLines = 3) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const next = line ? `${line} ${word}` : word;
+    if (ctx.measureText(next).width <= maxWidth || !line) line = next;
+    else { lines.push(line); line = word; }
+  }
+  if (line) lines.push(line);
+  if (lines.length > maxLines) {
+    const kept = lines.slice(0, maxLines);
+    let last = kept[maxLines - 1];
+    while (last && ctx.measureText(`${last}…`).width > maxWidth) last = last.slice(0, -1);
+    kept[maxLines - 1] = `${last.replace(/[\s,.;·]+$/, "")}…`;
+    return kept;
+  }
+  return lines;
+}
+
+function storyRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function storyGlass(ctx, x, y, w, h, r = 36) {
+  ctx.save();
+  storyRoundRect(ctx, x, y, w, h, r);
+  const fill = ctx.createLinearGradient(x, y, x, y + h);
+  fill.addColorStop(0, "rgba(255,255,255,0.10)");
+  fill.addColorStop(1, "rgba(255,255,255,0.05)");
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(245,238,220,0.16)";
+  ctx.stroke();
+  ctx.restore();
+}
+
+function storySun(ctx, cx, cy, r, color) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = r * 0.22; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2); ctx.fill();
+  for (let i = 0; i < 8; i += 1) {
+    const a = (Math.PI / 4) * i;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * r * 0.72, cy + Math.sin(a) * r * 0.72);
+    ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function storyMoon(ctx, cx, cy, r, color) {
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.8, 0, Math.PI * 2); ctx.clip();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.8, 0, Math.PI * 2);
+  ctx.arc(cx + r * 0.42, cy - r * 0.3, r * 0.68, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill("evenodd");
+  ctx.restore();
+}
+
+function storyData() {
+  const routine = state.generatedRoutine;
+  const meta = state.routineMeta;
+  if (!routine || !meta) return null;
+  const entries = meta.ingredientCandidates?.entries || [];
+  const r = meta.environment?.readings || {};
+  const uv = planningUv(r);
+  const fmt = (v, unit = "") => (Number.isFinite(Number(v)) && v !== null ? `${Math.round(Number(v))}${unit}` : "—");
+  const steps = (phase) => (routine[phase] || []).map((step) => {
+    const entry = entries.find((e) => e.categoryId === step.id && e.phase === phase);
+    return { name: plainStep(step).name, ingredient: entry?.displayName || "", product: productNameFor(`${phase}:${step.id}`) };
+  });
+  const tomorrow = state.outlook?.data?.tomorrow;
+  const tomorrowChanges = (tomorrow?.changes || []).filter((c) => c.change !== "kept");
+  return {
+    date: new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" }),
+    place: locationLabel() === "Your location" ? "Near you" : locationLabel(),
+    line: todayOneLine(meta, routine) || "Your routine for today, matched to the weather.",
+    tiles: [
+      ["UV peak", fmt(uv), uvBand(uv)?.label || ""],
+      ["Humidity", fmt(r.humidity, "%"), humidityBand(r.humidity)?.label || ""],
+      ["Haze", fmt(r.pm25), hazeBand(r.pm25)?.label || "PM2.5"],
+      ["Temp", fmt(r.temperature, "°"), temperatureBand(r.temperature)?.label || ""],
+    ],
+    am: steps("am"),
+    pm: steps("pm"),
+    tomorrow: tomorrow ? (tomorrow.sameAsToday ? "Same routine as today." : tomorrowChanges.map((c) => c.text).join(" ") || tomorrow.summary || "") : "",
+    profile: `${state.profile[0].toUpperCase()}${state.profile.slice(1)} skin · ${concernOption().label}`,
+  };
+}
+
+function drawStory(ctx, data, s) {
+  const S = STORY;
+  const W = S.w;
+  const inner = W - S.x * 2;
+  // Background: deep forest gradient, a mint glow and a soft gold halo.
+  const bg = ctx.createLinearGradient(0, 0, W * 0.35, S.h);
+  bg.addColorStop(0, S.bgTop);
+  bg.addColorStop(1, S.bgBottom);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, S.h);
+  const glow = ctx.createRadialGradient(W - 96, 250, 20, W - 96, 250, 620);
+  glow.addColorStop(0, "rgba(159,227,207,0.30)");
+  glow.addColorStop(1, "rgba(159,227,207,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, S.h);
+  const warm = ctx.createRadialGradient(W * 0.1, S.h * 0.9, 20, W * 0.1, S.h * 0.9, 700);
+  warm.addColorStop(0, "rgba(232,199,122,0.07)");
+  warm.addColorStop(1, "rgba(232,199,122,0)");
+  ctx.fillStyle = warm;
+  ctx.fillRect(0, 0, W, S.h);
+  ctx.save();
+  ctx.strokeStyle = "rgba(232,199,122,0.22)";
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(W - 96, 250, 118, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W - 96, 250, 168, 0, Math.PI * 2); ctx.globalAlpha = 0.5; ctx.stroke();
+  ctx.restore();
+
+  ctx.textBaseline = "alphabetic";
+  let y = S.safeTop + 18;
+  // Wordmark and date.
+  ctx.fillStyle = S.gold;
+  ctx.font = `600 26px ${S.sans}`;
+  ctx.letterSpacing = "8px";
+  ctx.fillText("DERMASYNTH", S.x, y);
+  ctx.letterSpacing = "0px";
+  y += 52;
+  ctx.fillStyle = "rgba(245,238,220,0.72)";
+  ctx.font = `500 28px ${S.sans}`;
+  ctx.fillText(`${data.date} · ${data.place}`, S.x, y);
+
+  // Headline: "Today's" in gold italic, "skin plan" in cream.
+  y += 118 * Math.max(s, 0.85);
+  const headSize = Math.round(96 * Math.max(s, 0.85));
+  ctx.font = `italic 500 ${headSize}px ${S.serif}`;
+  ctx.fillStyle = S.gold;
+  ctx.fillText("Today's", S.x, y);
+  const todayWidth = ctx.measureText("Today's ").width;
+  ctx.font = `500 ${headSize}px ${S.serif}`;
+  ctx.fillStyle = S.cream;
+  ctx.fillText("skin plan", S.x + todayWidth, y);
+
+  // One-line summary.
+  y += 30;
+  ctx.font = `500 ${Math.round(36 * s)}px ${S.sans}`;
+  ctx.fillStyle = "rgba(245,238,220,0.92)";
+  for (const line of storyWrap(ctx, data.line, inner, 3)) { y += Math.round(50 * s); ctx.fillText(line, S.x, y); }
+  y += Math.round(20 * s);
+  ctx.font = `500 ${Math.round(24 * s)}px ${S.sans}`;
+  ctx.fillStyle = S.mint;
+  y += Math.round(30 * s);
+  ctx.fillText(data.profile, S.x, y);
+
+  // Weather tiles, one row of four.
+  y += Math.round(40 * s);
+  const gap = 18;
+  const tileW = (inner - gap * 3) / 4;
+  const tileH = Math.round(168 * s);
+  data.tiles.forEach(([label, value, band], i) => {
+    const tx = S.x + i * (tileW + gap);
+    storyGlass(ctx, tx, y, tileW, tileH, 30);
+    ctx.fillStyle = "rgba(245,238,220,0.66)";
+    ctx.font = `600 ${Math.round(20 * s)}px ${S.sans}`;
+    ctx.letterSpacing = "2px";
+    ctx.fillText(label.toUpperCase(), tx + 24, y + Math.round(44 * s));
+    ctx.letterSpacing = "0px";
+    ctx.fillStyle = S.cream;
+    ctx.font = `600 ${Math.round(54 * s)}px ${S.sans}`;
+    ctx.fillText(value, tx + 22, y + Math.round(106 * s));
+    ctx.fillStyle = S.gold;
+    ctx.font = `600 ${Math.round(21 * s)}px ${S.sans}`;
+    ctx.fillText(storyWrap(ctx, band, tileW - 40, 1)[0] || "", tx + 24, y + Math.round(144 * s));
+  });
+  y += tileH + Math.round(34 * s);
+
+  // Morning and evening cards.
+  const card = (title, steps, drawIcon) => {
+    const headH = Math.round(92 * s);
+    const rowH = Math.round((steps.some((st) => st.product) ? 100 : 86) * s);
+    const h = headH + rowH * steps.length + Math.round(18 * s);
+    storyGlass(ctx, S.x, y, inner, h, 40);
+    drawIcon(S.x + 50, y + headH / 2 + 4, Math.round(24 * s));
+    ctx.fillStyle = S.cream;
+    ctx.font = `500 ${Math.round(46 * s)}px ${S.serif}`;
+    ctx.fillText(title, S.x + 92, y + headH / 2 + Math.round(18 * s));
+    ctx.fillStyle = "rgba(245,238,220,0.6)";
+    ctx.font = `500 ${Math.round(24 * s)}px ${S.sans}`;
+    const count = `${steps.length} step${steps.length === 1 ? "" : "s"}`;
+    ctx.fillText(count, S.x + inner - 36 - ctx.measureText(count).width, y + headH / 2 + Math.round(12 * s));
+    let ry = y + headH;
+    steps.forEach((st, i) => {
+      ctx.strokeStyle = "rgba(245,238,220,0.10)";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(S.x + 36, ry); ctx.lineTo(S.x + inner - 36, ry); ctx.stroke();
+      const cy = ry + rowH / 2;
+      const cr = Math.round(22 * s);
+      ctx.fillStyle = S.gold;
+      ctx.beginPath(); ctx.arc(S.x + 58, cy, cr, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = S.deep;
+      ctx.font = `700 ${Math.round(24 * s)}px ${S.sans}`;
+      const num = String(i + 1);
+      ctx.fillText(num, S.x + 58 - ctx.measureText(num).width / 2, cy + Math.round(8 * s));
+      const textX = S.x + 104;
+      const maxW = inner - 140;
+      ctx.fillStyle = S.cream;
+      ctx.font = `600 ${Math.round(32 * s)}px ${S.sans}`;
+      const sub = st.product || st.ingredient;
+      ctx.fillText(storyWrap(ctx, st.name, maxW, 1)[0], textX, sub ? cy - Math.round(4 * s) : cy + Math.round(11 * s));
+      if (sub) {
+        ctx.fillStyle = S.mint;
+        ctx.font = `500 ${Math.round(25 * s)}px ${S.sans}`;
+        const text = st.product ? `${st.product}${st.ingredient ? ` · ${st.ingredient}` : ""}` : `with ${st.ingredient}`;
+        ctx.fillText(storyWrap(ctx, text, maxW, 1)[0], textX, cy + Math.round(32 * s));
+      }
+      ry += rowH;
+    });
+    y += h + Math.round(24 * s);
+  };
+  if (data.am.length) card("Morning", data.am, (cx, cy, r) => storySun(ctx, cx, cy, r, S.gold));
+  if (data.pm.length) card("Evening", data.pm, (cx, cy, r) => storyMoon(ctx, cx, cy, r, S.gold));
+
+  // Tomorrow strip.
+  if (data.tomorrow) {
+    ctx.font = `500 ${Math.round(26 * s)}px ${S.sans}`;
+    const lines = storyWrap(ctx, data.tomorrow, inner - 220, 2);
+    const h = Math.round(38 * s) * lines.length + Math.round(44 * s);
+    storyRoundRect(ctx, S.x, y, inner, h, h / 2 > 48 ? 40 : h / 2);
+    ctx.fillStyle = "rgba(232,199,122,0.14)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(232,199,122,0.4)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = S.gold;
+    ctx.font = `700 ${Math.round(22 * s)}px ${S.sans}`;
+    ctx.letterSpacing = "3px";
+    ctx.fillText("TOMORROW", S.x + 34, y + h / 2 + Math.round(8 * s));
+    ctx.letterSpacing = "0px";
+    ctx.fillStyle = S.cream;
+    ctx.font = `500 ${Math.round(26 * s)}px ${S.sans}`;
+    const startY = y + h / 2 - ((lines.length - 1) * Math.round(38 * s)) / 2 + Math.round(9 * s);
+    lines.forEach((line, i) => ctx.fillText(line, S.x + 196, startY + i * Math.round(38 * s)));
+    y += h;
+  }
+
+  // Footer, inside the safe zone.
+  ctx.fillStyle = "rgba(245,238,220,0.5)";
+  ctx.font = `500 22px ${S.sans}`;
+  const foot = "Research prototype · not medical advice";
+  ctx.fillText(foot, (W - ctx.measureText(foot).width) / 2, S.safeBottom);
+  return y;
+}
+
+async function buildStoryImage() {
+  const data = storyData();
+  if (!data) return null;
+  try { await document.fonts?.ready; } catch { /* fonts API unavailable */ }
+  const canvas = document.createElement("canvas");
+  canvas.width = STORY.w;
+  canvas.height = STORY.h;
+  const ctx = canvas.getContext("2d");
+  // Shrink the lower sections until everything sits above the footer.
+  let scale = 1;
+  for (let i = 0; i < 12; i += 1) {
+    ctx.clearRect(0, 0, STORY.w, STORY.h);
+    const end = drawStory(ctx, data, scale);
+    if (end <= STORY.safeBottom - 50 || scale <= 0.64) break;
+    scale = Math.max(0.64, scale - 0.04);
+  }
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  return blob ? { blob, width: canvas.width, height: canvas.height } : null;
+}
+
+let storyReturnFocus = null;
+async function openStory() {
+  storyReturnFocus = document.activeElement;
+  closeStory({ restoreFocus: false });
+  const image = await buildStoryImage();
+  if (!image) { showToast("Build a routine first."); return; }
+  const url = URL.createObjectURL(image.blob);
+  state.story = { blob: image.blob, url, width: image.width, height: image.height };
+  const canShare = (() => { try { return Boolean(navigator.canShare?.({ files: [new File([image.blob], "dermasynth-today.png", { type: "image/png" })] })); } catch { return false; } })();
+  const modal = document.createElement("div");
+  modal.className = "story-modal";
+  modal.id = "story-modal";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "story-title");
+  modal.innerHTML = `<div class="story-backdrop" data-action="story-close"></div><div class="story-sheet"><div class="story-sheet-head"><h2 id="story-title">Your story image</h2><button type="button" class="story-close" data-action="story-close" aria-label="Close">×</button></div><img class="story-preview" src="${url}" width="${image.width}" height="${image.height}" alt="Story image of today's skin plan: the summary line, today's weather, and the morning and evening steps." /><div class="story-actions">${canShare ? `<button type="button" class="primary-button" data-action="story-share">${icon("share", 15)} Share</button>` : ""}<button type="button" class="${canShare ? "ghost-button" : "primary-button"}" data-action="story-download">${icon("download", 15)} Save image</button></div><p class="story-hint">1080 × 1920, sized for an Instagram Story.</p></div>`;
+  document.body.append(modal);
+  requestAnimationFrame(() => modal.classList.add("is-open"));
+  modal.querySelector(canShare ? "[data-action='story-share']" : "[data-action='story-download']")?.focus();
+}
+
+function closeStory({ restoreFocus = true } = {}) {
+  const modal = document.querySelector("#story-modal");
+  if (modal) modal.remove();
+  if (state.story?.url) setTimeout(((url) => () => URL.revokeObjectURL(url))(state.story.url), 1000);
+  state.story = null;
+  if (restoreFocus && storyReturnFocus?.isConnected) storyReturnFocus.focus();
+}
+
+function downloadStory() {
+  if (!state.story) return;
+  const link = document.createElement("a");
+  link.href = state.story.url;
+  link.download = "dermasynth-today.png";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  showToast("Image saved.");
+}
+
+async function shareStory() {
+  if (!state.story) return;
+  const file = new File([state.story.blob], "dermasynth-today.png", { type: "image/png" });
+  try {
+    await navigator.share({ files: [file], title: "My skin plan today" });
+  } catch (error) {
+    if (error?.name !== "AbortError") downloadStory();
+  }
 }
 
 function consumerResult(routine, meta, running) {
@@ -1391,7 +2030,7 @@ function consumerResult(routine, meta, running) {
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
   const reviewNote = meta.status === "cleared" ? "" : `<p class="consumer-status is-warn" role="status">${icon("info", 13)} Some checks asked for review, so treat this routine with extra care.</p>`;
   state.stepCounter = 0;
-  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${conditionsSummaryCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}</section>${tomorrowCard()}</div>`;
+  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${meta.status === "cleared" ? heroCard(meta, routine) : ""}${conditionsSummaryCard(meta)}${compareCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>${checkinCard(meta)}${tomorrowCard()}${productCheckCard(meta)}</div>`;
 }
 
 function synthesizedRoutineCard(routine, meta) {
@@ -1429,9 +2068,10 @@ function simulatorView() {
   const profileChoices = ["dry", "combination", "oily", "sensitive"].map((profile) => `<button class="profile-choice ${state.profile === profile ? "is-selected" : ""}" type="button" data-action="profile" data-profile="${profile}" aria-pressed="${state.profile === profile}" ${state.runStatus === "running" ? "disabled" : ""}>${profile[0].toUpperCase()}${profile.slice(1)}</button>`).join("");
   const locationUpdating = isLocationUpdating();
   const running = state.runStatus === "running";
-  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} About your skin</h3><p class="panel-note">Takes about a minute</p></div><div class="form-grid"><div class="field"><label id="skin-type-label">Skin type</label><div class="profile-pills" role="group" aria-labelledby="skin-type-label">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Anything unusual with your skin right now?</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="For example: swelling, burning after a new product, a spreading rash, blisters"></textarea><p class="field-help" id="symptoms-help">Leave it empty if not. If something needs a pharmacist or doctor, we'll tell you instead of giving a routine. This text is used only for that check and is not stored.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button><button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Today's weather</button></div></section>`;
+  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} About your skin</h3><p class="panel-note">Takes about a minute</p></div><div class="form-grid"><div class="field"><label id="skin-type-label">Skin type</label><div class="profile-pills" role="group" aria-labelledby="skin-type-label">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Anything unusual with your skin right now?</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="For example: swelling, burning after a new product, a spreading rash, blisters">${escapeHtml(state.symptoms || "")}</textarea><p class="field-help" id="symptoms-help">Leave it empty if not. If something needs a pharmacist or doctor, we'll tell you instead of giving a routine. This text is used only for that check and is not stored.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button><button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Today's weather</button></div></section>`;
+  const formPanel = state.formCollapsed && !state.expertView && state.routineMeta && !running ? collapsedFormPanel() : inputs;
   const result = `<section class="sim-result" id="routine-result">${synthesizedRoutineCard(routine, state.routineMeta)}${state.expertView ? researchContextPanel(state.routineMeta) : ""}</section>`;
-  return shell(`<div class="view-heading"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid">${inputs}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
+  return shell(`<div class="view-heading"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
 }
 
 function concernLabelFromId(value) {
@@ -1589,8 +2229,16 @@ function render() {
     focusSelector = `[data-action="${CSS.escape(active.dataset.action)}"]`;
     for (const attr of ["key", "view", "profile", "concern", "value"]) if (active.dataset[attr]) focusSelector += `[data-${attr}="${CSS.escape(active.dataset[attr])}"]`;
   }
+  let fieldFocus = null;
+  if (active && app.contains(active) && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") && active.id) {
+    fieldFocus = { id: active.id, start: active.selectionStart, end: active.selectionEnd };
+  }
   app.innerHTML = views[state.activeView]();
   if (focusSelector) app.querySelector(focusSelector)?.focus({ preventScroll: true });
+  if (fieldFocus) {
+    const field = document.getElementById(fieldFocus.id);
+    if (field) { field.focus({ preventScroll: true }); try { field.setSelectionRange(fieldFocus.start, fieldFocus.end); } catch { /* not a text field */ } }
+  }
   document.title = `DermaSynth | ${(VIEW_META[state.activeView] || VIEW_META.dashboard).title}`;
 }
 
@@ -2198,6 +2846,25 @@ document.addEventListener("click", (event) => {
   const target = event.target.closest("[data-action]");
   if (!target) return;
   const { action } = target.dataset;
+  if (action === "story-open") { openStory(); return; }
+  if (action === "story-close") { closeStory(); return; }
+  if (action === "story-share") { shareStory(); return; }
+  if (action === "story-download") { downloadStory(); return; }
+  if (action === "reminders") { downloadReminders(); return; }
+  if (action === "save-my-routine") { saveMyRoutine(); return; }
+  if (action === "products-done") { state.editingProducts = false; writeStore(MY_ROUTINE_KEY, state.myRoutine); renderAnimated(); showToast("Saved."); return; }
+  if (action === "clear-my-routine") { clearMyRoutine(); return; }
+  if (action === "edit-form") { state.formCollapsed = false; renderAnimated().then(() => document.querySelector("#routine-preview")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" })); return; }
+  if (action === "pc-run") { runProductCheck(); return; }
+  if (action === "checkin" || action === "checkin-follow") {
+    const about = target.dataset.about === "yesterday" ? "yesterday" : "today";
+    const draft = state.checkinDraft?.about === about ? { ...state.checkinDraft } : { about };
+    if (action === "checkin") draft.rating = target.dataset.value; else draft.followed = target.dataset.value;
+    state.checkinDraft = draft;
+    if (draft.rating && draft.followed) { sendCheckin(about); return; }
+    renderAnimated();
+    return;
+  }
   if (action === "presentation-start") { startPresentation(); return; }
   if (action === "presentation-close") { endPresentation(); return; }
   if (action === "presentation-back") { setPresentationStep(state.presentation.step - 1); return; }
@@ -2306,6 +2973,17 @@ document.addEventListener("input", (event) => {
   const target = event.target;
   if (target.dataset.action === "symptoms") {
     state.symptoms = target.value.slice(0, 280);
+    return;
+  }
+  if (target.dataset.action === "pc-text") {
+    state.productCheck = { ...(state.productCheck || {}), open: true, text: target.value.slice(0, 4000) };
+    return;
+  }
+  if (target.dataset.action === "my-product" && state.myRoutine) {
+    const value = target.value.replace(/[\u0000-\u001f]/g, "").slice(0, 60);
+    state.myRoutine.products = { ...(state.myRoutine.products || {}) };
+    if (value.trim()) state.myRoutine.products[target.dataset.key] = value; else delete state.myRoutine.products[target.dataset.key];
+    writeStore(MY_ROUTINE_KEY, state.myRoutine);
     return;
   }
   if (target.dataset.action === "location-query") {
@@ -2762,6 +3440,9 @@ async function generateRoutine({ reportedConditions = null, standardRoutine = fa
     if (state.exposureContext) body.exposureContext = state.exposureContext;
     if (symptoms) body.symptoms = symptoms;
     if (reportedConditions) body.reportedConditions = reportedConditions;
+    const previous = previousRoutineForCompare();
+    const usual = state.myRoutine?.steps?.length ? state.myRoutine.steps : null;
+    if (usual || previous) body.compare = { ...(usual ? { usualSteps: usual } : {}), ...(previous ? { previous: { steps: previous.steps, readings: previous.readings, at: previous.at } } : {}) };
     // A replaced request can still hold the server's one in-flight slot for a
     // moment after it is cancelled; retry briefly on that specific 429.
     let response;
@@ -2796,7 +3477,13 @@ async function generateRoutine({ reportedConditions = null, standardRoutine = fa
     }
     state.explainability = payload.explainability || state.explainability;
     recordRunSummary(payload, location);
+    rememberRoutine(payload);
+    state.productCheck = null;
+    state.checkinDraft = null;
+    state.editingProducts = false;
+    state.formCollapsed = ["cleared", "review_required"].includes(payload.status);
     renderAnimated({ entering: true });
+    requestAnimationFrame(scrollToResult);
     refreshRoutineContext();
     refreshOutlook();
     if (payload.status === "needs_conditions") {
@@ -2937,6 +3624,23 @@ document.addEventListener("drop", (event) => {
   const file = event.dataTransfer?.files?.[0];
   if (!file) return;
   importBulkFile(file);
+});
+
+state.myRoutine = readStore(MY_ROUTINE_KEY, null);
+document.addEventListener("toggle", (event) => {
+  if (event.target?.dataset?.actionToggle === "product-check") state.productCheck = { ...(state.productCheck || {}), open: event.target.open };
+}, true);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && document.querySelector("#story-modal")) { event.preventDefault(); closeStory(); }
+  // Keep keyboard focus inside the story dialog while it is open.
+  const modal = document.querySelector("#story-modal");
+  if (event.key === "Tab" && modal) {
+    const items = [...modal.querySelectorAll("button")];
+    if (!items.length) return;
+    const first = items[0]; const last = items.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  }
 });
 
 if (!window.location.hash || !viewFromHash()) window.history.replaceState(null, "", viewHash(state.activeView));
