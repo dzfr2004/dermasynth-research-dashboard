@@ -653,7 +653,7 @@ function shell(view) {
           ${state.expertView ? `<button class="presentation-button" type="button" data-action="presentation-start">${icon("sparkles", 14)} Defence walkthrough</button>
           <span class="pill ${cueClass}">${icon("sparkles", 14)} ${escapeHtml(cueLabel())}</span>
           <span class="pill ${modeClass}">${escapeHtml(environmentSourceLabel())}</span>` : ""}
-          <button class="refresh-button" type="button" data-action="refresh" aria-label="Refresh environment readings" ${locationUpdating ? "disabled" : ""}>${icon("refresh", 16)} <span>Refresh environment</span></button>
+          ${state.expertView ? `<button class="refresh-button" type="button" data-action="refresh" aria-label="Refresh environment readings" ${locationUpdating ? "disabled" : ""}>${icon("refresh", 16)} <span>Refresh environment</span></button>` : ""}
         </div>
       </header>
       <div class="scope-banner" role="note">${icon("shield", 14)}<span><strong>Research prototype, not medical advice.</strong> Patch-test new products and stop if your skin reacts.</span></div>
@@ -1191,7 +1191,7 @@ function weatherView() {
   const hasRoutine = Boolean(state.routineMeta?.status === "cleared" && state.generatedRoutine);
   const tomorrowHtml = hasRoutine && state.outlook?.data?.tomorrow
     ? tomorrowCard()
-    : tomorrow ? `<section class="tomorrow-card" aria-labelledby="w-tomorrow"><h3 id="w-tomorrow">${icon("activity", 15)} Tomorrow</h3><p class="tomorrow-summary">${escapeHtml(tomorrow.summary)}</p><p class="tomorrow-source">${escapeHtml(wo.data?.source || "")}</p></section>`
+    : tomorrow ? `<section class="tomorrow-card" aria-labelledby="w-tomorrow"><h3 id="w-tomorrow">${icon("activity", 15)} Tomorrow</h3>${tomorrowChips(tomorrow)}<p class="tomorrow-source">${escapeHtml(wo.data?.source || "")}</p></section>`
       : wo?.status === "loading" ? `<section class="tomorrow-card is-loading" aria-live="polite"><h3>${icon("activity", 15)} Tomorrow</h3><p class="shimmer-text">Checking tomorrow's forecast…</p></section>` : "";
   const cta = `<section class="weather-cta"><p>${hasRoutine ? "Your routine already uses these readings." : "DermaSynth turns today's weather into a morning and evening routine for your skin."}</p><button type="button" class="primary-button" data-action="navigate" data-view="simulator">${icon("sparkles", 15)} ${hasRoutine ? "See my routine" : "Build today's routine"}</button></section>`;
   return shell(`<div class="view-heading"><div><h2>Today's weather for your skin</h2><p>UV, humidity, haze and temperature where you are, and what tomorrow looks like.</p></div><button type="button" class="ghost-button" data-action="refresh" ${isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button></div><section class="panel monitor-location-panel" id="monitor-location">${locationPicker({ label: "Location", compact: true })}</section><div class="weather-stack">${conditionsSummaryCard(null, wo)}${tomorrowHtml}${cta}</div>`);
@@ -1232,10 +1232,12 @@ function profilePreferenceFields() {
   const disabled = state.runStatus === "running";
   const finishPreference = ["matte", "dewy", "no-preference"].includes(state.finishPreference) ? state.finishPreference : "";
   const reactivityLevel = ["low", "moderate", "high"].includes(state.reactivityLevel) ? state.reactivityLevel : "";
-  return `<div class="profile-secondary-fields" aria-label="Optional self-report context">
+  const anySet = Boolean(finishPreference || reactivityLevel || (state.exposureContext && state.exposureContext !== "mixed"));
+  const open = state.openToggles?.["more-fields"] ?? anySet;
+  return `<details class="more-fields" data-toggle-key="more-fields" ${open ? "open" : ""}><summary>More about your skin <span class="field-optional">(optional)</span></summary><div class="profile-secondary-fields" aria-label="Optional details">
     <div class="field"><label for="finish-preference">Finish preference <span class="field-optional">(optional)</span></label><select id="finish-preference" data-action="finish-preference" ${disabled ? "disabled" : ""}><option value="" ${finishPreference ? "" : "selected"}>Not specified</option><option value="matte" ${finishPreference === "matte" ? "selected" : ""}>Matte</option><option value="dewy" ${finishPreference === "dewy" ? "selected" : ""}>Dewy</option><option value="no-preference" ${finishPreference === "no-preference" ? "selected" : ""}>No preference</option></select><p class="field-help">How you like your skin to look after moisturising.</p></div>
     <div class="field"><label for="reactivity-level">Do new products often sting or redden your skin? <span class="field-optional">(optional)</span></label><select id="reactivity-level" data-action="reactivity-level" ${disabled ? "disabled" : ""}><option value="" ${reactivityLevel ? "" : "selected"}>Not specified</option><option value="low" ${reactivityLevel === "low" ? "selected" : ""}>Rarely</option><option value="moderate" ${reactivityLevel === "moderate" ? "selected" : ""}>Sometimes</option><option value="high" ${reactivityLevel === "high" ? "selected" : ""}>Often</option></select><p class="field-help">If they do, the routine stays extra gentle.</p></div>
-    <div class="field"><label for="exposure-context">Your day today</label><select id="exposure-context" data-action="exposure-context" ${disabled ? "disabled" : ""}><option value="indoors" ${state.exposureContext === "indoors" ? "selected" : ""}>Mostly indoors</option><option value="mixed" ${state.exposureContext === "mixed" ? "selected" : ""}>Mixed</option><option value="outdoors" ${state.exposureContext === "outdoors" ? "selected" : ""}>Mostly outdoors</option></select><p class="field-help">More time outdoors means sun protection is added at lower UV.</p></div></div>`;
+    <div class="field"><label for="exposure-context">Your day today</label><select id="exposure-context" data-action="exposure-context" ${disabled ? "disabled" : ""}><option value="indoors" ${state.exposureContext === "indoors" ? "selected" : ""}>Mostly indoors</option><option value="mixed" ${state.exposureContext === "mixed" ? "selected" : ""}>Mixed</option><option value="outdoors" ${state.exposureContext === "outdoors" ? "selected" : ""}>Mostly outdoors</option></select><p class="field-help">More time outdoors means sun protection is added at lower UV.</p></div></div></details>`;
 }
 
 function conditionsCard(meta) {
@@ -1249,7 +1251,7 @@ function conditionsCard(meta) {
 
 // ---- G1/G2/G3: consumer view ---------------------------------------------
 const STEP_PLAIN = Object.freeze({
-  "low-irritation-cleansing": { name: "Gentle cleanse", what: "A mild, non-stripping cleanser." },
+  "low-irritation-cleansing": { name: "Gentle cleanse", what: "Any gentle, fragrance-free cleanser." },
   "comfort-hydration": { name: "Hydrating layer", what: "A hydrating serum or essence that draws in water." },
   "light-hydration": { name: "Light hydrating layer", what: "A light, water-based hydrating layer." },
   "supportive-hydration": { name: "Hydrating layer", what: "A hydrating serum or essence." },
@@ -1258,8 +1260,8 @@ const STEP_PLAIN = Object.freeze({
   "supportive-moisturising": { name: "Moisturiser", what: "An everyday moisturiser." },
   "daytime-photoprotection": { name: "Sun protection", what: "Sunscreen as the last morning step." },
   "antioxidant-context": { name: "Antioxidant", what: "An antioxidant serum for high-pollution days." },
-  "texture-renewal": { name: "Gentle exfoliant (evenings only)", what: "A mild leave-on exfoliant, evenings only." },
-  "overnight-comfort": { name: "Soothing night step", what: "A calming last step before bed." },
+  "texture-renewal": { name: "Gentle exfoliant", what: "A mild leave-on exfoliant, evenings only." },
+  "overnight-comfort": { name: "Night moisturiser", what: "A plain moisturiser or balm to finish your evening." },
 });
 
 function plainStep(step) {
@@ -1299,6 +1301,29 @@ function temperatureBand(c) {
   return { label: "mild", tone: "calm" };
 }
 
+function hazeWords(pm25) {
+  const band = hazeBand(pm25);
+  if (!band) return "";
+  return band.label === "clean air" ? "Clean air" : band.label === "moderate" ? "Slightly hazy" : band.label[0].toUpperCase() + band.label.slice(1);
+}
+
+function todayChips(readings = {}) {
+  const uv = planningUv(readings);
+  const chips = [];
+  if (uv !== null) chips.push([`UV ${Math.round(uv)}`, uvBand(uv)?.label || "", uvBand(uv)?.tone || ""]);
+  if (Number.isFinite(Number(readings.humidity)) && readings.humidity !== null) chips.push([`${Math.round(readings.humidity)}%`, humidityBand(readings.humidity)?.label || "", humidityBand(readings.humidity)?.tone || ""]);
+  if (Number.isFinite(Number(readings.pm25)) && readings.pm25 !== null) chips.push([hazeWords(readings.pm25) || "Haze", "", hazeBand(readings.pm25)?.tone || ""]);
+  if (Number.isFinite(Number(readings.temperature)) && readings.temperature !== null) chips.push([`${Math.round(readings.temperature)} °C`, temperatureBand(readings.temperature)?.label || "", temperatureBand(readings.temperature)?.tone || ""]);
+  return chips.map(([main, sub, tone]) => `<span class="today-chip ${tone ? `is-${escapeHtml(tone)}` : ""}"><b>${escapeHtml(main)}</b>${sub ? ` ${escapeHtml(sub)}` : ""}</span>`).join("");
+}
+
+// Result page: one row of chips; the full card (tiles, UV chart, timing) opens on tap.
+function todayStrip(meta) {
+  const readings = (meta?.environment || activeEnvironment())?.readings || {};
+  const open = Boolean(state.openToggles?.today);
+  return `<section class="today-strip" style="view-transition-name: today-card"><details data-toggle-key="today" ${open ? "open" : ""}><summary><span class="today-strip-title">${icon("pin", 14)} Today</span><span class="today-chips">${todayChips(readings)}</span><span class="today-strip-more" aria-hidden="true">${open ? "Less" : "More"}</span></summary>${conditionsSummaryCard(meta)}</details></section>`;
+}
+
 function conditionsSummaryCard(meta, outlook = state.outlook) {
   const environment = meta?.environment || activeEnvironment();
   const r = environment?.readings || {};
@@ -1323,6 +1348,19 @@ function sunscreenTiming() {
   return `Matters most from ${hour(w.start)} to ${hour(w.end)} today. If you're outside for long, top it up during the day.`;
 }
 
+function tomorrowChips(tomorrow) {
+  const r = tomorrow?.readings || {};
+  const chips = [];
+  const rain = Number(tomorrow?.precipitation);
+  if (Number.isFinite(rain) && rain >= 50) chips.push(`Rain likely (${Math.round(rain)}%)`);
+  else if (tomorrow?.sky) chips.push(tomorrow.sky[0].toUpperCase() + tomorrow.sky.slice(1));
+  if (Number.isFinite(Number(r.uvi)) && r.uvi !== null) chips.push(`UV up to ${Math.round(r.uvi)}`);
+  if (Number.isFinite(Number(r.temperature)) && r.temperature !== null) chips.push(`Up to ${Math.round(r.temperature)} °C`);
+  if (humidityBand(r.humidity)) chips.push({ "dry air": "Dry air", humid: "Humid", comfortable: "Comfortable humidity" }[humidityBand(r.humidity).label] || humidityBand(r.humidity).label);
+  if (hazeBand(r.pm25)) chips.push(hazeWords(r.pm25));
+  return chips.length ? `<div class="tomorrow-chips">${chips.map((c) => `<span>${escapeHtml(c)}</span>`).join("")}</div>` : `<p class="tomorrow-summary">${escapeHtml(tomorrow?.summary || "")}</p>`;
+}
+
 function tomorrowCard() {
   const outlook = state.outlook;
   if (!outlook || outlook.status === "idle") return "";
@@ -1331,7 +1369,7 @@ function tomorrowCard() {
   if (!tomorrow) return "";
   const changes = (tomorrow.changes || []).filter((c) => c.change !== "kept");
   const kept = (tomorrow.changes || []).filter((c) => c.change === "kept");
-  return `<section class="tomorrow-card" style="view-transition-name: tomorrow-card" aria-labelledby="tomorrow-title"><h3 id="tomorrow-title">${icon("activity", 15)} Tomorrow</h3><p class="tomorrow-summary">${escapeHtml(tomorrow.summary)}</p>${tomorrow.sameAsToday ? `<p class="tomorrow-same">${icon("check", 14)} Same routine as today.</p>` : `<ul class="tomorrow-changes">${changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`}${kept.length ? `<p class="tomorrow-kept">${kept.map((c) => escapeHtml(c.text)).join(" ")}</p>` : ""}<p class="tomorrow-source">${escapeHtml(outlook.data?.source || "")}</p></section>`;
+  return `<section class="tomorrow-card" style="view-transition-name: tomorrow-card" aria-labelledby="tomorrow-title"><h3 id="tomorrow-title">${icon("activity", 15)} Tomorrow</h3>${tomorrowChips(tomorrow)}${tomorrow.sameAsToday ? `<p class="tomorrow-same">${icon("check", 14)} Same routine as today.</p>` : `<ul class="tomorrow-changes">${changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`}${kept.length ? `<p class="tomorrow-kept">${kept.map((c) => escapeHtml(c.text)).join(" ")}</p>` : ""}<p class="tomorrow-source">${escapeHtml(outlook.data?.source || "")}</p></section>`;
 }
 
 async function refreshOutlook() {
@@ -1364,7 +1402,17 @@ function plainMessage(text, fallback = "This part isn't available right now.") {
   return value;
 }
 
-function consumerWhy(entry) {
+function sameText(a, b) {
+  const n = (t) => String(t || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return Boolean(n(a)) && n(a) === n(b);
+}
+function shortPublisher(name) {
+  const text = String(name || "").trim();
+  if (/cochrane/i.test(text)) return "Cochrane";
+  return text.length > 42 ? `${text.slice(0, 40).replace(/\s+\S*$/, "")}…` : text;
+}
+
+function consumerWhy(entry, stepLine = "") {
   const gpt = state.routineContext?.ingredients?.[`${entry.phase}:${entry.categoryId}`] || null;
   const rule = entry.explanation?.consumer || {};
   const useGpt = Boolean(gpt?.whatItIs && gpt?.whyToday);
@@ -1373,9 +1421,9 @@ function consumerWhy(entry) {
   const references = Array.isArray(rule.references) ? rule.references : [];
   const rows = [
     ["What it is", escapeHtml(fields.whatItIs || "")],
-    ["Why today", escapeHtml(fields.whyToday || "")],
+    ["Why today", sameText(fields.whyToday, stepLine) ? "" : escapeHtml(fields.whyToday || "")],
     ["On labels", escapeHtml(`Look for ${labels.names.map((name) => `“${name}”`).join(" or ")} in the ingredient list.${labels.note ? ` ${labels.note}` : ""}`)],
-    ["References", references.length ? `<ol class="reference-list">${references.map((ref) => { const url = safeEvidenceUrl(ref.url); return `<li><span class="reference-type">${escapeHtml(ref.studyType)}</span> ${escapeHtml(ref.title)}. <i>${escapeHtml(ref.publisher || "")}</i>${ref.year ? ` ${escapeHtml(String(ref.year))}` : ""}.${ref.doi ? ` doi:${escapeHtml(ref.doi)}` : ref.pmid ? ` PMID: ${escapeHtml(ref.pmid)}` : ""}${url ? ` <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Open<span class="sr-only"> ${escapeHtml(ref.title)} (opens in a new tab)</span></a>` : ""}</li>`; }).join("")}</ol>` : ""],
+    ["References", references.length ? `<ol class="reference-list">${references.map((ref) => { const url = safeEvidenceUrl(ref.url); return `<li><span class="reference-type">${escapeHtml(ref.studyType)}</span> <span class="reference-where">${escapeHtml(shortPublisher(ref.publisher))}${ref.year ? `, ${escapeHtml(String(ref.year))}` : ""}</span>${url ? ` · <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Open<span class="sr-only"> ${escapeHtml(ref.studyType)} (opens in a new tab)</span></a>` : ""}<details class="reference-more"><summary>Full citation</summary><p>${escapeHtml(ref.title)}. <i>${escapeHtml(ref.publisher || "")}</i>${ref.year ? ` ${escapeHtml(String(ref.year))}` : ""}.${ref.doi ? ` doi:${escapeHtml(ref.doi)}` : ref.pmid ? ` PMID: ${escapeHtml(ref.pmid)}` : ""}</p></details></li>`; }).join("")}</ol>` : ""],
   ].filter(([, html]) => html);
   const loading = !useGpt && state.routineContext?.status === "loading";
   return `<dl class="why-grid ${useGpt ? "is-gpt" : ""} ${useGpt && state.gptJustArrived ? "is-arriving" : ""}">${rows.map(([label, html]) => `<div class="why-row"><dt>${escapeHtml(label)}</dt><dd>${html}</dd></div>`).join("")}</dl><p class="why-foot">${useGpt ? `${icon("sparkles", 12)} Written by AI from DermaSynth's checked facts, then checked again against them.` : loading ? `${icon("sparkles", 12)} <span class="shimmer-text">Writing a friendlier version…</span>` : ""}</p>`;
@@ -1393,7 +1441,7 @@ function consumerStepItem(step, phase, entries, meta) {
   const panelId = `why-${phase}-${step.id}`;
   const stepIndex = (state.stepCounter = (state.stepCounter || 0) + 1);
   const mine = state.editingProducts ? "" : productNameFor(key);
-  return `<li class="consumer-step" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : `<span class="consumer-ingredient">${escapeHtml(plain.what)}</span>`}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing">${icon("sun", 12)} ${escapeHtml(timing)}</p>` : ""}${productInput(key, plain.name)}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : "Why?"}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry) : ""}</div>` : ""}</li>`;
+  return `<li class="consumer-step" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : ""}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing">${icon("sun", 12)} ${escapeHtml(timing)}</p>` : ""}${productInput(key, plain.name)}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : "Why?"}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, line) : ""}</div>` : ""}</li>`;
 }
 
 // ---- Impact features (1-10) -----------------------------------------------
@@ -1520,7 +1568,9 @@ function checkinCard(meta) {
   const runId = meta.routineContext?.runId || meta.requestId || "";
   const askYesterday = state.previousForCheckin && !store[`y:${state.previousForCheckin.at}`];
   const done = store[runId];
-  if (done && !askYesterday) return `<section class="checkin-card is-done" aria-live="polite"><p>${icon("check", 14)} Thanks. Your check-in helps test DermaSynth.</p></section>`;
+  // Only ask about a routine the user has had time to try (the previous day's).
+  if (!askYesterday && !state.checkinThanks) return "";
+  if (!askYesterday || done) return `<section class="checkin-card is-done" aria-live="polite"><p>${icon("check", 14)} Thanks. Your check-in helps test DermaSynth.</p></section>`;
   const about = askYesterday ? "yesterday" : "today";
   const title = askYesterday ? `How did your skin feel after your routine ${escapeHtml(relativeDay(state.previousForCheckin.at))}?` : "How does your skin feel with today's routine?";
   const chosen = state.checkinDraft?.about === about ? state.checkinDraft : {};
@@ -1541,6 +1591,7 @@ async function sendCheckin(about) {
   writeStore(CHECKIN_KEY, store);
   state.checkinDraft = null;
   if (about === "yesterday") state.previousForCheckin = null;
+  state.checkinThanks = true;
   renderAnimated();
   showToast("Thanks for checking in.");
 }
@@ -2082,7 +2133,21 @@ function consumerResult(routine, meta, running) {
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
   const reviewNote = meta.status === "cleared" ? "" : `<p class="consumer-status is-warn" role="status">${icon("info", 13)} Some checks asked for review, so treat this routine with extra care.</p>`;
   state.stepCounter = 0;
-  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${meta.status === "cleared" ? heroCard(meta, routine) : ""}${conditionsSummaryCard(meta)}${compareCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>${productCheckCard(meta)}${checkinCard(meta)}${tomorrowCard()}</div>`;
+  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${meta.status === "cleared" ? heroCard(meta, routine) : ""}${todayStrip(meta)}${compareCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>${productCheckCard(meta)}${tomorrowCard()}${checkinCard(meta)}</div>`;
+}
+
+const REDIRECT_PLAIN = [
+  [/urgent/i, "something that needs urgent attention"],
+  [/allergic/i, "an allergic reaction"],
+  [/reaction to a product/i, "a reaction to a product"],
+  [/infection/i, "an infection"],
+  [/acute skin reaction/i, "a skin reaction that should be checked"],
+  [/clinical assessment/i, "something a professional should look at"],
+];
+function redirectPlain(notices) {
+  const text = String(notices || "");
+  const found = [...new Set(REDIRECT_PLAIN.filter(([pattern]) => pattern.test(text.replace(/may require clinical assessment/i, ""))).map(([, words]) => words))].slice(0, 2);
+  return found.length ? `<p class="redirect-plain">It sounds like it could be ${escapeHtml(found.join(" or "))}.</p>` : "";
 }
 
 function synthesizedRoutineCard(routine, meta) {
@@ -2098,7 +2163,7 @@ function synthesizedRoutineCard(routine, meta) {
   if (meta?.status === "needs_conditions" && !running) return conditionsCard(meta);
   if (!state.expertView && !redirect) return consumerResult(routine, meta, running);
   if (redirect) {
-    return `<section class="clinical-redirect" role="alert"><span class="clinical-redirect-icon">${icon("shield", 23)}</span><div><p class="routine-eyebrow">Please get this checked</p><h3>We won't suggest a routine today</h3><p>What you described may need a pharmacist or doctor to look at it. Please don't start new products until then.</p><p class="redirect-flags">${escapeHtml(notices)}</p><small>If you have swelling of the face, lips or throat, or trouble breathing, get urgent medical help now.</small></div></section>`;
+    return `<section class="clinical-redirect" role="alert"><span class="clinical-redirect-icon">${icon("shield", 23)}</span><div><p class="routine-eyebrow">Please get this checked</p><h3>We won't suggest a routine today</h3><p>What you described may need a pharmacist or doctor to look at it. Please don't start new products until then.</p>${state.expertView ? `<p class="redirect-flags">${escapeHtml(notices)}</p>` : redirectPlain(notices)}<div class="form-actions"><button type="button" class="ghost-button" data-action="redirect-edit">Change my answer</button></div><small>If you have swelling of the face, lips or throat, or trouble breathing, get urgent medical help now.</small></div></section>`;
   }
   const statusMessage = running
     ? "Building your routine…"
@@ -2121,7 +2186,7 @@ function simulatorView() {
   const profileChoices = ["dry", "combination", "oily", "sensitive"].map((profile) => `<button class="profile-choice ${state.profile === profile ? "is-selected" : ""}" type="button" data-action="profile" data-profile="${profile}" aria-pressed="${state.profile === profile}" ${state.runStatus === "running" ? "disabled" : ""}>${profile[0].toUpperCase()}${profile.slice(1)}</button>`).join("");
   const locationUpdating = isLocationUpdating();
   const running = state.runStatus === "running";
-  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} About your skin</h3><p class="panel-note">Takes about a minute</p></div><div class="form-grid"><div class="field"><label id="skin-type-label">Skin type</label><div class="profile-pills" role="group" aria-labelledby="skin-type-label">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Anything unusual with your skin right now?</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="For example: swelling, burning after a new product, a spreading rash, blisters">${escapeHtml(state.symptoms || "")}</textarea><p class="field-help" id="symptoms-help">Leave it empty if not. If something needs a pharmacist or doctor, we'll tell you instead of giving a routine. This text is used only for that check and is not stored.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button><button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Today's weather</button></div></section>`;
+  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} About your skin</h3><p class="panel-note">Takes about a minute</p></div><div class="form-grid"><div class="field"><label id="skin-type-label">Skin type</label><div class="profile-pills" role="group" aria-labelledby="skin-type-label">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Anything unusual with your skin right now?</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="For example: swelling, burning after a new product, a spreading rash, blisters">${escapeHtml(state.symptoms || "")}</textarea><p class="field-help" id="symptoms-help">Leave empty if all is fine. If something needs a doctor or pharmacist, we'll say so. Not stored.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button>${state.expertView ? `<button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Today's weather</button>` : ""}</div></section>`;
   const formPanel = state.formCollapsed && !state.expertView && state.routineMeta && !running ? collapsedFormPanel() : inputs;
   const result = `<section class="sim-result" id="routine-result">${synthesizedRoutineCard(routine, state.routineMeta)}${state.expertView ? researchContextPanel(state.routineMeta) : ""}</section>`;
   return shell(`<div class="view-heading ${state.routineMeta && !state.expertView ? "has-result" : ""}"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
@@ -2247,6 +2312,7 @@ function knowledgeExplorerView() {
   const sourceFamilies = Object.entries(overview.sourceFamilies || {});
   const liveResearchIndex = overview.liveResearchIndex || { enabled: false, namespace: overview.demoNamespace || "research index" };
   const statusText = state.knowledgeStatus === "loading" ? "Updating Atlas…" : state.knowledgeNotice;
+  const consumer = !state.expertView;
   const ATLAS_PAGE = 12;
   const atlasLimited = !state.atlasShowAll && !query && filtered.length > ATLAS_PAGE;
   const cards = (atlasLimited ? filtered.slice(0, ATLAS_PAGE) : filtered).map((ingredient) => {
@@ -2255,7 +2321,11 @@ function knowledgeExplorerView() {
     const sources = Array.isArray(ingredient.sources) ? ingredient.sources : [];
     const primarySource = sources[0];
     const sourceCount = sources.length;
-    return `<article class="atlas-ingredient"><div class="atlas-ingredient-head"><div><h3>${escapeHtml(ingredient.displayName)}</h3><p>${escapeHtml(inci || ingredient.id)}</p></div><span class="atlas-state">${sourceCount} source${sourceCount === 1 ? "" : "s"}</span></div><div class="atlas-contexts">${contexts}</div>${atlasReferenceLine(ingredient)}${primarySource ? `<div class="atlas-primary-source">${atlasSourceCard(primarySource)}</div>` : ""}${sources.length > 1 ? `<details class="atlas-limitations"><summary>View ${sources.length - 1} more source${sources.length === 2 ? "" : "s"}</summary><div class="atlas-sources">${sources.slice(1).map(atlasSourceCard).join("")}</div></details>` : ""}</article>`;
+    const labelLine = inci && inci.toLowerCase() !== String(ingredient.displayName || "").toLowerCase() ? inci : "";
+    if (consumer) {
+      return `<article class="atlas-ingredient is-consumer"><h3>${escapeHtml(ingredient.displayName)}</h3>${labelLine ? `<p class="atlas-label-line">On labels: ${escapeHtml(labelLine)}</p>` : ""}${ingredient.plain?.whatItIs ? `<p class="atlas-what">${escapeHtml(ingredient.plain.whatItIs)}</p>` : ""}<div class="atlas-contexts">${contexts}</div>${ingredient.plain?.safety ? `<p class="atlas-safety">${icon("shield", 13)} ${escapeHtml(ingredient.plain.safety)}</p>` : ""}${ingredient.routineSelectionAllowed === false ? `<p class="atlas-safety is-warn">${icon("info", 13)} DermaSynth does not use it in routines.</p>` : ""}${sources.length ? `<details class="atlas-limitations"><summary>Studies and sources (${sources.length})</summary><div class="atlas-sources">${sources.map(atlasSourceCard).join("")}</div></details>` : ""}</article>`;
+    }
+    return `<article class="atlas-ingredient"><div class="atlas-ingredient-head"><div><h3>${escapeHtml(ingredient.displayName)}</h3>${labelLine ? `<p>${escapeHtml(labelLine)}</p>` : ""}</div><span class="atlas-state">${sourceCount} source${sourceCount === 1 ? "" : "s"}</span></div><div class="atlas-contexts">${contexts}</div>${atlasReferenceLine(ingredient)}${primarySource ? `<div class="atlas-primary-source">${atlasSourceCard(primarySource)}</div>` : ""}${sources.length > 1 ? `<details class="atlas-limitations"><summary>View ${sources.length - 1} more source${sources.length === 2 ? "" : "s"}</summary><div class="atlas-sources">${sources.slice(1).map(atlasSourceCard).join("")}</div></details>` : ""}</article>`;
   }).join("");
   const retrievalCards = results.slice(0, 8).map((item) => {
     const sourceUrl = safeEvidenceUrl(item.sourceUrl);
@@ -2267,7 +2337,6 @@ function knowledgeExplorerView() {
   const showRetrieval = Boolean(state.knowledgeQuery.trim() && retrieval);
   const corpus = state.corpusSummary;
   const corpusCard = corpus ? `<section class="panel corpus-digest"><div><p class="ingredient-eyebrow">${icon("layers", 14)} ${escapeHtml(corpus.title || "Corpus summary")}</p><h3>${escapeHtml(corpus.digest || "Live database facts are loading.")}</h3></div><div class="corpus-digest-tags">${(corpus.highlights || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div></section>` : "";
-  const consumer = !state.expertView;
   return shell(`<div class="view-heading atlas-heading"><div><p class="hero-kicker">${consumer ? "Ingredients" : "Knowledge base"}</p><h2>${consumer ? "Ingredient guide" : "Ingredient Atlas"}</h2><p>${consumer ? "Look up any ingredient DermaSynth can suggest, what it's used for, and the studies behind it." : "Search ingredients, filter by context, and open the linked sources."}</p></div>${consumer ? "" : `<button class="ghost-button" type="button" data-action="knowledge-refresh" ${state.knowledgeStatus === "loading" ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button>`}</div>${consumer ? "" : `<section class="atlas-summary panel"><div class="atlas-summary-stat"><span>Ingredients</span><strong>${escapeHtml(String(ingredientCount || "—"))}</strong><small>incorporated records</small></div><div class="atlas-summary-stat"><span>Sources</span><strong>${escapeHtml(String(overview.sourceCount || "—"))}</strong><small>${sourceFamilies.map(([family, count]) => `${sourceFamilyLabel(family)} ${count}`).join(" · ") || "linked records"}</small></div><div class="atlas-summary-stat"><span>Index</span><strong>${liveResearchIndex.enabled ? "Live" : "Local"}</strong><small>${escapeHtml(liveResearchIndex.namespace || "metadata index")}</small></div></section>${corpusCard}`}<section class="panel atlas-controls"><div class="atlas-search"><label for="knowledge-query">Find an ingredient</label><div><input id="knowledge-query" value="${escapeHtml(state.knowledgeQuery)}" placeholder="${consumer ? "e.g. niacinamide" : "Search Atlas"}" data-action="knowledge-query" /><button type="button" class="primary-button" data-action="knowledge-search" ${state.knowledgeSearchStatus === "searching" ? "disabled" : ""}>${state.knowledgeSearchStatus === "searching" ? "Searching…" : "Search"}</button></div></div><div class="atlas-filter"><span>${consumer ? "Filter by skin concern" : "Filter by context"}</span><div>${["all", ...concernOptions.map((option) => option.id)].map((concern) => `<button type="button" data-action="knowledge-concern" data-concern="${escapeHtml(concern)}" class="filter-chip ${state.knowledgeConcern === concern ? "is-selected" : ""}" aria-pressed="${state.knowledgeConcern === concern}">${escapeHtml(consumer && concern === "all" ? "All" : concernLabelFromId(concern))}</button>`).join("")}</div></div>${statusText && (!consumer || state.knowledgeStatus === "loading" || state.knowledgeStatus === "error") ? `<p class="atlas-notice" role="status">${escapeHtml(statusText)}</p>` : ""}</section>${showRetrieval ? `<section class="panel atlas-retrieval"><div class="panel-header"><div><h3 class="panel-title">Search results</h3><p class="panel-note">${escapeHtml(String(retrieval.coverage?.uniqueIngredients ?? 0))} matches</p></div></div><div class="research-hit-grid">${retrievalCards || `<div class="evidence-empty"><strong>No source match found.</strong></div>`}</div></section>` : ""}${consumer ? "" : `<details class="atlas-explorer-details"><summary>${icon("activity", 16)} Explore ingredient relationships</summary>${ingredientRelationshipExplorer()}</details>`}<section class="atlas-grid" aria-live="polite">${cards || `<div class="panel evidence-empty"><strong>No ingredients match this view.</strong></div>`}</section>${atlasLimited ? `<div class="atlas-more"><button type="button" class="ghost-button" data-action="atlas-show-all">Show all ${filtered.length} ingredients</button></div>` : ""}`);
 }
 
@@ -2759,6 +2828,7 @@ document.addEventListener("click", (event) => {
   const { action } = target.dataset;
   if (action === "story-open") { openStory(); return; }
   if (action === "atlas-show-all") { state.atlasShowAll = true; renderAnimated(); return; }
+  if (action === "redirect-edit") { state.formCollapsed = false; renderAnimated().then(() => { const box = document.querySelector("#symptoms"); box?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" }); box?.focus({ preventScroll: true }); }); return; }
   if (action === "story-close") { closeStory(); return; }
   if (action === "story-share") { shareStory(); return; }
   if (action === "story-download") { downloadStory(); return; }
@@ -3480,6 +3550,14 @@ function gptTag(item) {
 
 
 state.myRoutine = readStore(MY_ROUTINE_KEY, null);
+state.openToggles = {};
+document.addEventListener("toggle", (event) => {
+  const key = event.target?.dataset?.toggleKey;
+  if (!key) return;
+  state.openToggles[key] = event.target.open;
+  const more = event.target.querySelector(":scope > summary .today-strip-more");
+  if (more) more.textContent = event.target.open ? "Less" : "More";
+}, true);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && document.querySelector("#story-modal")) { event.preventDefault(); closeStory(); }
   // Keep keyboard focus inside the story dialog while it is open.

@@ -100,6 +100,12 @@ const CONFIG_LEAK = /\.env\b|LIVE_SERVICES_ENABLED|OPENAI_API_KEY|OPENWEATHER_AP
 async function openPage(width) {
   // bypassCSP only so the axe script can be injected; the app itself is unchanged.
   const context = await browser.newContext({ viewport: { width, height: width < 500 ? 812 : 900 }, bypassCSP: true, acceptDownloads: true });
+  // A routine "from yesterday", so the next-day check-in is asked.
+  await context.addInitScript(() => {
+    try {
+      if (!localStorage.getItem("dermasynth.last-routine.v1")) localStorage.setItem("dermasynth.last-routine.v1", JSON.stringify({ steps: ["am:low-irritation-cleansing", "pm:low-irritation-cleansing"], readings: { uvi: 3, humidity: 60, pm25: 10, temperature: 28 }, at: new Date(Date.now() - 864e5).toISOString(), profile: "combination", concern: "acne", status: "cleared" }));
+    } catch {}
+  });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -197,7 +203,9 @@ for (const width of [375, 1280]) {
     await button.click();
     await page.waitForTimeout(500);
     const labels = await page.locator(".consumer-why:not([hidden]) .why-row dt").allInnerTexts();
-    expect(["What it is", "Why today", "On labels", "References"].every((l) => labels.includes(l)), `Rows: ${labels.join(", ")}`);
+    expect(["What it is", "On labels", "References"].every((l) => labels.includes(l)), `Rows: ${labels.join(", ")}`);
+    // "Why today" is left out only when it would repeat the step's own reason.
+    if (!labels.includes("Why today")) expect((await page.locator(".consumer-step").first().locator(".step-line").innerText()).trim().length > 15, "No reason shown for today.");
     expect(await page.locator(".consumer-why:not([hidden]) .reference-list li").count() >= 1, "No journal-style reference shown.");
     const text = await page.locator(".consumer-why:not([hidden])").innerText();
     expect(!/picked from|approved ingredients|score|rank|retriev/i.test(text), "System wording in the Why? panel.");
@@ -244,12 +252,12 @@ for (const width of [375, 1280]) {
     await page.locator('[data-action="pc-example"]').click();
     await page.waitForSelector(".pc-result.is-good", { timeout: 10000 });
   });
-  await check(`${label}-checkin`, `${label}: the one-tap check-in is sent`, async () => {
+  await check(`${label}-checkin`, `${label}: the next-day check-in is asked and sent`, async () => {
     const posted = page.waitForRequest((r) => r.url().endsWith("/api/feedback") && r.method() === "POST");
     await page.locator('[data-action="checkin"][data-value="good"]').click();
     await page.locator('[data-action="checkin-follow"][data-value="partly"]').click();
     const body = JSON.parse((await posted).postData() || "{}");
-    expect(body.rating === "good" && body.followed === "partly", "Check-in body wrong.");
+    expect(body.rating === "good" && body.followed === "partly" && body.about === "yesterday", "Check-in body wrong.");
     await page.waitForSelector(".checkin-card.is-done", { timeout: 5000 });
   });
   await check(`${label}-reminders`, `${label}: reminders download as a calendar file`, async () => {

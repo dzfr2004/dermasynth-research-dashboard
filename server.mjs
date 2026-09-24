@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { createConfig, loadDotEnv, publicConfigStatus } from "./lib/config.mjs";
 import { buildOutlook, readingChanges, tomorrowChanges } from "./lib/outlook.mjs";
 import { checkProduct } from "./lib/product-check.mjs";
-import { CONCERN_WORDS } from "./lib/plain-language.mjs";
+import { CONCERN_WORDS, plainFunction, safetyShort } from "./lib/plain-language.mjs";
 import { DEFAULT_LOCATION, getEnvironment, reverseLocation, getEnvironmentForecast, parseReportedConditions, providerReliabilitySnapshot, REPORTED_CONDITION_OPTIONS, reportedConditionsEnvironment, searchLocations } from "./lib/environment.mjs";
 import { llmTriageSecondOpinion } from "./lib/triage-llm.mjs";
 import { ExternalServiceError } from "./lib/http-client.mjs";
@@ -1742,8 +1742,14 @@ async function routeApi(request, response, url, requestId) {
     const concern = optionalConcernFromQuery(url);
     const repo = knowledgeRepo();
     const explorer = repo ? buildExplorerFromDb(repo, { concern }) : ingredientResearchExplorer({ concern });
+    // Plain-language lines for the consumer Ingredient guide.
+    const ingredients = (explorer.ingredients || []).map((item) => {
+      const fn = plainFunction(item.id);
+      return { ...item, plain: { whatItIs: fn ? `${fn[0].toUpperCase()}${fn.slice(1)}.` : null, safety: safetyShort(item.id) } };
+    });
     return sendJson(response, 200, {
       ...explorer,
+      ingredients,
       overview: {
         ...explorer.overview,
         liveResearchIndex: {

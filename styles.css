@@ -1582,3 +1582,43 @@ textarea:focus-visible {
 .ready-list { display: grid; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
 .ready-list li { display: flex; align-items: center; gap: 8px; padding: 9px 12px; color: #33504a; border-radius: 12px; background: var(--surface-soft); font-size: 0.86rem; }
 .ready-list svg { flex: 0 0 auto; color: var(--accent); }
+
+/* ---- User-POV pass ---------------------------------------------------------- */
+/* Today strip on the result page */
+.today-strip { margin-bottom: 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); }
+.today-strip > details > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 14px; cursor: pointer; list-style: none; }
+.today-strip > details > summary::-webkit-details-marker { display: none; }
+.today-strip-title { display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; font-weight: 750; }
+.today-chips { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 6px; }
+.today-chip { padding: 4px 9px; color: #3b4f4a; border-radius: 999px; background: var(--surface-soft); font-size: 0.78rem; white-space: nowrap; box-shadow: inset 0 0 0 1px var(--line); }
+.today-chip b { color: var(--ink); }
+.today-chip.is-alert { color: #8f2f33; background: var(--danger-soft); box-shadow: inset 0 0 0 1px #efc7c9; }
+.today-chip.is-warn { color: #6d420f; background: #fff3dc; box-shadow: inset 0 0 0 1px #ecd29a; }
+.today-strip-more { margin-left: auto; color: var(--accent-dark); font-size: 0.8rem; font-weight: 700; }
+.today-strip .today-card { margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0 0 18px 18px; box-shadow: none; }
+/* Tomorrow chips */
+.tomorrow-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tomorrow-chips span { padding: 4px 9px; border-radius: 999px; background: rgb(255 255 255 / 80%); font-size: 0.8rem; box-shadow: inset 0 0 0 1px #d9e6f6; }
+/* References: short label, full citation on tap */
+.reference-where { color: var(--muted); }
+.reference-more { margin-top: 2px; }
+.reference-more summary { color: var(--accent-dark); font-size: 0.78rem; cursor: pointer; }
+.reference-more p { margin: 4px 0 0; color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+/* Redirect */
+.redirect-plain { font-weight: 650; }
+.clinical-redirect .form-actions { margin: 12px 0; }
+/* Optional form fields folded */
+.more-fields { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); }
+.more-fields > summary { display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; color: #485955; font-size: 0.8rem; font-weight: 720; cursor: pointer; }
+.more-fields > summary::after { margin-left: auto; content: "+"; font-size: 1.1rem; transition: transform 300ms var(--spring-fallback); }
+.more-fields[open] > summary::after { transform: rotate(45deg); }
+.more-fields .profile-secondary-fields { padding: 0 12px 12px; }
+/* Ingredient guide cards (normal view) */
+.atlas-ingredient.is-consumer h3 { margin: 0; font-size: 1.05rem; }
+.atlas-label-line { margin: 2px 0 0; color: var(--muted); font-size: 0.8rem; }
+.atlas-what { margin: 8px 0 0; font-size: 0.88rem; line-height: 1.5; }
+.atlas-ingredient.is-consumer .atlas-contexts { margin-top: 8px; }
+.atlas-safety { display: flex; gap: 6px; margin: 10px 0 0; color: var(--success); font-size: 0.82rem; line-height: 1.45; }
+.atlas-safety svg { flex: 0 0 auto; margin-top: 2px; }
+.atlas-safety.is-warn { color: #6d420f; }
+.atlas-ingredient.is-consumer .atlas-limitations { margin-top: 10px; }
