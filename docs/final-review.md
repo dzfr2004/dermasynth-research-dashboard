@@ -73,4 +73,4 @@ npm test            # all offline suites, about 3 minutes
 npm run eval:live   # real GPT evaluation (needs .env keys and npm start)
 ```
 
-`npm test` runs: syntax checks, knowledge-base verification, the study evaluation (113 checks), retrieval (30 queries), Safety-50, ingredient selection, category coverage, triage (148 cases), extended safety (93 tests plus an 840-run property check), input sensitivity (quick), GPT layer, GPT output schemas (50), outlook, result-impact features, and the browser smoke test (59 checks, phone and desktop, axe accessibility). Reports are written to `data/evaluation/reports/`.
+`npm test` runs: syntax checks, knowledge-base verification, the study evaluation (113 checks), retrieval (30 queries), Safety-50, ingredient selection, category coverage, triage (148 cases), extended safety (93 tests plus an 840-run property check), input sensitivity (quick), GPT layer, GPT output schemas (50), outlook, result-impact features, the user-study site (25 checks), and the browser smoke test (59 checks, phone and desktop, axe accessibility). Reports are written to `data/evaluation/reports/`.

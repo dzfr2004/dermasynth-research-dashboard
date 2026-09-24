@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { createConfig, loadDotEnv, publicConfigStatus } from "./lib/config.mjs";
 import { buildOutlook, readingChanges, tomorrowChanges } from "./lib/outlook.mjs";
 import { checkProduct } from "./lib/product-check.mjs";
+import { createStudyRoutes } from "./lib/study-routes.mjs";
 import { CONCERN_WORDS, plainFunction, safetyShort } from "./lib/plain-language.mjs";
 import { DEFAULT_LOCATION, getEnvironment, reverseLocation, getEnvironmentForecast, parseReportedConditions, providerReliabilitySnapshot, REPORTED_CONDITION_OPTIONS, reportedConditionsEnvironment, searchLocations } from "./lib/environment.mjs";
 import { llmTriageSecondOpinion } from "./lib/triage-llm.mjs";
@@ -134,6 +135,10 @@ const publicFiles = new Map([
   ["/labelling", { path: "labelling.html", contentType: "text/html; charset=utf-8" }],
   ["/labelling.html", { path: "labelling.html", contentType: "text/html; charset=utf-8" }],
   ["/labelling.js", { path: "labelling.js", contentType: "text/javascript; charset=utf-8" }],
+  ["/study", { path: "study.html", contentType: "text/html; charset=utf-8" }],
+  ["/study.html", { path: "study.html", contentType: "text/html; charset=utf-8" }],
+  ["/study.js", { path: "study.js", contentType: "text/javascript; charset=utf-8" }],
+  ["/study.css", { path: "study.css", contentType: "text/css; charset=utf-8" }],
 ]);
 
 class HttpError extends Error {
@@ -1491,7 +1496,13 @@ async function handleRoutineRun(input, requestId) {
   });
 }
 
+let studyRoutes = null;
+
 async function routeApi(request, response, url, requestId) {
+  if (url.pathname.startsWith("/api/study/")) {
+    studyRoutes ??= createStudyRoutes({ HttpError, readJson, sendJson, securityHeaders, ingredients: getIngredientKnowledgeBase().ingredients || [] });
+    return studyRoutes.handle(request, response, url, requestId);
+  }
   if (!["GET", "POST"].includes(request.method || "GET")) {
     return sendMethodNotAllowed(response, requestId);
   }

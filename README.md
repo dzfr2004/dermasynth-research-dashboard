@@ -146,6 +146,19 @@ npm run eval:safety-50
 
 The retrieval pack contains 30 source-discovery queries over the local registry and reports Recall@5, MRR, source coverage, and latency. The safety pack contains 50 deterministic routing and output-contract cases. Their current exports are [retrieval-evaluation.latest.md](data/evaluation/reports/retrieval-evaluation.latest.md) and [safety-50-case.latest.md](data/evaluation/reports/safety-50-case.latest.md).
 
+## User study site (/study)
+
+The user test runs inside DermaSynth, so participants use one link on their phone.
+
+1. Add a private researcher token (16 or more characters) to `.env`: `STUDY_ADMIN_TOKEN=...`, then restart with `npm start` (or `HOST=0.0.0.0 npm start` for phones on your hotspot).
+2. Participants open `http://<laptop-ip>:4173/study`, tap **Take part**, give consent and get a code (P01, P02...). The code is remembered on their phone.
+3. You open `/study#admin` on your laptop, enter the token, choose their code and record each of the 7 tasks (Start, then Success / With help / Failed / Skipped). Time is saved automatically.
+4. After the tasks they open **Questionnaire**: profile, the 10 SUS statements, 7 DermaSynth statements and two comments.
+5. **Results** shows the SUS mean, SD, median, range and adjective against the average of 68, task completion and median times, per-statement medians and agreement, comments and the names of people who agreed to be thanked. Export the questionnaire and task CSVs for the dissertation (codes only, no names).
+6. The independent case writer opens `/study#cases` (over the HTTPS tunnel if remote). On **Case sets**, **Use for eval:independent** writes their set unchanged to `data/evaluation/independent/cases.json`; then run `npm run eval:independent`.
+
+Records are kept in `data/study/study.sqlite`, which git ignores and the knowledge-base rebuild never touches. **Withdraw** deletes a participant's consent, tasks and answers. Delete the file after the project is graded, as the consent page promises. `npm run eval:study-site` tests the whole flow on a throwaway database.
+
 ## Run the triage, extended safety and independent sets
 
 ```sh

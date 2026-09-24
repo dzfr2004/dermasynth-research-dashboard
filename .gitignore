@@ -12,6 +12,8 @@ data/reviewer-queue/*.local.json
 data/reviewer-queue/*.tmp
 data/governance/*.local.json
 data/db/
+# User-study records (names, consent). Never commit; delete after grading.
+data/study/
 
 # Local documents and archive (not part of the code)
 /reports/

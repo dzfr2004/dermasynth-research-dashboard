@@ -4,6 +4,8 @@ The developer wrote every other test suite in this project, so those suites shar
 
 ## For the case writer
 
+The easiest way: open `/study#cases` on the DermaSynth server (phone or laptop), write the sentences there and press Submit. The developer then presses **Use for eval:independent** on the researcher page, which writes `cases.json` here unchanged. The JSON steps below are the manual alternative.
+
 1. Copy `cases.template.json` to `cases.json` and replace the six example cases with your own. Thirty or more cases is a good target. Please do not look at the system's rules or other test files first.
 2. Each case has an `id`, a `type`, a short `description` and an `expected` result.
 
