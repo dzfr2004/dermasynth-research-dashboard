@@ -1508,3 +1508,70 @@ textarea:focus-visible {
 }
 #routine-result { scroll-margin-top: 104px; }
 @media (max-width: 900px) { #routine-result { scroll-margin-top: 12px; } }
+
+/* ---- Phone layout pass ------------------------------------------------------ */
+.topbar-mark { display: none; }
+.page-title { display: flex; align-items: center; gap: 10px; }
+.page-title-text { min-width: 0; }
+.atlas-more { display: flex; justify-content: center; margin-top: 16px; }
+.weather-stack { display: grid; gap: 14px; margin-top: 14px; }
+.weather-stack .today-card, .weather-stack .tomorrow-card { margin: 0; }
+.weather-cta { display: grid; gap: 10px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); }
+.weather-cta p { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+.weather-cta .primary-button { justify-self: start; }
+
+@media (max-width: 700px) {
+  /* Chrome: one compact title bar instead of brand bar + sticky header */
+  .sidebar { display: none; }
+  .topbar { position: static; min-height: 0; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; gap: 10px; backdrop-filter: none; background: var(--surface-soft); }
+  .topbar-mark { display: block; flex: 0 0 auto; width: 30px; height: 30px; border-radius: 9px; }
+  .page-title h1 { font-size: 1.15rem; }
+  .location-line { margin-top: 1px; font-size: 0.75rem; }
+  .scope-banner { padding: 7px 16px; font-size: 0.72rem; }
+  .content { padding: 16px 14px calc(96px + env(safe-area-inset-bottom)); }
+
+  /* Bottom navigation: as many columns as items, clear of the home bar */
+  .mobile-nav { bottom: calc(8px + env(safe-area-inset-bottom)); grid-template-columns: repeat(var(--nav-items, 4), minmax(0, 1fr)); }
+  .mobile-nav-item { min-height: 50px; }
+  .mobile-nav-item span { font-size: 0.72rem; }
+
+  /* No zoom-on-focus in iOS Safari: form text at least 16 px */
+  input, select, textarea, .product-card textarea, #pc-text { font-size: 16px !important; }
+
+  /* Tap targets of at least 44 px */
+  .primary-button, .ghost-button, .pill-button, .why-button, .profile-choice, .concern-choice, .location-search-button,
+  .filter-chip, .relationship-filter, .expert-toggle-top, .refresh-button, .condition-chip { min-height: 44px; }
+  .expert-toggle-top, .refresh-button { min-width: 44px; justify-content: center; }
+  .profile-choice { padding-inline: 14px; }
+  .text-button { min-height: 44px; padding: 10px 4px; }
+  .location-status button { display: inline-flex; align-items: center; min-height: 44px; }
+  .collapsed-form-actions .text-button { min-height: 44px; }
+
+  /* Routine page */
+  .view-heading.has-result { display: none; }
+  .view-heading h2 { font-size: 1.35rem; }
+  .form-panel:not(.is-collapsed) .form-actions { position: sticky; z-index: 5; bottom: calc(72px + env(safe-area-inset-bottom)); margin: 18px -18px -18px; padding: 12px 18px; border-top: 1px solid var(--line); border-radius: 0 0 18px 18px; background: rgb(255 255 255 / 92%); backdrop-filter: blur(12px); }
+  .form-panel:not(.is-collapsed) .form-actions .primary-button { flex: 1 1 auto; justify-content: center; }
+  .hero-line { padding: 16px; }
+  .hero-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .hero-actions .pill-button { justify-content: center; }
+  .hero-actions .pill-button.is-primary { grid-column: 1 / -1; }
+  .consumer-card { padding: 16px 14px; }
+  .consumer-step { grid-template-columns: minmax(0, 1fr); padding: 12px 12px 12px 40px; }
+  .consumer-step .why-button { justify-self: start; margin-top: 2px; }
+  .consumer-why { grid-column: 1 / -1; margin-left: -28px; }
+  .today-card, .tomorrow-card, .checkin-card, .compare-card { padding: 14px; }
+  .product-card { padding: 16px 14px 18px; }
+  .weather-cta .primary-button { justify-self: stretch; justify-content: center; }
+  .monitor-location-panel { padding: 14px; }
+}
+@media (max-width: 700px) {
+  #knowledge-query { min-height: 44px; }
+  .atlas-ingredient a, .atlas-source-card a { display: inline-flex; align-items: center; min-height: 44px; }
+  .atlas-limitations summary { display: flex; align-items: center; min-height: 44px; }
+  .panel-note, .field-help, .location-status, .checkin-note, .tomorrow-source, .uv-timeline figcaption, .collapsed-form-label, .today-item dt { font-size: 0.8rem; }
+  .scope-banner { font-size: 0.74rem; line-height: 1.35; }
+}
+@media (max-width: 700px) {
+  select, .field select, input[type="search"], input[type="text"] { min-height: 44px; height: 44px; }
+}

@@ -611,13 +611,17 @@ function mobileNavItem(id, label, iconName) {
 }
 
 function mobileNavigation() {
-  return `<nav class="mobile-nav" aria-label="Primary navigation">${mobileNavItem("dashboard", "Overview", "grid")}${mobileNavItem("monitor", "Environment", "activity")}${mobileNavItem("simulator", "Routine", "flask")}${mobileNavItem("knowledge", "Atlas", "file")}</nav>`;
+  const items = state.expertView
+    ? [["dashboard", "Overview", "grid"], ["monitor", "Environment", "activity"], ["simulator", "Routine", "flask"], ["knowledge", "Atlas", "file"]]
+    : [["simulator", "Today", "sparkles"], ["monitor", "Weather", "sun"], ["knowledge", "Ingredients", "file"]];
+  return `<nav class="mobile-nav" style="--nav-items: ${items.length}" aria-label="Primary navigation">${items.map(([id, label, iconName]) => mobileNavItem(id, label, iconName)).join("")}</nav>`;
 }
 
 function shell(view) {
   const ingredientCount = Number(state.knowledgeExplorer?.overview?.ingredientCount) || incorporatedIngredientRecords().length;
   const currentMeta = VIEW_META[state.activeView] || VIEW_META.dashboard;
-  const title = currentMeta.title;
+  const CONSUMER_TITLES = { simulator: "Your routine", monitor: "Weather", knowledge: "Ingredients" };
+  const title = !state.expertView && CONSUMER_TITLES[state.activeView] ? CONSUMER_TITLES[state.activeView] : currentMeta.title;
   const modeClass = activeEnvironment().mode === "live" ? "" : ["degraded", "unavailable"].includes(activeEnvironment().mode) ? "is-warning" : "is-neutral";
   const cueClass = state.routineMeta?.status === "cleared" ? "" : "is-warning";
   const locationUpdating = isLocationUpdating();
@@ -643,7 +647,7 @@ function shell(view) {
     </aside>
     <main class="main-content" id="main-content" tabindex="-1">
       <header class="topbar">
-        <div class="page-title"><h1 id="page-title" tabindex="-1">${title}</h1><p class="location-line">${icon("pin", 15)}<span>${escapeHtml(locationLabel())}</span><span>· ${escapeHtml(environmentModeLabel())}</span></p></div>
+        <div class="page-title"><img class="topbar-mark" src="/assets/dermasynth-mark.svg" alt="" width="30" height="30" /><div class="page-title-text"><h1 id="page-title" tabindex="-1">${title}</h1><p class="location-line">${icon("pin", 15)}<span>${escapeHtml(locationLabel())}</span><span>· ${escapeHtml(environmentModeLabel())}</span></p></div></div>
         <div class="topbar-actions">
           <button class="expert-toggle-top" type="button" data-action="toggle-expert" aria-pressed="${state.expertView}">${icon("layers", 14)} <span>Expert view</span></button>
           ${state.expertView ? `<button class="presentation-button" type="button" data-action="presentation-start">${icon("sparkles", 14)} Defence walkthrough</button>
@@ -1181,7 +1185,36 @@ function dashboardView() {
   return shell(`${dashboardHero()}<section class="dashboard-spotlight"><div>${routinePanel()}</div>${environmentPanel()}</section>${metricStrip()}${pipelinePanel()}${ingredientSystemPanel()}<div class="dashboard-grid">${safetyPanel()}${insightPanel()}${evidencePanel()}${historyPanel()}</div>`);
 }
 
+function weatherView() {
+  const wo = state.weatherOutlook;
+  const tomorrow = wo?.data?.tomorrow;
+  const hasRoutine = Boolean(state.routineMeta?.status === "cleared" && state.generatedRoutine);
+  const tomorrowHtml = hasRoutine && state.outlook?.data?.tomorrow
+    ? tomorrowCard()
+    : tomorrow ? `<section class="tomorrow-card" aria-labelledby="w-tomorrow"><h3 id="w-tomorrow">${icon("activity", 15)} Tomorrow</h3><p class="tomorrow-summary">${escapeHtml(tomorrow.summary)}</p><p class="tomorrow-source">${escapeHtml(wo.data?.source || "")}</p></section>`
+      : wo?.status === "loading" ? `<section class="tomorrow-card is-loading" aria-live="polite"><h3>${icon("activity", 15)} Tomorrow</h3><p class="shimmer-text">Checking tomorrow's forecast…</p></section>` : "";
+  const cta = `<section class="weather-cta"><p>${hasRoutine ? "Your routine already uses these readings." : "DermaSynth turns today's weather into a morning and evening routine for your skin."}</p><button type="button" class="primary-button" data-action="navigate" data-view="simulator">${icon("sparkles", 15)} ${hasRoutine ? "See my routine" : "Build today's routine"}</button></section>`;
+  return shell(`<div class="view-heading"><div><h2>Today's weather for your skin</h2><p>UV, humidity, haze and temperature where you are, and what tomorrow looks like.</p></div><button type="button" class="ghost-button" data-action="refresh" ${isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button></div><section class="panel monitor-location-panel" id="monitor-location">${locationPicker({ label: "Location", compact: true })}</section><div class="weather-stack">${conditionsSummaryCard(null, wo)}${tomorrowHtml}${cta}</div>`);
+}
+
+async function refreshWeatherOutlook() {
+  const key = `${locationPayload().lat},${locationPayload().lon}`;
+  if (state.weatherOutlook?.key === key && ["loading", "available"].includes(state.weatherOutlook.status)) return;
+  state.weatherOutlook = { status: "loading", key };
+  const todaySteps = currentStepKeys();
+  try {
+    const response = await fetch("/api/outlook", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ profile: state.profile, concern: state.concern, location: locationPayload(), todaySteps, exposureContext: state.exposureContext || "mixed" }) });
+    const data = await response.json().catch(() => ({}));
+    if (state.weatherOutlook?.key !== key) return;
+    state.weatherOutlook = data?.available ? { status: "available", key, data } : { status: "idle", key };
+  } catch {
+    if (state.weatherOutlook?.key === key) state.weatherOutlook = { status: "idle", key };
+  }
+  if (state.activeView === "monitor" && !state.expertView) scheduleRender({ animated: true });
+}
+
 function monitorView() {
+  if (!state.expertView) return weatherView();
   const env = activeEnvironment();
   const uvi = environmentValue(env.readings?.uvi);
   const weatherStatus = env.sources?.weather?.status || "demo";
@@ -1266,7 +1299,7 @@ function temperatureBand(c) {
   return { label: "mild", tone: "calm" };
 }
 
-function conditionsSummaryCard(meta) {
+function conditionsSummaryCard(meta, outlook = state.outlook) {
   const environment = meta?.environment || activeEnvironment();
   const r = environment?.readings || {};
   const fmt = (v, d = 0) => (Number.isFinite(Number(v)) ? Number(v).toFixed(d) : "—");
@@ -1277,9 +1310,9 @@ function conditionsSummaryCard(meta) {
     ["Temperature", fmt(r.temperature), "°C", temperatureBand(r.temperature)],
   ];
   const source = environment?.mode === "live" ? "Live readings" : environment?.mode === "user_reported" ? "Conditions you reported" : environment?.mode === "degraded" ? "Some live readings missing" : "Sample weather (not live)";
-  const outlookToday = state.outlook?.data?.today;
+  const outlookToday = outlook?.data?.today;
   const timingLine = outlookToday?.text ? `<p class="today-timing">${icon("sun", 13)} ${escapeHtml(outlookToday.text)}${outlookToday.sunTip ? ` ${escapeHtml(outlookToday.sunTip)}` : ""}</p>` : "";
-  return `<section class="today-card" style="view-transition-name: today-card" aria-labelledby="today-title"><div class="today-head"><h3 id="today-title">${icon("pin", 15)} ${locationLabel() === "Your location" ? "Today near you" : `Today in ${escapeHtml(locationLabel())}`}</h3><span>${escapeHtml(source)}</span></div><dl class="today-grid">${items.map(([label, value, unit, band]) => `<div class="today-item ${band ? `is-${band.tone}` : ""}"><dt>${escapeHtml(label)}</dt><dd><strong>${escapeHtml(value)}</strong>${unit && value !== "—" ? `<small>${escapeHtml(unit)}</small>` : ""}${band ? `<span>${escapeHtml(band.label)}</span>` : ""}</dd></div>`).join("")}</dl>${uvTimeline()}${timingLine}</section>`;
+  return `<section class="today-card" style="view-transition-name: today-card" aria-labelledby="today-title"><div class="today-head"><h3 id="today-title">${icon("pin", 15)} ${locationLabel() === "Your location" ? "Today near you" : `Today in ${escapeHtml(locationLabel())}`}</h3><span>${escapeHtml(source)}</span></div><dl class="today-grid">${items.map(([label, value, unit, band]) => `<div class="today-item ${band ? `is-${band.tone}` : ""}"><dt>${escapeHtml(label)}</dt><dd><strong>${escapeHtml(value)}</strong>${unit && value !== "—" ? `<small>${escapeHtml(unit)}</small>` : ""}${band ? `<span>${escapeHtml(band.label)}</span>` : ""}</dd></div>`).join("")}</dl>${uvTimeline(outlook)}${timingLine}</section>`;
 }
 
 // ---- Timing and tomorrow (forecast, /api/outlook) ----------------------------
@@ -1419,8 +1452,8 @@ function heroCard(meta, routine) {
 }
 
 // 4. UV timeline: today's hourly UV with the sunscreen window shaded.
-function uvTimeline() {
-  const today = state.outlook?.data?.today;
+function uvTimeline(outlook = state.outlook) {
+  const today = outlook?.data?.today;
   const hours = Array.isArray(today?.hourly) ? today.hourly : [];
   if (hours.length < 6) return "";
   const w = 320; const h = 96; const padX = 8; const top = 12; const base = 70;
@@ -2056,6 +2089,7 @@ function synthesizedRoutineCard(routine, meta) {
   const redirect = meta?.status === "medical_redirect";
   const cleared = meta?.status === "cleared";
   const running = state.runStatus === "running";
+  if (!meta && !running && !state.expertView) return consumerResult(routine, meta, running);
   if (!meta && !running) {
     return `<section class="synthesized-routine-card is-ready" aria-live="polite"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Ready to run</p><h3>Your category preview will appear here</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status is-review">Awaiting run</span></div><div class="synth-ready-content"><span>${icon("flask", 24)}</span><div><strong>One gated request, then an inspectable result.</strong><p>Choose a research context and run the preview to see the category output, evidence grounding, safety trace, and environmental explanation together.</p></div></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>No routine categories are shown before a gated research run.</span></p></div></section>`;
   }
@@ -2090,7 +2124,7 @@ function simulatorView() {
   const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} About your skin</h3><p class="panel-note">Takes about a minute</p></div><div class="form-grid"><div class="field"><label id="skin-type-label">Skin type</label><div class="profile-pills" role="group" aria-labelledby="skin-type-label">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Anything unusual with your skin right now?</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="For example: swelling, burning after a new product, a spreading rash, blisters">${escapeHtml(state.symptoms || "")}</textarea><p class="field-help" id="symptoms-help">Leave it empty if not. If something needs a pharmacist or doctor, we'll tell you instead of giving a routine. This text is used only for that check and is not stored.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button><button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Today's weather</button></div></section>`;
   const formPanel = state.formCollapsed && !state.expertView && state.routineMeta && !running ? collapsedFormPanel() : inputs;
   const result = `<section class="sim-result" id="routine-result">${synthesizedRoutineCard(routine, state.routineMeta)}${state.expertView ? researchContextPanel(state.routineMeta) : ""}</section>`;
-  return shell(`<div class="view-heading"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
+  return shell(`<div class="view-heading ${state.routineMeta && !state.expertView ? "has-result" : ""}"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
 }
 
 function concernLabelFromId(value) {
@@ -2213,7 +2247,9 @@ function knowledgeExplorerView() {
   const sourceFamilies = Object.entries(overview.sourceFamilies || {});
   const liveResearchIndex = overview.liveResearchIndex || { enabled: false, namespace: overview.demoNamespace || "research index" };
   const statusText = state.knowledgeStatus === "loading" ? "Updating Atlas…" : state.knowledgeNotice;
-  const cards = filtered.map((ingredient) => {
+  const ATLAS_PAGE = 12;
+  const atlasLimited = !state.atlasShowAll && !query && filtered.length > ATLAS_PAGE;
+  const cards = (atlasLimited ? filtered.slice(0, ATLAS_PAGE) : filtered).map((ingredient) => {
     const contexts = (ingredient.concernContexts || []).map((context) => `<span>${escapeHtml(concernLabelFromId(context))}</span>`).join("");
     const inci = (ingredient.inciNames || []).join(" · ");
     const sources = Array.isArray(ingredient.sources) ? ingredient.sources : [];
@@ -2231,7 +2267,8 @@ function knowledgeExplorerView() {
   const showRetrieval = Boolean(state.knowledgeQuery.trim() && retrieval);
   const corpus = state.corpusSummary;
   const corpusCard = corpus ? `<section class="panel corpus-digest"><div><p class="ingredient-eyebrow">${icon("layers", 14)} ${escapeHtml(corpus.title || "Corpus summary")}</p><h3>${escapeHtml(corpus.digest || "Live database facts are loading.")}</h3></div><div class="corpus-digest-tags">${(corpus.highlights || []).map((item) => `<span>${escapeHtml(item)}</span>`).join("")}</div></section>` : "";
-  return shell(`<div class="view-heading atlas-heading"><div><p class="hero-kicker">Knowledge base</p><h2>Ingredient Atlas</h2><p>Search ingredients, filter by context, and open the linked sources.</p></div><button class="ghost-button" type="button" data-action="knowledge-refresh" ${state.knowledgeStatus === "loading" ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button></div><section class="atlas-summary panel"><div class="atlas-summary-stat"><span>Ingredients</span><strong>${escapeHtml(String(ingredientCount || "—"))}</strong><small>incorporated records</small></div><div class="atlas-summary-stat"><span>Sources</span><strong>${escapeHtml(String(overview.sourceCount || "—"))}</strong><small>${sourceFamilies.map(([family, count]) => `${sourceFamilyLabel(family)} ${count}`).join(" · ") || "linked records"}</small></div><div class="atlas-summary-stat"><span>Index</span><strong>${liveResearchIndex.enabled ? "Live" : "Local"}</strong><small>${escapeHtml(liveResearchIndex.namespace || "metadata index")}</small></div></section>${corpusCard}<section class="panel atlas-controls"><div class="atlas-search"><label for="knowledge-query">Find an ingredient</label><div><input id="knowledge-query" value="${escapeHtml(state.knowledgeQuery)}" placeholder="Search Atlas" data-action="knowledge-query" /><button type="button" class="primary-button" data-action="knowledge-search" ${state.knowledgeSearchStatus === "searching" ? "disabled" : ""}>${state.knowledgeSearchStatus === "searching" ? "Searching…" : "Search"}</button></div></div><div class="atlas-filter"><span>Filter by context</span><div>${["all", ...concernOptions.map((option) => option.id)].map((concern) => `<button type="button" data-action="knowledge-concern" data-concern="${escapeHtml(concern)}" class="filter-chip ${state.knowledgeConcern === concern ? "is-selected" : ""}" aria-pressed="${state.knowledgeConcern === concern}">${escapeHtml(concernLabelFromId(concern))}</button>`).join("")}</div></div>${statusText ? `<p class="atlas-notice" role="status">${escapeHtml(statusText)}</p>` : ""}</section>${showRetrieval ? `<section class="panel atlas-retrieval"><div class="panel-header"><div><h3 class="panel-title">Search results</h3><p class="panel-note">${escapeHtml(String(retrieval.coverage?.uniqueIngredients ?? 0))} matches</p></div></div><div class="research-hit-grid">${retrievalCards || `<div class="evidence-empty"><strong>No source match found.</strong></div>`}</div></section>` : ""}<details class="atlas-explorer-details"><summary>${icon("activity", 16)} Explore ingredient relationships</summary>${ingredientRelationshipExplorer()}</details><section class="atlas-grid" aria-live="polite">${cards || `<div class="panel evidence-empty"><strong>No ingredients match this view.</strong></div>`}</section>`);
+  const consumer = !state.expertView;
+  return shell(`<div class="view-heading atlas-heading"><div><p class="hero-kicker">${consumer ? "Ingredients" : "Knowledge base"}</p><h2>${consumer ? "Ingredient guide" : "Ingredient Atlas"}</h2><p>${consumer ? "Look up any ingredient DermaSynth can suggest, what it's used for, and the studies behind it." : "Search ingredients, filter by context, and open the linked sources."}</p></div>${consumer ? "" : `<button class="ghost-button" type="button" data-action="knowledge-refresh" ${state.knowledgeStatus === "loading" ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button>`}</div>${consumer ? "" : `<section class="atlas-summary panel"><div class="atlas-summary-stat"><span>Ingredients</span><strong>${escapeHtml(String(ingredientCount || "—"))}</strong><small>incorporated records</small></div><div class="atlas-summary-stat"><span>Sources</span><strong>${escapeHtml(String(overview.sourceCount || "—"))}</strong><small>${sourceFamilies.map(([family, count]) => `${sourceFamilyLabel(family)} ${count}`).join(" · ") || "linked records"}</small></div><div class="atlas-summary-stat"><span>Index</span><strong>${liveResearchIndex.enabled ? "Live" : "Local"}</strong><small>${escapeHtml(liveResearchIndex.namespace || "metadata index")}</small></div></section>${corpusCard}`}<section class="panel atlas-controls"><div class="atlas-search"><label for="knowledge-query">Find an ingredient</label><div><input id="knowledge-query" value="${escapeHtml(state.knowledgeQuery)}" placeholder="${consumer ? "e.g. niacinamide" : "Search Atlas"}" data-action="knowledge-query" /><button type="button" class="primary-button" data-action="knowledge-search" ${state.knowledgeSearchStatus === "searching" ? "disabled" : ""}>${state.knowledgeSearchStatus === "searching" ? "Searching…" : "Search"}</button></div></div><div class="atlas-filter"><span>${consumer ? "Filter by skin concern" : "Filter by context"}</span><div>${["all", ...concernOptions.map((option) => option.id)].map((concern) => `<button type="button" data-action="knowledge-concern" data-concern="${escapeHtml(concern)}" class="filter-chip ${state.knowledgeConcern === concern ? "is-selected" : ""}" aria-pressed="${state.knowledgeConcern === concern}">${escapeHtml(consumer && concern === "all" ? "All" : concernLabelFromId(concern))}</button>`).join("")}</div></div>${statusText && (!consumer || state.knowledgeStatus === "loading" || state.knowledgeStatus === "error") ? `<p class="atlas-notice" role="status">${escapeHtml(statusText)}</p>` : ""}</section>${showRetrieval ? `<section class="panel atlas-retrieval"><div class="panel-header"><div><h3 class="panel-title">Search results</h3><p class="panel-note">${escapeHtml(String(retrieval.coverage?.uniqueIngredients ?? 0))} matches</p></div></div><div class="research-hit-grid">${retrievalCards || `<div class="evidence-empty"><strong>No source match found.</strong></div>`}</div></section>` : ""}${consumer ? "" : `<details class="atlas-explorer-details"><summary>${icon("activity", 16)} Explore ingredient relationships</summary>${ingredientRelationshipExplorer()}</details>`}<section class="atlas-grid" aria-live="polite">${cards || `<div class="panel evidence-empty"><strong>No ingredients match this view.</strong></div>`}</section>${atlasLimited ? `<div class="atlas-more"><button type="button" class="ghost-button" data-action="atlas-show-all">Show all ${filtered.length} ingredients</button></div>` : ""}`);
 }
 
 function escapeHtml(value) {
@@ -2333,6 +2370,7 @@ function navigateView(view, { source = "user", history = source === "presentatio
   if (view === "knowledge") {
     loadKnowledgeExplorer();
   }
+  if (view === "monitor" && !state.expertView) refreshWeatherOutlook();
 }
 
 function applyRoute() {
@@ -2720,6 +2758,7 @@ document.addEventListener("click", (event) => {
   if (!target) return;
   const { action } = target.dataset;
   if (action === "story-open") { openStory(); return; }
+  if (action === "atlas-show-all") { state.atlasShowAll = true; renderAnimated(); return; }
   if (action === "story-close") { closeStory(); return; }
   if (action === "story-share") { shareStory(); return; }
   if (action === "story-download") { downloadStory(); return; }
@@ -2766,7 +2805,7 @@ document.addEventListener("click", (event) => {
   if (action === "concern-choice") { if (state.runStatus === "running") return; state.concern = target.dataset.concern; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); return; }
   if (action === "simulate") { generateRoutine(); return; }
   if (action === "report-condition") { state.reportedConditions = { ...(state.reportedConditions || {}), [target.dataset.key]: target.dataset.value }; render(); return; }
-  if (action === "toggle-expert") { state.expertView = !state.expertView; saveExpertView(state.expertView); render(); showToast(state.expertView ? "Expert view on: scores, traces and the run report are shown." : "Expert view off."); return; }
+  if (action === "toggle-expert") { state.expertView = !state.expertView; saveExpertView(state.expertView); render(); if (state.activeView === "monitor" && !state.expertView) refreshWeatherOutlook(); showToast(state.expertView ? "Expert view on: scores, traces and the run report are shown." : "Expert view off."); return; }
   if (action === "toggle-why") { const key = target.dataset.key; const opening = !state.openWhy[key]; state.openWhy = { ...state.openWhy, [key]: opening }; state.whyJustOpened = opening ? key : ""; renderAnimated().then(() => { state.whyJustOpened = ""; document.querySelector(`[data-action="toggle-why"][data-key="${CSS.escape(key)}"]`)?.focus({ preventScroll: true }); }); return; }
   if (action === "submit-conditions") { generateRoutine({ reportedConditions: state.reportedConditions }); return; }
   if (action === "reason") { state.reasonOpen = !state.reasonOpen; render(); return; }
@@ -3155,6 +3194,7 @@ async function refreshEnvironment(location = state.selectedLocation, { announce 
     await refreshExplainability({ shouldRender: false });
     await refreshForecast(state.selectedLocation, { shouldRender: false });
     render();
+    if (state.activeView === "monitor" && !state.expertView) refreshWeatherOutlook();
     if (announce) showToast(`${environmentModeLabel()} refreshed for ${state.selectedLocation.name}.`);
     return true;
   } catch {
@@ -3474,5 +3514,6 @@ render();
   }
 }
 void refreshComparisonContext(state.comparison.selectedLocation, { announce: false });
+if (state.activeView === "monitor" && !state.expertView) void refreshWeatherOutlook();
 void loadKnowledgeExplorer();
 void loadCorpusSummary();

@@ -1,18 +1,23 @@
 # Browser smoke test
 
-Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, axe-core WCAG 2.1 A/AA, serious and critical only). Result: **54/54 passed**.
+Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, axe-core WCAG 2.1 A/AA, serious and critical only). Result: **59/59 passed**.
 
 | Check | Result |
 | --- | --- |
 | phone: a consumer lands on the routine page | passed |
+| phone: the simulator page is reachable from the bottom navigation | passed |
 | phone: simulator page has no sideways scroll | passed |
 | phone: simulator page has no serious accessibility violations | passed |
+| phone: the monitor page is reachable from the bottom navigation | passed |
 | phone: monitor page has no sideways scroll | passed |
 | phone: monitor page has no serious accessibility violations | passed |
-| phone: dashboard page has no sideways scroll | passed |
-| phone: dashboard page has no serious accessibility violations | passed |
+| phone: the knowledge page is reachable from the bottom navigation | passed |
 | phone: knowledge page has no sideways scroll | passed |
 | phone: knowledge page has no serious accessibility violations | passed |
+| phone: the bottom navigation is Today / Weather / Ingredients | passed |
+| phone: the Weather page is plain (no research terms) and shows today's readings | passed |
+| phone: form fields use at least 16 px text (no zoom on focus in iOS) | passed |
+| phone: buttons and fields are at least 44 px tall | passed |
 | phone: the skin question is shown in plain words before the build button | passed |
 | phone: a routine builds and every step has a reason | passed |
 | phone: "Why?" opens, closes and keeps focus | passed |

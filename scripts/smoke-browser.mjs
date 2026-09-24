@@ -125,8 +125,12 @@ for (const width of [375, 1280]) {
   await check(`${label}-landing`, `${label}: a consumer lands on the routine page`, async () => {
     expect((await page.locator("#page-title").innerText()).trim() === "Your routine", "Landing page is not the routine page.");
   });
-  for (const view of ["simulator", "monitor", "dashboard", "knowledge"]) {
+  const views = width < 500 ? ["simulator", "monitor", "knowledge"] : ["simulator", "monitor", "dashboard", "knowledge"];
+  for (const view of views) {
     await goTo(page, view);
+    if (width < 500) await check(`${label}-${view}-reached`, `${label}: the ${view} page is reachable from the bottom navigation`, async () => {
+      expect(await page.evaluate((v) => document.querySelector(`.mobile-nav [data-view="${v}"]`)?.classList.contains("is-active"), view), "Nav item not active.");
+    });
     if (view === "knowledge") await page.waitForTimeout(1200);
     await check(`${label}-${view}-layout`, `${label}: ${view} page has no sideways scroll`, async () => {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -135,6 +139,28 @@ for (const width of [375, 1280]) {
     await check(`${label}-${view}-a11y`, `${label}: ${view} page has no serious accessibility violations`, async () => {
       const violations = await axeViolations(page);
       expect(!violations.length, violations.join("; "));
+    });
+  }
+  if (width < 500) {
+    await check("phone-nav", "phone: the bottom navigation is Today / Weather / Ingredients", async () => {
+      const labels = await page.locator(".mobile-nav-item span").allInnerTexts();
+      expect(labels.join("/") === "Today/Weather/Ingredients", `Nav is ${labels.join("/")}`);
+    });
+    await goTo(page, "monitor");
+    await check("phone-weather", "phone: the Weather page is plain (no research terms) and shows today's readings", async () => {
+      await page.waitForSelector(".today-card", { timeout: 5000 });
+      const text = await page.locator(".view").innerText();
+      const leak = text.match(/not_configured|Shapley|surrogate|\bGPT\b|research context/i);
+      expect(!leak, `Found "${leak?.[0]}".`);
+    });
+    await goTo(page, "simulator");
+    await check("phone-no-zoom", "phone: form fields use at least 16 px text (no zoom on focus in iOS)", async () => {
+      const small = await page.evaluate(() => [...document.querySelectorAll("input, select, textarea")].filter((el) => el.offsetParent && parseFloat(getComputedStyle(el).fontSize) < 16).map((el) => el.id || el.className));
+      expect(!small.length, `Under 16 px: ${small.join(", ")}`);
+    });
+    await check("phone-tap-targets", "phone: buttons and fields are at least 44 px tall", async () => {
+      const small = await page.evaluate(() => [...document.querySelectorAll(".view button, .view input, .view select, .mobile-nav button, .topbar button")].filter((el) => el.offsetParent).map((el) => ({ t: (el.innerText || el.id || el.className).trim().slice(0, 24), h: el.getBoundingClientRect().height })).filter((x) => x.h < 43.5));
+      expect(!small.length, small.map((x) => `${x.t} (${Math.round(x.h)} px)`).join(", "));
     });
   }
   await goTo(page, "simulator");
