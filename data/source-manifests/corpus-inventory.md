@@ -1,6 +1,6 @@
 # Evidence corpus inventory
 
-Generated 2026-09-23 by `npm run report:corpus-inventory` from the knowledge-base database and the verified card files.
+Generated 2026-09-24 by `npm run report:corpus-inventory` from the knowledge-base database and the verified card files.
 
 ## Sources in the knowledge base
 
