@@ -1342,19 +1342,18 @@ function plainMessage(text, fallback = "This part isn't available right now.") {
 function consumerWhy(entry) {
   const gpt = state.routineContext?.ingredients?.[`${entry.phase}:${entry.categoryId}`] || null;
   const rule = entry.explanation?.consumer || {};
-  const useGpt = Boolean(gpt?.whatItIs && gpt?.whyToday && gpt?.safety);
-  const fields = useGpt ? { whatItIs: gpt.whatItIs, whyToday: gpt.whyToday, safety: gpt.safety } : { whatItIs: rule.whatItIs, whyToday: rule.whyToday, safety: rule.safety };
+  const useGpt = Boolean(gpt?.whatItIs && gpt?.whyToday);
+  const fields = useGpt ? { whatItIs: gpt.whatItIs, whyToday: gpt.whyToday } : { whatItIs: rule.whatItIs, whyToday: rule.whyToday };
   const labels = rule.labels || { names: [entry.displayName], note: null };
-  const source = Array.isArray(entry.sourceRecords) ? entry.sourceRecords[0] : null;
-  const url = safeEvidenceUrl(source?.sourceUrl);
+  const references = Array.isArray(rule.references) ? rule.references : [];
   const rows = [
-    ["What it is", fields.whatItIs],
-    ["Why today", fields.whyToday],
-    ["Is it safe?", fields.safety, url ? ` <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Read the source<span class="sr-only"> (opens in a new tab)</span></a>` : ""],
-    ["On labels", `Look for ${labels.names.map((name) => `“${name}”`).join(" or ")} in the ingredient list.${labels.note ? ` ${labels.note}` : ""}`],
-  ].filter(([, text]) => text);
+    ["What it is", escapeHtml(fields.whatItIs || "")],
+    ["Why today", escapeHtml(fields.whyToday || "")],
+    ["On labels", escapeHtml(`Look for ${labels.names.map((name) => `“${name}”`).join(" or ")} in the ingredient list.${labels.note ? ` ${labels.note}` : ""}`)],
+    ["References", references.length ? `<ol class="reference-list">${references.map((ref) => { const url = safeEvidenceUrl(ref.url); return `<li><span class="reference-type">${escapeHtml(ref.studyType)}</span> ${escapeHtml(ref.title)}. <i>${escapeHtml(ref.publisher || "")}</i>${ref.year ? ` ${escapeHtml(String(ref.year))}` : ""}.${ref.doi ? ` doi:${escapeHtml(ref.doi)}` : ref.pmid ? ` PMID: ${escapeHtml(ref.pmid)}` : ""}${url ? ` <a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">Open<span class="sr-only"> ${escapeHtml(ref.title)} (opens in a new tab)</span></a>` : ""}</li>`; }).join("")}</ol>` : ""],
+  ].filter(([, html]) => html);
   const loading = !useGpt && state.routineContext?.status === "loading";
-  return `<dl class="why-grid ${useGpt ? "is-gpt" : ""} ${useGpt && state.gptJustArrived ? "is-arriving" : ""}">${rows.map(([label, text, extra = ""]) => `<div class="why-row"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(text)}${extra}</dd></div>`).join("")}</dl><p class="why-foot">${useGpt ? `${icon("sparkles", 12)} Written by AI from DermaSynth's checked facts, then checked again against them.` : loading ? `${icon("sparkles", 12)} <span class="shimmer-text">Writing a friendlier version…</span>` : ""}</p>`;
+  return `<dl class="why-grid ${useGpt ? "is-gpt" : ""} ${useGpt && state.gptJustArrived ? "is-arriving" : ""}">${rows.map(([label, html]) => `<div class="why-row"><dt>${escapeHtml(label)}</dt><dd>${html}</dd></div>`).join("")}</dl><p class="why-foot">${useGpt ? `${icon("sparkles", 12)} Written by AI from DermaSynth's checked facts, then checked again against them.` : loading ? `${icon("sparkles", 12)} <span class="shimmer-text">Writing a friendlier version…</span>` : ""}</p>`;
 }
 
 function consumerStepItem(step, phase, entries, meta) {
@@ -1373,7 +1372,8 @@ function consumerStepItem(step, phase, entries, meta) {
 
 function consumerResult(routine, meta, running) {
   if (running) {
-    return `<section class="consumer-card is-loading" aria-live="polite" aria-busy="true"><h3>Building your routine…</h3><p>Checking today's weather, running the safety checks and choosing ingredients. This usually takes a few seconds.</p></section>`;
+    const slow = state.runSlow;
+    return `<section class="consumer-card is-loading" aria-live="polite" aria-busy="true"><h3>${slow ? "This is taking longer than usual" : "Building your routine…"}</h3><p>${slow ? "The AI is still choosing and checking. You can keep waiting, or see the standard routine now: it uses the same safety checks and rules, without the AI's choices." : "Checking today's weather, running the safety checks and choosing ingredients. This usually takes a few seconds."}</p>${slow ? `<div class="form-actions"><button class="primary-button" type="button" data-action="standard-routine">Show the standard routine now</button><span class="consumer-wait shimmer-text">Still waiting for the AI…</span></div>` : ""}</section>`;
   }
   if (!meta) {
     return `<section class="consumer-card is-ready" aria-live="polite"><h3>Your routine will appear here</h3><p>Choose your skin type and main concern, answer the skin question, then press <b>Build routine</b>.</p></section>`;
@@ -1386,7 +1386,7 @@ function consumerResult(routine, meta, running) {
   const removed = Array.isArray(meta?.ingredientCandidates?.removedBySafety) ? meta.ingredientCandidates.removedBySafety : [];
   const contextStatus = state.routineContext?.status;
   const contextNote = contextStatus === "loading"
-    ? `<p class="consumer-status" aria-live="polite">${icon("sparkles", 13)} Writing friendlier explanations…</p>`
+    ? `<p class="consumer-status" aria-live="polite">${icon("sparkles", 13)} ${state.routineContext.slow ? "Friendlier explanations are taking a while. The standard reasons are shown meanwhile, and nothing else is waiting on them." : "Writing friendlier explanations…"}</p>`
     : contextStatus === "error" ? `<p class="consumer-status">${icon("info", 13)} ${escapeHtml(plainMessage(state.routineContext.error))}</p>` : "";
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
   const reviewNote = meta.status === "cleared" ? "" : `<p class="consumer-status is-warn" role="status">${icon("info", 13)} Some checks asked for review, so treat this routine with extra care.</p>`;
@@ -2215,6 +2215,7 @@ document.addEventListener("click", (event) => {
   if (action === "select-location") { selectLocation(Number(target.dataset.locationIndex)); return; }
   if (action === "reset-location") { resetLocation(); return; }
   if (action === "use-my-location") { useMyLocation(); return; }
+  if (action === "standard-routine") { showStandardRoutineNow(); return; }
   if (action === "comparison-location-search") { searchComparisonLocations(); return; }
   if (action === "comparison-location-select") { selectComparisonLocation(Number(target.dataset.comparisonLocationIndex)); return; }
   if (action === "comparison-refresh") { refreshComparisonContext(); return; }
@@ -2718,7 +2719,21 @@ async function selectComparisonLocation(index) {
   }
 }
 
-async function generateRoutine({ reportedConditions = null } = {}) {
+// F2: the page never waits silently. After 25 s the user can keep waiting for
+// GPT or get the standard (rule-based) routine at once.
+const SLOW_ROUTINE_MS = 25_000;
+let routineAbort = null;
+
+function showStandardRoutineNow() {
+  const reportedConditions = state.lastReportedConditions || null;
+  if (routineAbort) routineAbort.abort();
+  routineAbort = null;
+  state.runStatus = "idle";
+  state.runSlow = false;
+  generateRoutine({ reportedConditions, standardRoutine: true });
+}
+
+async function generateRoutine({ reportedConditions = null, standardRoutine = false } = {}) {
   if (isLocationUpdating()) {
     showToast("Wait for the selected location's readings to finish updating.");
     return;
@@ -2731,19 +2746,37 @@ async function generateRoutine({ reportedConditions = null } = {}) {
   const requestVersion = ++state.routineRequestVersion;
   state.runStatus = "running";
   state.runStartedAt = Date.now();
+  state.runSlow = false;
+  state.lastReportedConditions = reportedConditions;
+  const controller = new AbortController();
+  routineAbort = controller;
+  const slowTimer = setTimeout(() => {
+    if (requestVersion === state.routineRequestVersion && state.runStatus === "running") { state.runSlow = true; render(); }
+  }, SLOW_ROUTINE_MS);
   render();
   try {
     const body = { profile: state.profile, concern: state.concern, location };
+    if (standardRoutine) body.standardRoutine = true;
     if (state.finishPreference) body.finishPreference = state.finishPreference;
     if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
     if (state.exposureContext) body.exposureContext = state.exposureContext;
     if (symptoms) body.symptoms = symptoms;
     if (reportedConditions) body.reportedConditions = reportedConditions;
-    const response = await fetch("/api/routine", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    // A replaced request can still hold the server's one in-flight slot for a
+    // moment after it is cancelled; retry briefly on that specific 429.
+    let response;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      response = await fetch("/api/routine", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      const retryAfter = Number(response.headers.get("retry-after"));
+      if (response.status !== 429 || !(retryAfter > 0 && retryAfter <= 3)) break;
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+    clearTimeout(slowTimer);
     if (!response.ok) { const failure = new Error("Routine API is unavailable"); failure.status = response.status; throw failure; }
     const payload = await response.json();
     if (requestVersion !== state.routineRequestVersion || locationVersion !== state.locationVersion) return;
@@ -2778,6 +2811,8 @@ async function generateRoutine({ reportedConditions = null } = {}) {
       showToast("Your routine is ready.");
     }
   } catch (failure) {
+    clearTimeout(slowTimer);
+    if (failure?.name === "AbortError") return; // replaced by the standard-routine request
     if (requestVersion !== state.routineRequestVersion || locationVersion !== state.locationVersion) return;
     state.generatedRoutine = profileRoutines[state.concern] || profileRoutines.acne;
     state.routineMeta = {
@@ -2809,6 +2844,9 @@ async function refreshRoutineContext() {
   }
   if (state.routineContext.runId === runId && ["loading", "available"].includes(state.routineContext.status)) return;
   state.routineContext = { runId, status: "loading", steps: {}, ingredients: {}, error: "", model: "" };
+  const slowContextTimer = setTimeout(() => {
+    if (state.routineContext.runId === runId && state.routineContext.status === "loading") { state.routineContext = { ...state.routineContext, slow: true }; scheduleRender(); }
+  }, SLOW_ROUTINE_MS);
   scheduleRender();
   try {
     const response = await fetch("/api/ai/routine-context", {
@@ -2829,7 +2867,9 @@ async function refreshRoutineContext() {
       model: payload.model || "",
     };
     state.gptJustArrived = true;
+    clearTimeout(slowContextTimer);
   } catch (error) {
+    clearTimeout(slowContextTimer);
     if (state.routineContext.runId !== runId) return;
     state.routineContext = { runId, status: "error", steps: {}, ingredients: {}, error: error instanceof Error ? error.message : "GPT explanations are unavailable.", model: "" };
   }

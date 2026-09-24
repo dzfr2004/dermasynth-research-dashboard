@@ -57,7 +57,8 @@
     "cue:sheet": "node scripts/generate-cue-rating-sheet.mjs",
     "eval:cue-human": "node scripts/score-cue-human.mjs",
     "test:browser": "node scripts/smoke-browser.mjs",
-    "eval:outlook": "node scripts/evaluate-outlook.mjs"
+    "eval:outlook": "node scripts/evaluate-outlook.mjs",
+    "kb:rebuild": "node scripts/kb-rebuild.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1"

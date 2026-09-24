@@ -175,6 +175,13 @@ Technical failures are shown to consumers in plain words; configuration details 
 
 `npm run test:browser` (part of `npm test`) opens the app in headless Chromium at phone and desktop widths and checks for JavaScript errors, sideways scrolling, serious accessibility violations (axe-core, WCAG 2.1 AA), the safety question, the Why? buttons, the check-up redirect and Expert view. First time only: `npm install` then `npx playwright install chromium`. Without them the test reports that it was skipped.
 
+## Reliability and deployment
+
+- **Reduced answers are visible (F1):** a routine that fell back on rules (GPT failed, the user chose the standard routine, weather was reported by the user) still returns HTTP 200 with a safe routine, but carries `degraded` in the body, an `x-dermasynth-degraded` header, a line in the selection log, and a running count in `/api/health` (`safeguards.runOutcomes`). `npm run report:selection-log` reports the share and reasons.
+- **The page never waits silently (F2):** after 25 s the loading card offers "Show the standard routine now". It cancels the slow request (the server stops making GPT calls for it) and shows the rule-based routine with the same safety checks. Explanations that take longer than 25 s say so while the standard reasons stay on screen.
+- **Single instance (F3):** see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Set `HOST=0.0.0.0` on a hosting platform.
+- **One knowledge-base command (F4):** `npm run kb:rebuild` (add `-- --upload` to write Pinecone, `-- --fresh` to reseed, `-- --plan` to list the steps).
+
 ## Consumer explanations, timing and tomorrow
 
 - **Why? panel:** each ingredient shows *What it is*, *Why today*, *Is it safe?* and *On labels*. The rule-based version is built from fixed plain-language facts (`lib/plain-language.mjs`: class definitions, the verified safety card, INCI names). With GPT on, GPT rewrites the first three fields in friendlier words using only those facts, and CUE checks the result against them; anything below the threshold falls back to the rule-based text.

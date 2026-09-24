@@ -86,6 +86,8 @@ const MAX_BODY_BYTES = 64 * 1024;
 const LOCATION_SEARCH_WINDOW_MS = 60_000;
 const LOCATION_SEARCH_MAX_PER_WINDOW = 20;
 const LOCATION_SEARCH_CLIENTS_MAX = 500;
+const INSTANCE_ID = randomUUID().slice(0, 8);
+const INSTANCE_STARTED_AT = new Date().toISOString();
 const ROUTINE_WINDOW_MS = 60_000;
 const ROUTINE_MAX_PER_WINDOW = 6;
 const ROUTINE_MAX_IN_FLIGHT_PER_CLIENT = 1;
@@ -845,7 +847,6 @@ function routineContextPayload({ concern, profile, environment, routine, entries
         // Plain-language facts for the consumer panel (lib/plain-language.mjs).
         what_it_is_plain: entry.explanation?.consumer?.whatItIs || null,
         why_today_plain: entry.explanation?.consumer?.whyToday || null,
-        safety_plain: entry.explanation?.consumer?.safety || null,
         user_concern: CONCERN_WORDS[concern] || concern,
         chosen_by: entry.selectedBy === "llm_from_rag_pool" ? "the language model, from the retrieved approved pool" : "the highest transparent candidate score",
         ewg_reference: ewg?.status === "listed" ? `EWG Skin Deep hazard score ${ewg.hazardScore} on a 1 to 10 scale (1 = lowest), ${ewg.dataAvailability} data, checked ${ewg.checkedAt || "2026-09-23"}` : "not listed on EWG Skin Deep",
@@ -1023,8 +1024,8 @@ async function routineResult({
     cue,
     explanation,
   });
-  if (selectionEnabled) {
-    await appendSelectionLog(config, selectionLogRecord({
+  // Written by handleRoutine() once the degraded status is known (F1).
+  const selectionRecord = !selectionEnabled ? null : selectionLogRecord({
       runId: requestId,
       startedAt,
       concern,
@@ -1039,9 +1040,9 @@ async function routineResult({
       llm,
       gptBudget: budgetSummary(currentGptBudget()),
       stages: stages.map((item) => ({ id: item.id, status: item.status, durationMs: item.durationMs })),
-    }));
-  }
+    });
   return {
+    __selectionLog: selectionRecord,
     mode,
     status,
     synthesisStatus,
@@ -1179,20 +1180,46 @@ function stage(id, status, startedAt, detail = {}) {
  * skipped, the rule-based path answers instead and the response says so in
  * `degraded`, so a reduced answer is never presented as a full one.
  */
-async function handleRoutine(input, requestId) {
+async function handleRoutine(input, requestId, cancel = null) {
   const gptActive = Boolean(config.liveServicesEnabled && config.openai?.apiKey);
   // The budget object is always kept (it records GPT time and calls); it only
   // limits anything when GPT_ROUTINE_BUDGET_MS is set above 0.
-  const budget = gptActive ? createGptBudget(config.openai.routineBudgetMs || Number.POSITIVE_INFINITY) : null;
-  const result = budget ? await runWithGptBudget(budget, () => handleRoutineRun(input, requestId)) : await handleRoutineRun(input, requestId);
-  return { ...result, gpt: { active: gptActive, budget: budgetSummary(budget) }, degraded: degradedStatus(result, { gptActive, budget }) };
+  // F2: "Show the standard routine now" re-requests with standardRoutine=true;
+  // every GPT step is then skipped and the rule-based path answers at once.
+  const standardRoutine = input?.standardRoutine === true;
+  const budget = gptActive ? createGptBudget(config.openai.routineBudgetMs || Number.POSITIVE_INFINITY, { disabled: standardRoutine }) : null;
+  if (cancel) cancel.budget = budget;
+  const { __selectionLog, ...result } = budget ? await runWithGptBudget(budget, () => handleRoutineRun(input, requestId)) : await handleRoutineRun(input, requestId);
+  const degraded = degradedStatus(result, { gptActive, budget });
+  recordRunOutcome(degraded);
+  // F1: the degraded status goes into the selection log with the run.
+  if (__selectionLog) await appendSelectionLog(config, { ...__selectionLog, degraded: { status: degraded.status, reasons: degraded.reasons.map((reason) => reason.id) } });
+  return { ...result, gpt: { active: gptActive, budget: budgetSummary(budget) }, degraded };
+}
+
+// F1: in-process counters, exposed in /api/health so a monitor can alert on a
+// rising share of reduced answers even though they return HTTP 200.
+const runOutcomes = { since: new Date().toISOString(), runs: 0, degraded: 0, reasons: {}, recent: [] };
+function recordRunOutcome(degraded) {
+  runOutcomes.runs += 1;
+  const isDegraded = degraded.status === "degraded";
+  if (isDegraded) runOutcomes.degraded += 1;
+  for (const reason of degraded.reasons) runOutcomes.reasons[reason.id] = (runOutcomes.reasons[reason.id] || 0) + 1;
+  runOutcomes.recent.push(isDegraded ? 1 : 0);
+  if (runOutcomes.recent.length > 50) runOutcomes.recent.shift();
+}
+function runOutcomeSummary() {
+  const recent = runOutcomes.recent;
+  return { since: runOutcomes.since, runs: runOutcomes.runs, degraded: runOutcomes.degraded, degradedShareLast50: recent.length ? Math.round((recent.reduce((a, b) => a + b, 0) / recent.length) * 1000) / 1000 : null, reasons: runOutcomes.reasons };
 }
 
 function degradedStatus(result, { gptActive, budget }) {
   const stages = result?.trace?.stages || [];
   const find = (name) => stages.find((item) => item.id === name) || null;
   const reasons = [];
-  if (gptActive) {
+  if (gptActive && budget?.disabled) {
+    reasons.push({ id: "standard_routine_chosen", text: "You asked for the standard routine, so the AI steps were skipped. The rule-based symptom check and all safety checks still ran." });
+  } else if (gptActive) {
     if (budget?.exhausted) reasons.push({ id: "gpt_time_budget", text: `GPT used its ${Math.round(budget.totalMs / 1000)}-second budget, so the remaining GPT steps were skipped.` });
     const triage = find("triage");
     if (triage?.secondOpinion === "failed") reasons.push({ id: "ai_symptom_check_failed", text: "The AI second symptom check did not complete; the rule-based symptom check still ran." });
@@ -1500,6 +1527,10 @@ async function routeApi(request, response, url, requestId) {
         postSelectionSafetyPass: true,
         selectionLog: Boolean(config.selectionLog.enabled),
         gptBudgetMs: { routine: config.openai.routineBudgetMs || "off", explanations: config.openai.contextBudgetMs || "off" },
+        runOutcomes: runOutcomeSummary(),
+        // F3: identifies the process, so two different ids behind one URL
+        // reveal an accidental multi-instance deployment.
+        instance: { id: INSTANCE_ID, startedAt: INSTANCE_STARTED_AT, inMemoryState: ["rate limits", "weather and forecast caches", "GPT explanation cache", "model fallback memory", "run counters"] },
       },
       requestId,
     }, requestId);
@@ -1824,9 +1855,20 @@ async function routeApi(request, response, url, requestId) {
   if (request.method === "POST" && url.pathname === "/api/routine") {
     const input = await readJson(request);
     const release = acquireRoutineBudget(request);
+    // F2: if the browser gives up (the user chose the standard routine), stop
+    // making GPT calls for this request and free the client's in-flight slot.
+    const cancel = { budget: null };
+    response.on("close", () => {
+      if (response.writableFinished) return;
+      if (cancel.budget) cancel.budget.disabled = true;
+      release();
+    });
     try {
-      const result = await handleRoutine(input, requestId);
-      return sendJson(response, 200, { ...result, requestId }, requestId);
+      const result = await handleRoutine(input, requestId, cancel);
+      // F1: reduced answers stay HTTP 200 (the user still gets a safe routine)
+      // but are visible to monitoring through this header and /api/health.
+      const degradedHeader = result.degraded?.status === "degraded" ? { "x-dermasynth-degraded": result.degraded.reasons.map((reason) => reason.id).join(",") || "yes" } : {};
+      return sendJson(response, 200, { ...result, requestId }, requestId, degradedHeader);
     } finally {
       release();
     }
@@ -1941,6 +1983,12 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => {
-  console.log(`DermaSynth server listening on http://127.0.0.1:${PORT} (${config.liveServicesEnabled ? "live services enabled" : "demo mode"})`);
+// HOST stays 127.0.0.1 for local use; a hosting platform sets HOST=0.0.0.0.
+const HOST = process.env.HOST || "127.0.0.1";
+server.listen(PORT, HOST, () => {
+  console.log(`DermaSynth server listening on http://${HOST}:${PORT} (${config.liveServicesEnabled ? "live services enabled" : "demo mode"})`);
+  // F3: caches, rate limits, the GPT explanation cache and run counters live in
+  // this process, so the app must run as ONE instance (docs/DEPLOYMENT.md).
+  const workers = Number(process.env.WEB_CONCURRENCY || process.env.INSTANCE_COUNT || 1);
+  if (workers > 1) console.warn(`Warning: ${workers} instances requested. DermaSynth keeps rate limits, caches and the explanation cache in memory; run a single instance (see docs/DEPLOYMENT.md).`);
 });

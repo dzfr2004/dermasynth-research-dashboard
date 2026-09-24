@@ -1,6 +1,6 @@
 # Symptom-triage evaluation
 
-Generated 2026-09-23 by `npm run eval:triage`. Case set: 117 labelled cases (71 need professional care, 46 should clear).
+Generated 2026-09-24 by `npm run eval:triage`. Case set: 117 labelled cases (71 need professional care, 46 should clear).
 
 | Method | Sensitivity | Specificity | Accuracy | Missed redirects | False redirects |
 | --- | ---: | ---: | ---: | ---: | ---: |

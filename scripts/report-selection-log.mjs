@@ -123,6 +123,11 @@ const summary = {
     methods: Object.fromEntries([...new Set(cueRuns.map((run) => run.cue.method))].map((m) => [m, cueRuns.filter((run) => run.cue.method === m).length])),
   },
   latencyMs: { median: quantile(latencies, 0.5), p90: quantile(latencies, 0.9) },
+  degraded: {
+    runsWithStatus: runs.filter((run) => run.degraded).length,
+    degraded: runs.filter((run) => run.degraded?.status === "degraded").length,
+    reasons: runs.reduce((acc, run) => { for (const reason of run.degraded?.reasons || []) acc[reason] = (acc[reason] || 0) + 1; return acc; }, {}),
+  },
   gptBudget: {
     runsWithBudget: runs.filter((run) => run.gptBudget).length,
     exhausted: runs.filter((run) => run.gptBudget?.exhausted).length,
@@ -185,6 +190,10 @@ const md = [
   `Runs with a CUE score: ${cueRuns.length}. Passed first time: ${summary.cue.passedFirstTime}; passed after one regeneration: ${summary.cue.passedAfterRegeneration}; withheld: ${summary.cue.withheld}. Mean CUE: ${f3(summary.cue.meanScore)}. Methods: ${Object.entries(summary.cue.methods).map(([k, v]) => `${k} ${v}`).join(", ") || "n/a"}.`,
   "",
   `Latency (whole routine request): median ${summary.latencyMs.median ?? "n/a"} ms, 90th percentile ${summary.latencyMs.p90 ?? "n/a"} ms. GPT time budget used up in ${summary.gptBudget.exhausted} of ${summary.gptBudget.runsWithBudget} runs (median GPT time ${summary.gptBudget.medianUsedMs ?? "n/a"} ms).`,
+  "",
+  "## Reduced (degraded) runs",
+  "",
+  `${summary.degraded.degraded} of ${summary.degraded.runsWithStatus} runs with a recorded status were reduced (${pct(summary.degraded.degraded, summary.degraded.runsWithStatus)}). Reasons: ${Object.entries(summary.degraded.reasons).map(([k, v]) => `${k.replaceAll("_", " ")} ${v}`).join(", ") || "none"}. These runs still returned a safe, rule-based routine (HTTP 200) and carried the x-dermasynth-degraded header.`,
   "",
   "## GPT explanations for steps and ingredients (context log)",
   "",

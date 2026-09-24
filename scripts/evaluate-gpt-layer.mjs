@@ -129,15 +129,15 @@ await test("gpt-05", "Every routine step has a rule-based reason without GPT", a
   }
 });
 
-await test("gpt-06", "Ingredient explanations come back as what it is / why today / safety, grounded in the plain facts", async () => {
+await test("gpt-06", "Ingredient explanations come back as what it is / why today, grounded in the plain facts", async () => {
   behaviour = {};
   seen.length = 0;
   const entries = [{ key: "am:comfort-hydration", name: "Glycerin", phase: "am", stepTitle: "Comfort hydration", stepRule: "Humidity is low.", facts: { functional_class: "Humectant", what_it_is_plain: "A humectant: an ingredient that attracts water.", why_today_plain: "A richer texture today because of dry air.", safety_plain: "An independent US expert panel concluded it is safe as used in cosmetics." } }];
   const result = await composeRoutineContext({ config, concernLabel: "Dryness", profile: "dry", environment: { readings: { humidity: 40 } }, steps: [], entries });
   const item = result.ingredients["am:comfort-hydration"];
-  expect(item && item.whatItIs && item.whyToday && item.safety, "Missing one of the three fields.");
+  expect(item && item.whatItIs && item.whyToday && !("safety" in item), "Expected what it is and why today only.");
   const sent = seen.find((s) => s.name === "routine_context").input.ingredients[0];
-  expect(sent.what_it_is_plain && sent.why_today_plain && sent.safety_plain, "Plain facts were not sent to the model.");
+  expect(sent.what_it_is_plain && sent.why_today_plain, "Plain facts were not sent to the model.");
 });
 
 server.close();

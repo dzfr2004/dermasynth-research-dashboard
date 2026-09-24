@@ -165,12 +165,13 @@ for (const width of [375, 1280]) {
     await page.waitForTimeout(300);
     expect(await page.locator('[data-action="toggle-why"]').first().getAttribute("aria-expanded") === "false", "Did not close.");
   });
-  await check(`${label}-why-panel`, `${label}: the Why? panel explains what it is, why today, safety and label names`, async () => {
+  await check(`${label}-why-panel`, `${label}: the Why? panel explains what it is, why today, label names and references`, async () => {
     const button = page.locator('[data-action="toggle-why"]').first();
     await button.click();
     await page.waitForTimeout(500);
     const labels = await page.locator(".consumer-why:not([hidden]) .why-row dt").allInnerTexts();
-    expect(["What it is", "Why today", "Is it safe?", "On labels"].every((l) => labels.includes(l)), `Rows: ${labels.join(", ")}`);
+    expect(["What it is", "Why today", "On labels", "References"].every((l) => labels.includes(l)), `Rows: ${labels.join(", ")}`);
+    expect(await page.locator(".consumer-why:not([hidden]) .reference-list li").count() >= 1, "No journal-style reference shown.");
     const text = await page.locator(".consumer-why:not([hidden])").innerText();
     expect(!/picked from|approved ingredients|score|rank|retriev/i.test(text), "System wording in the Why? panel.");
     await page.locator('[data-action="toggle-why"]').first().click();
