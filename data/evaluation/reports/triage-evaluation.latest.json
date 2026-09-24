@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-09-23T16:32:35.086Z",
-  "cases": 117,
+  "generatedAt": "2026-09-24T17:43:25.587Z",
+  "cases": 148,
   "summary": {
     "v1_keyword_baseline": {
-      "tp": 16,
-      "fn": 55,
-      "tn": 41,
+      "tp": 19,
+      "fn": 67,
+      "tn": 57,
       "fp": 5,
-      "sensitivity": 0.22535211267605634,
-      "specificity": 0.8913043478260869,
-      "accuracy": 0.48717948717948717,
+      "sensitivity": 0.22093023255813954,
+      "specificity": 0.9193548387096774,
+      "accuracy": 0.5135135135135135,
       "byCategory": {
         "direct": {
           "total": 13,
@@ -32,12 +32,16 @@
           "correct": 4
         },
         "cosmetic": {
-          "total": 23,
-          "correct": 23
+          "total": 24,
+          "correct": 24
         },
         "held-out": {
           "total": 40,
           "correct": 16
+        },
+        "fresh": {
+          "total": 30,
+          "correct": 18
         }
       },
       "misses": [
@@ -460,13 +464,97 @@
           "expected": "clear",
           "got": "redirect",
           "text": "no blisters or pus, only blackheads"
+        },
+        {
+          "id": "tri-f001",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "my cheek got really puffy and hot an hour after the new serum"
+        },
+        {
+          "id": "tri-f003",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "skin on my arm is peeling off in sheets and I feel feverish"
+        },
+        {
+          "id": "tri-f004",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "a mole on my back changed colour and got bigger"
+        },
+        {
+          "id": "tri-f005",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "my tongue feels thick and swallowing is hard after using the mask"
+        },
+        {
+          "id": "tri-f006",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "burn from a chemical peel is oozing yellow stuff"
+        },
+        {
+          "id": "tri-f007",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "red streak spreading up from a pimple on my leg"
+        },
+        {
+          "id": "tri-f009",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "eyelids swelled up so much i can barely open my eyes"
+        },
+        {
+          "id": "tri-f011",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "huge painful lumps under the skin on my jaw that leave scars"
+        },
+        {
+          "id": "tri-f012",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "rash all over my body after starting new antibiotics"
+        },
+        {
+          "id": "tri-f013",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "patch of skin went numb and pale after the sunburn"
+        },
+        {
+          "id": "tri-f014",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "face has been hot, red and swollen for three days and its getting worse"
+        },
+        {
+          "id": "tri-f015",
+          "category": "fresh",
+          "expected": "redirect",
+          "got": "clear",
+          "text": "hives came up and my throat feels tight"
         }
       ]
     },
     "v2_rules": {
-      "tp": 71,
+      "tp": 86,
       "fn": 0,
-      "tn": 46,
+      "tn": 62,
       "fp": 0,
       "sensitivity": 1,
       "specificity": 1,
@@ -493,12 +581,16 @@
           "correct": 8
         },
         "cosmetic": {
-          "total": 23,
-          "correct": 23
+          "total": 24,
+          "correct": 24
         },
         "held-out": {
           "total": 40,
           "correct": 40
+        },
+        "fresh": {
+          "total": 30,
+          "correct": 30
         }
       },
       "misses": []

@@ -1575,3 +1575,10 @@ textarea:focus-visible {
 @media (max-width: 700px) {
   select, .field select, input[type="search"], input[type="text"] { min-height: 44px; height: 44px; }
 }
+
+/* Routine placeholder: sized to its content, not the form's height */
+.simulator-grid { align-items: start; }
+.sim-result { align-content: start; }
+.ready-list { display: grid; gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+.ready-list li { display: flex; align-items: center; gap: 8px; padding: 9px 12px; color: #33504a; border-radius: 12px; background: var(--surface-soft); font-size: 0.86rem; }
+.ready-list svg { flex: 0 0 auto; color: var(--accent); }

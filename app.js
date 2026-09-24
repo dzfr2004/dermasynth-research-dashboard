@@ -2067,7 +2067,7 @@ function consumerResult(routine, meta, running) {
     return `<section class="consumer-card is-loading" aria-live="polite" aria-busy="true"><h3>${slow ? "This is taking longer than usual" : "Building your routine…"}</h3><p>${slow ? "The AI is still choosing and checking. You can keep waiting, or see the standard routine now: it uses the same safety checks and rules, without the AI's choices." : "Checking today's weather, running the safety checks and choosing ingredients. This usually takes a few seconds."}</p>${slow ? `<div class="form-actions"><button class="primary-button" type="button" data-action="standard-routine">Show the standard routine now</button><span class="consumer-wait shimmer-text">Still waiting for the AI…</span></div>` : ""}</section>`;
   }
   if (!meta) {
-    return `<section class="consumer-card is-ready" aria-live="polite"><h3>Your routine will appear here</h3><p>Choose your skin type and main concern, answer the skin question, then press <b>Build routine</b>.</p></section>`;
+    return `<section class="consumer-card is-ready" aria-live="polite"><h3>Your routine will appear here</h3><p>Choose your skin type and main concern, answer the skin question, then press <b>Build routine</b>.</p><ul class="ready-list"><li>${icon("sun", 15)} A morning and evening routine for today's weather</li><li>${icon("sparkles", 15)} The ingredient to look for in each step, and why</li><li>${icon("layers", 15)} A check for products you already own</li></ul></section>`;
   }
   if (meta.mode === "local") {
     const busy = meta.errorKind === "busy";

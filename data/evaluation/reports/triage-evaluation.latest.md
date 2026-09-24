@@ -1,10 +1,10 @@
 # Symptom-triage evaluation
 
-Generated 2026-09-24 by `npm run eval:triage`. Case set: 117 labelled cases (71 need professional care, 46 should clear).
+Generated 2026-09-24 by `npm run eval:triage`. Case set: 148 labelled cases (86 need professional care, 62 should clear).
 
 | Method | Sensitivity | Specificity | Accuracy | Missed redirects | False redirects |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| v1_keyword_baseline | 22.5% | 89.1% | 48.7% | 55 | 5 |
+| v1_keyword_baseline | 22.1% | 91.9% | 51.4% | 67 | 5 |
 | v2_rules | 100.0% | 100.0% | 100.0% | 0 | 0 |
 
 ## Accuracy by case type
@@ -16,8 +16,9 @@ Generated 2026-09-24 by `npm run eval:triage`. Case set: 117 labelled cases (71 
 | typo | 0/8 | 8/8 |
 | mixed | 2/4 | 4/4 |
 | negation | 4/8 | 8/8 |
-| cosmetic | 23/23 | 23/23 |
+| cosmetic | 24/24 | 24/24 |
 | held-out | 16/40 | 40/40 |
+| fresh | 18/30 | 30/30 |
 
 ## Errors
 
@@ -83,6 +84,18 @@ Generated 2026-09-24 by `npm run eval:triage`. Case set: 117 labelled cases (71 
 - tri-h023 (held-out, expected redirect, got clear): "the rash keeps getting worse despite stopping everything"
 - tri-h025 (held-out, expected redirect, got clear): "stinging and redness right after applying vitamin c serum"
 - tri-h027 (held-out, expected clear, got redirect): "no blisters or pus, only blackheads"
+- tri-f001 (fresh, expected redirect, got clear): "my cheek got really puffy and hot an hour after the new serum"
+- tri-f003 (fresh, expected redirect, got clear): "skin on my arm is peeling off in sheets and I feel feverish"
+- tri-f004 (fresh, expected redirect, got clear): "a mole on my back changed colour and got bigger"
+- tri-f005 (fresh, expected redirect, got clear): "my tongue feels thick and swallowing is hard after using the mask"
+- tri-f006 (fresh, expected redirect, got clear): "burn from a chemical peel is oozing yellow stuff"
+- tri-f007 (fresh, expected redirect, got clear): "red streak spreading up from a pimple on my leg"
+- tri-f009 (fresh, expected redirect, got clear): "eyelids swelled up so much i can barely open my eyes"
+- tri-f011 (fresh, expected redirect, got clear): "huge painful lumps under the skin on my jaw that leave scars"
+- tri-f012 (fresh, expected redirect, got clear): "rash all over my body after starting new antibiotics"
+- tri-f013 (fresh, expected redirect, got clear): "patch of skin went numb and pale after the sunburn"
+- tri-f014 (fresh, expected redirect, got clear): "face has been hot, red and swollen for three days and its getting worse"
+- tri-f015 (fresh, expected redirect, got clear): "hives came up and my throat feels tight"
 
 **v2_rules**: none
 

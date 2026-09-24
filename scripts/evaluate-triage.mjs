@@ -20,7 +20,8 @@ import { LEGACY_MEDICAL_REDIRECT_PATTERN, triageRoutineRequest } from "../lib/sa
 const useLlm = process.argv.includes("--llm");
 const fixture = JSON.parse(await readFile(new URL("../data/evaluation/fixtures/triage-cases.v1.json", import.meta.url), "utf8"));
 const heldOut = JSON.parse(await readFile(new URL("../data/evaluation/fixtures/triage-cases.heldout.v1.json", import.meta.url), "utf8"));
-const cases = [...fixture.cases, ...heldOut.cases];
+const fresh = JSON.parse(await readFile(new URL("../data/evaluation/fixtures/triage-cases.fresh.v1.json", import.meta.url), "utf8"));
+const cases = [...fixture.cases, ...heldOut.cases, ...fresh.cases];
 
 const methods = {
   v1_keyword_baseline: async (text) => (text && LEGACY_MEDICAL_REDIRECT_PATTERN.test(text) ? "redirect" : "clear"),
