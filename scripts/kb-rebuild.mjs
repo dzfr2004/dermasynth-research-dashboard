@@ -14,8 +14,9 @@ import { createConfig, loadDotEnv } from "../lib/config.mjs";
  *   3. apply the September 2026 knowledge-base update (idempotent);
  *   4. verify the database and the knowledge base offline;
  *   5. regenerate the corpus inventory;
- *   6. Pinecone: publish approved records, the Atlas research namespace, the
- *      verified CIR/regulatory cards, and the ingredient evidence documents.
+ *   6. Pinecone: publish approved records, the Atlas research namespace and
+ *      the ingredient evidence documents; the verified CIR/regulatory cards are
+ *      validated locally (the app reads them from disk, not from Pinecone).
  *      Dry runs unless --upload is passed; with --upload it ends with
  *      verify:index.
  * It stops at the first failing step.
@@ -63,7 +64,11 @@ const steps = [
   { name: "Regenerate the corpus inventory", script: "corpus-inventory.mjs" },
   { name: `Publish approved records to Pinecone (${upload ? "upload" : "dry run"})`, script: "publish-approved-ingredient-db.mjs", args: [upload ? "--upload" : "--dry-run"] },
   { name: `Atlas research namespace (${upload ? "upload" : "dry run"})`, script: "sync-atlas-research.mjs", args: upload ? ["--upload"] : [], needsPinecone: true },
-  { name: `Verified CIR and regulatory cards, ${verifiedCards.length} files (${upload ? "upload" : "dry run"})`, script: "ingest-evidence.mjs", args: [...verifiedCards.flatMap((file) => ["--file", file]), ...(upload ? ["--research-upload", "--namespace", "demo-cir-ewg-safety-v1"] : [])] },
+  // Validation only, even with --upload: the app reads these cards from the
+  // local files (Why? panel, safety summaries), and no runtime code queries a
+  // Pinecone namespace for them. Their labels also do not meet the research-
+  // upload contract in ingest-evidence.mjs, which is deliberately strict.
+  { name: `Validate the verified CIR and regulatory cards, ${verifiedCards.length} files (local only; not uploaded)`, script: "ingest-evidence.mjs", args: verifiedCards.flatMap((file) => ["--file", file]) },
   { name: `Ingredient evidence documents for the candidate retriever (${upload ? "upload" : "dry run"})`, script: "sync-ingredient-evidence-pinecone.mjs", args: upload ? ["--upload"] : [] },
   ...(upload ? [{ name: "Verify the Pinecone index", script: "verify-pinecone.mjs" }] : []),
 ];

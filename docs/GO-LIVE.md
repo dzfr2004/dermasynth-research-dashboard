@@ -47,7 +47,9 @@ npm run verify:ingredient-db  # offline lifecycle test
 ```sh
 npm run db:publish-atlas -- --upload           # publishes approved ingredient/source metadata
 npm run sync:atlas-pinecone -- --upload        # Atlas research namespace
-# CIR/EWG factual cards → research namespace (isolated demo- namespace):
+# CIR/EWG factual cards: validate only (the app reads them from the local
+# files; no runtime code queries a Pinecone namespace for them, and their
+# labels do not meet the strict --research-upload contract):
 npm run ingest:evidence -- \
   --file data/evidence/cir-ewg/cir-factual-context.verified.batch1.v1.jsonl \
   --file data/evidence/cir-ewg/cir-factual-context.verified.batch2.v1.jsonl \
@@ -55,8 +57,7 @@ npm run ingest:evidence -- \
   --file data/evidence/cir-ewg/cir-factual-context.verified.batch4.v1.jsonl \
   --file data/evidence/cir-ewg/cir-factual-context.verified.batch5.v1.jsonl \
   --file data/evidence/cir-ewg/regulatory-factual-context.verified.batch6.v1.jsonl \
-  --file data/evidence/cir-ewg/factual-context.verified.batch7.v1.jsonl \
-  --research-upload --namespace demo-cir-ewg-safety-v1
+  --file data/evidence/cir-ewg/factual-context.verified.batch7.v1.jsonl
 # Candidate-pool retrieval uses its own namespace of ingredient evidence documents:
 npm run sync:evidence-pinecone -- --upload
 ```
