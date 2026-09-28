@@ -77,7 +77,7 @@ const env = { STUDY_DB_PATH: join(dir, "study.sqlite"), STUDY_CASES_PATH: join(d
   child.kill();
 }
 
-const { child, base } = await startServer({ ...env, STUDY_ADMIN_TOKEN: TOKEN });
+const { child, base } = await startServer({ ...env, STUDY_ADMIN_TOKEN: TOKEN, STUDY_MODE: "on" });
 const post = (path, body, token) => fetch(`${base}${path}`, { method: "POST", headers: { "content-type": "application/json", ...(token ? { "x-study-token": token } : {}) }, body: JSON.stringify(body) });
 const get = (path, token) => fetch(`${base}${path}`, { headers: token ? { "x-study-token": token } : {} });
 const consent = (name, extra = {}) => ({ readInfo: true, adult: true, prototype: true, agree: true, name, signature: name, date: "2026-10-01", ...extra });
@@ -229,9 +229,9 @@ try {
       const wide = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
       expect(!wide, `sideways scroll on ${where}`);
     };
-    const axe = async (where) => {
-      await page.addScriptTag({ content: axeSource });
-      const found = await page.evaluate(async () => (await window.axe.run(document, { runOnly: ["wcag2a", "wcag2aa"] })).violations.filter((v) => ["serious", "critical"].includes(v.impact)).map((v) => v.id));
+    const axe = async (where, target = page) => {
+      await target.addScriptTag({ content: axeSource });
+      const found = await target.evaluate(async () => (await window.axe.run(document, { runOnly: ["wcag2a", "wcag2aa"] })).violations.filter((v) => ["serious", "critical"].includes(v.impact)).map((v) => v.id));
       expect(found.length === 0, `${where}: ${found.join(", ")}`);
     };
     await check("Phone: home, consent and questionnaire pages fit and pass accessibility", async () => {
@@ -277,6 +277,20 @@ try {
       expect(text.includes("62.5") && !text.includes("Dee Test Dee"), "summary missing mean");
       await axe("admin results");
     });
+    await check("Phone: with STUDY_MODE on, opening the app shows an invitation that leads to consent; ?study goes straight there", async () => {
+      const g = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, bypassCSP: true });
+      const q = await g.newPage();
+      q.on("pageerror", (e) => errors.push(`invite: ${e.message}`));
+      await q.goto(`${base}/`);
+      await q.waitForSelector("#study-guide >> text=Take part", { timeout: 8000 });
+      await axe("app with invitation", q);
+      await q.click("#study-guide >> text=Not now");
+      expect(!(await q.isVisible("#study-guide")), "invitation not dismissed");
+      await q.goto(`${base}/?study`);
+      await q.waitForSelector("form >> text=Consent", { timeout: 8000 });
+      expect(q.url().endsWith("/study#consent"), `went to ${q.url()}`);
+      await g.close();
+    });
     await check("Phone: guided mode walks a participant through all 7 tasks and saves each result", async () => {
       const g = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, bypassCSP: true, acceptDownloads: true });
       const q = await g.newPage();
@@ -292,7 +306,7 @@ try {
       await card.waitFor({ timeout: 8000 });
       const step = async (n) => q.waitForFunction((t) => document.querySelector("#study-guide")?.textContent.includes(t), `Task ${n} of 7`, { timeout: 12000 });
       await step(1);
-      await axe("app with task card");
+      await axe("app with task card", q);
       // 1 build a routine
       await q.locator('[data-action="simulate"]').first().click();
       await step(2);

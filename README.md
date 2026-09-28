@@ -150,7 +150,7 @@ The retrieval pack contains 30 source-discovery queries over the local registry 
 
 The user test runs inside DermaSynth, so participants use one link on their phone.
 
-1. Add a private researcher token (16 or more characters) to `.env`: `STUDY_ADMIN_TOKEN=...`, then restart with `npm start` (or `HOST=0.0.0.0 npm start` for phones on your hotspot).
+1. Add a private researcher token (16 or more characters) to `.env`: `STUDY_ADMIN_TOKEN=...`, and `STUDY_MODE=on` for session days, then restart with `npm start` (or `HOST=0.0.0.0 npm start` for phones on your hotspot). With `STUDY_MODE=on`, anyone opening the app sees a "Take part" invitation card; a link ending in `/?study` goes straight to consent even when it is off.
 2. Participants open `http://<laptop-ip>:4173/study`, tap **Take part**, give consent and get a code (P01, P02...). The code is remembered on their phone.
    - **Guided mode (default):** they tap **Start the tasks**. The app opens with a task card at the bottom that shows one task at a time, notices when it is done (routine built, Why? opened, product checked, story saved, redirect shown), times it and saves it. The sun and tomorrow tasks ask for a short typed answer, checked against what the app showed. "I'm stuck" gives a hint (recorded as *with help*), then "Skip" (recorded as *failed*). After the last task it opens the questionnaire. You can review or correct any result on the researcher page.
    - **Moderated mode:** if you read the tasks yourself, they use "open DermaSynth without the task card" and you record the tasks as in step 3.

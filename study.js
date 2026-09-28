@@ -255,6 +255,7 @@ function questionnaireView() {
         askedChatbot: yn("askedChatbot"), multiDay: yn("multiDay"), daysUsed: f.get("daysUsed") ? Number(f.get("daysUsed")) : null,
         sus: sus.values, items: items.values, mostUseful: f.get("mostUseful"), confusing: f.get("confusing"),
       } });
+      try { const g = JSON.parse(store.get("localStorage", "study.guide") || "null"); if (g) store.set("localStorage", "study.guide", JSON.stringify({ ...g, active: false, finished: true })); } catch { /* ignore */ }
       render(
         h("h1", { text: "All done, thank you!" }),
         h("div", { class: "card" },

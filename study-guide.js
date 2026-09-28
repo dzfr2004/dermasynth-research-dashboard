@@ -1,6 +1,8 @@
-// Guided study mode. Does nothing unless a participant started the tasks from
-// /study (which stores their code and key in this browser). Shows one task at a
-// time in a small card, detects when it is done, times it, and saves the result.
+// Guided study mode. Shows one task at a time in a small card, detects when it
+// is done, times it, and saves the result. It runs once a participant has
+// started the tasks from /study. Before that, when the server runs with
+// STUDY_MODE=on (or the link has ?study), the app shows an invitation card that
+// leads to consent. Otherwise it does nothing.
 
 const KEY = "study.guide";
 const QUEUE = "study.guide.queue";
@@ -9,6 +11,40 @@ const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } ca
 
 let guide = read(KEY);
 if (guide?.active && guide.code && guide.key) start();
+else if (!guide) invite();
+
+async function invite() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("study")) { window.location.replace("/study#consent"); return; }
+  let dismissed = false;
+  try { dismissed = sessionStorage.getItem("study.invite.dismissed") === "1"; } catch { /* storage unavailable */ }
+  if (dismissed) return;
+  let config;
+  try { config = await (await fetch("/api/study/config")).json(); } catch { return; }
+  if (!config?.studyMode) return;
+  injectStyles();
+  const card = document.createElement("section");
+  card.id = "study-guide";
+  card.setAttribute("aria-label", "User study");
+  const title = document.createElement("p"); title.className = "sg-step"; title.textContent = "User study";
+  const text = document.createElement("p"); text.className = "sg-text"; text.textContent = `Help test DermaSynth: ${config.tasks?.length || 7} short tasks on your phone, then a short questionnaire (about 20 minutes).`;
+  const go = document.createElement("a"); go.className = "sg-primary"; go.href = "/study#consent"; go.textContent = "Take part";
+  const no = document.createElement("button"); no.type = "button"; no.className = "sg-secondary"; no.textContent = "Not now";
+  no.addEventListener("click", () => { try { sessionStorage.setItem("study.invite.dismissed", "1"); } catch { /* ignore */ } card.remove(); document.body.classList.remove("has-study-guide"); });
+  const actions = document.createElement("div"); actions.className = "sg-actions"; actions.append(go, no);
+  card.append(title, text, actions);
+  document.body.append(card);
+  document.body.classList.add("has-study-guide");
+  const place = () => {
+    const nav = document.querySelector(".mobile-nav");
+    const box = nav ? nav.getBoundingClientRect() : null;
+    const navH = box && box.height > 0 && getComputedStyle(nav).display !== "none" ? window.innerHeight - box.top : 0;
+    card.style.bottom = `${Math.round(navH + 10)}px`;
+    document.documentElement.style.setProperty("--study-guide-h", `${card.offsetHeight || 0}px`);
+  };
+  place();
+  const timer = setInterval(() => { if (!card.isConnected) clearInterval(timer); else place(); }, 800);
+}
 
 async function start() {
   let tasks;
