@@ -152,6 +152,8 @@ The user test runs inside DermaSynth, so participants use one link on their phon
 
 1. Add a private researcher token (16 or more characters) to `.env`: `STUDY_ADMIN_TOKEN=...`, then restart with `npm start` (or `HOST=0.0.0.0 npm start` for phones on your hotspot).
 2. Participants open `http://<laptop-ip>:4173/study`, tap **Take part**, give consent and get a code (P01, P02...). The code is remembered on their phone.
+   - **Guided mode (default):** they tap **Start the tasks**. The app opens with a task card at the bottom that shows one task at a time, notices when it is done (routine built, Why? opened, product checked, story saved, redirect shown), times it and saves it. The sun and tomorrow tasks ask for a short typed answer, checked against what the app showed. "I'm stuck" gives a hint (recorded as *with help*), then "Skip" (recorded as *failed*). After the last task it opens the questionnaire. You can review or correct any result on the researcher page.
+   - **Moderated mode:** if you read the tasks yourself, they use "open DermaSynth without the task card" and you record the tasks as in step 3.
 3. You open `/study#admin` on your laptop, enter the token, choose their code and record each of the 7 tasks (Start, then Success / With help / Failed / Skipped). Time is saved automatically.
 4. After the tasks they open **Questionnaire**: profile, the 10 SUS statements, 7 DermaSynth statements and two comments.
 5. **Results** shows the SUS mean, SD, median, range and adjective against the average of 68, task completion and median times, per-statement medians and agreement, comments and the names of people who agreed to be thanked. Export the questionnaire and task CSVs for the dissertation (codes only, no names).

@@ -29,7 +29,7 @@ const results = [];
 const expect = (cond, message) => { if (!cond) throw new Error(message); };
 async function check(title, fn) {
   try { await fn(); results.push({ title, ok: true }); }
-  catch (error) { results.push({ title, ok: false, detail: String(error?.message || error).split("\n")[0] }); }
+  catch (error) { results.push({ title, ok: false, detail: String(error?.message || error).split("\n").slice(0, process.env.VERBOSE ? 12 : 1).join(" | ") }); }
 }
 
 // ---- pure scoring ----
@@ -51,7 +51,7 @@ async function startServer(extraEnv) {
   const port = await reservePort();
   const child = spawn(process.execPath, ["server.mjs"], {
     cwd: root,
-    env: { PATH: process.env.PATH || "", PORT: String(port), LIVE_SERVICES_ENABLED: "false", OPENAI_API_KEY: "", OPENWEATHER_API_KEY: "", IQAIR_API_KEY: "", PINECONE_API_KEY: "", ...extraEnv },
+    env: { PATH: process.env.PATH || "", PORT: String(port), LIVE_SERVICES_ENABLED: "false", INGREDIENT_DB_ENABLED: "true", INGREDIENT_SELECTION_ENABLED: "true", SELECTION_LOG_ENABLED: "false", FEEDBACK_LOG_PATH: "tmp/study-site-feedback.jsonl", OPENAI_API_KEY: "", OPENWEATHER_API_KEY: "", IQAIR_API_KEY: "", PINECONE_API_KEY: "", ...extraEnv },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let out = "";
@@ -110,6 +110,18 @@ try {
       codes.push((await res.json()).code);
     }
     expect(codes.join() === "P01,P02", `got ${codes}`);
+  });
+  await check("A participant's phone can save its own task only with its key", async () => {
+    const res = await post("/api/study/consent", consent("Key Test"));
+    const { code, key } = await res.json();
+    expect(typeof key === "string" && key.length >= 20, "no session key returned");
+    const wrong = await post("/api/study/task", { code, key: "x".repeat(key.length), taskId: "t1", outcome: "success", seconds: 12 });
+    const other = await post("/api/study/task", { code: "P01", key, taskId: "t1", outcome: "success", seconds: 12 });
+    const right = await post("/api/study/task", { code, key, taskId: "t1", outcome: "success", seconds: 12, notes: "detected by the app" });
+    expect(wrong.status === 400 && other.status === 400 && right.ok, `statuses ${wrong.status}, ${other.status}, ${right.status}`);
+    const saved = await (await get(`/api/study/admin/tasks?code=${code}`, TOKEN)).json();
+    expect(saved.results.length === 1 && saved.results[0].seconds === 12, "task not stored");
+    await post("/api/study/admin/withdraw", { code, confirm: code }, TOKEN);
   });
   await check("Questionnaire with a missing rating is refused", async () => {
     const res = await post("/api/study/questionnaire", { code: "P01", ...answers([5, 2, 4, 1, 4, 2, 5, 1, 4]) });
@@ -194,7 +206,7 @@ try {
   });
   await check("Codes are not reused after a withdrawal", async () => {
     const { code } = await (await post("/api/study/consent", consent("Chen Test"))).json();
-    expect(code === "P03", `got ${code}`);
+    expect(code === "P04", `got ${code}`);
   });
 
   // ---- phone browser ----
@@ -240,10 +252,10 @@ try {
       await page.fill("#c-sign", "Dee Test");
       await page.click("button[type=submit]");
       const code = (await page.textContent(".code-badge", { timeout: 5000 })).trim();
-      expect(code === "P04", `code ${code}`);
+      expect(code === "P05", `code ${code}`);
       await page.goto(`${base}/study#questionnaire`);
       await page.waitForSelector("#q-code");
-      expect((await page.inputValue("#q-code")) === "P04", "code not prefilled");
+      expect((await page.inputValue("#q-code")) === "P05", "code not prefilled");
       await page.click("button[type=submit]");
       expect(await page.isVisible(".notice.error"), "missing ratings not flagged");
       await axe("questionnaire");
@@ -264,6 +276,65 @@ try {
       const text = await page.textContent("main");
       expect(text.includes("62.5") && !text.includes("Dee Test Dee"), "summary missing mean");
       await axe("admin results");
+    });
+    await check("Phone: guided mode walks a participant through all 7 tasks and saves each result", async () => {
+      const g = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, bypassCSP: true, acceptDownloads: true });
+      const q = await g.newPage();
+      q.on("pageerror", (e) => errors.push(`guided: ${e.message}`));
+      await q.goto(`${base}/study#consent`);
+      await q.waitForSelector("form");
+      for (const name of ["readInfo", "adult", "prototype", "agree"]) await q.check(`input[name=${name}]`);
+      await q.fill("#c-name", "Guide Test"); await q.fill("#c-sign", "Guide Test");
+      await q.click("button[type=submit]");
+      const code = (await q.textContent(".code-badge", { timeout: 5000 })).trim();
+      await q.click("text=Start the tasks");
+      const card = q.locator("#study-guide");
+      await card.waitFor({ timeout: 8000 });
+      const step = async (n) => q.waitForFunction((t) => document.querySelector("#study-guide")?.textContent.includes(t), `Task ${n} of 7`, { timeout: 12000 });
+      await step(1);
+      await axe("app with task card");
+      // 1 build a routine
+      await q.locator('[data-action="simulate"]').first().click();
+      await step(2);
+      // 2 open a Why? panel
+      await q.locator('[data-action="toggle-why"]').first().click();
+      await step(3);
+      // 3 type the sun answer
+      await q.fill("#study-guide textarea", "Use sunscreen, it matters most from 8 am to 6 pm");
+      await q.click("#study-guide >> text=Submit answer");
+      await step(4);
+      // 4 check the example product
+      await q.locator('[data-action="pc-focus"]').first().click();
+      await q.locator('[data-action="pc-example"]').first().click();
+      await q.locator('[data-action="pc-run"]').first().click();
+      await step(5);
+      // 5 tomorrow: use the hint, then skip (no forecast offline, so an answer cannot match)
+      expect(await q.isVisible("#study-guide textarea"), "tomorrow answer box missing");
+      await q.click("#study-guide >> text=I'm stuck");
+      expect(await q.isVisible("#study-guide .sg-hint"), "hint not shown");
+      await q.click("#study-guide >> text=Skip this task");
+      await step(6);
+      // 6 save the story image
+      await q.locator('[data-action="story-open"]').first().click();
+      await q.waitForSelector('[data-action="story-download"]');
+      await Promise.all([q.waitForEvent("download"), q.locator('[data-action="story-download"]').click()]);
+      await q.keyboard.press("Escape");
+      await step(7);
+      // 7 report lip swelling
+      await q.locator('[data-action="edit-form"]').first().click();
+      await q.fill("#symptoms", "my lips started swelling after a new cream");
+      await q.locator('[data-action="simulate"]').first().click();
+      await q.waitForSelector("#study-guide >> text=All 7 tasks done", { timeout: 12000 });
+      await q.waitForTimeout(500);
+      const saved = (await (await get(`/api/study/admin/tasks?code=${code}`, TOKEN)).json()).results;
+      const by = Object.fromEntries(saved.map((r) => [r.taskId, r.outcome]));
+      expect(saved.length === 7, `saved ${saved.length} of 7`);
+      expect(by.t1 === "success" && by.t2 === "success" && by.t3 === "success" && by.t4 === "success" && by.t5 === "failed" && by.t6 === "success" && by.t7 === "success", JSON.stringify(by));
+      expect(saved.every((r) => r.outcome === "failed" || Number.isFinite(r.seconds)), "times missing");
+      await q.click("#study-guide >> text=Open the questionnaire");
+      await q.waitForSelector("#q-code");
+      expect((await q.inputValue("#q-code")) === code, "code not carried to the questionnaire");
+      await g.close();
     });
     await check("Phone: no JavaScript errors", async () => expect(errors.length === 0, errors.join("; ")));
     await browser.close();

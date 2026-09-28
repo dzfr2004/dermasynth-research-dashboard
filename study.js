@@ -95,6 +95,10 @@ function readLikert(form, name, count) {
   return { values, firstMissing };
 }
 
+function guideState() {
+  try { return JSON.parse(store.get("localStorage", "study.guide") || "null"); } catch { return null; }
+}
+
 // ---------- home ----------
 function homeView() {
   const code = store.get("localStorage", "study.code");
@@ -102,6 +106,9 @@ function homeView() {
     h("h1", { text: "Help test DermaSynth" }),
     h("p", { class: "muted", text: "DermaSynth is a final-year student project that suggests a daily skincare routine from today's weather. Thank you for helping to test it." }),
     code ? notice("ok", `Your participant code on this phone is ${code}.`) : null,
+    guideState()?.active ? h("div", { class: "card soft" },
+      h("p", { text: `You are on task ${Math.min(guideState().index + 1, config.tasks.length)} of ${config.tasks.length}.` }),
+      h("a", { class: "button primary", href: "/", text: "Continue the tasks" })) : null,
     h("div", { class: "choices" },
       h("a", { class: "card choice", href: "#consent" }, h("strong", { text: "1. Take part" }), h("span", { class: "muted", text: "Read what the test involves and give consent. About 2 minutes." })),
       h("a", { class: "card choice", href: "#questionnaire" }, h("strong", { text: "2. Questionnaire" }), h("span", { class: "muted", text: "After the tasks: 17 quick ratings and two optional comments. About 5 minutes." })),
@@ -133,21 +140,25 @@ function consentView() {
     const button = form.querySelector("button[type=submit]");
     button.disabled = true;
     try {
-      const { code } = await api("/api/study/consent", { method: "POST", body: {
+      const { code, key } = await api("/api/study/consent", { method: "POST", body: {
         readInfo: f.has("readInfo"), adult: f.has("adult"), prototype: f.has("prototype"), agree: f.has("agree"), creditOptIn: f.has("creditOptIn"),
         name: f.get("name"), signature: f.get("signature"), date: f.get("date"),
       } });
       store.set("localStorage", "study.code", code);
+      const startGuided = () => {
+        store.set("localStorage", "study.guide", JSON.stringify({ active: true, code, key, index: 0, hinted: false, taskStartedAt: null }));
+        window.location.href = "/";
+      };
       render(
         h("h1", { text: "Thank you" }),
         h("div", { class: "card" },
           h("p", { text: "Your participant code is" }),
           h("div", { class: "code-badge", text: code }),
           h("p", { text: "Please keep it. You need it for the questionnaire, and to withdraw later if you want to. It is saved on this phone too." }),
+          h("p", { text: "Next, you will use DermaSynth for 7 short tasks. A small card at the bottom of the screen tells you each task and moves on by itself when you have done it." }),
           h("div", { class: "row" },
-            h("a", { class: "button primary", href: "/", target: "_blank", rel: "noopener", text: "Open DermaSynth" }),
-            h("a", { class: "button", href: "#home", text: "Back" }))),
-        h("p", { class: "small muted", text: "The researcher will now read you the tasks one at a time." }));
+            h("button", { type: "button", class: "primary wide", text: "Start the tasks", onclick: startGuided }))),
+        h("p", { class: "small muted" }, "If the researcher is reading the tasks to you instead, ", h("a", { href: "/", text: "open DermaSynth without the task card" }), "."));
     } catch (error) {
       showError(slot, error);
       button.disabled = false;

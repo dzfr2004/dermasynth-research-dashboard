@@ -139,6 +139,7 @@ const publicFiles = new Map([
   ["/study.html", { path: "study.html", contentType: "text/html; charset=utf-8" }],
   ["/study.js", { path: "study.js", contentType: "text/javascript; charset=utf-8" }],
   ["/study.css", { path: "study.css", contentType: "text/css; charset=utf-8" }],
+  ["/study-guide.js", { path: "study-guide.js", contentType: "text/javascript; charset=utf-8" }],
 ]);
 
 class HttpError extends Error {
