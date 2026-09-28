@@ -27,6 +27,7 @@ const args = process.argv.slice(2);
 const option = (name, fallback) => (args.find((a) => a.startsWith(`--${name}=`)) || "").split("=")[1] || fallback;
 const BASE = option("base", process.env.DERMASYNTH_URL || "http://127.0.0.1:4173");
 const LIMIT = Number(option("limit", "20"));
+const TIMEOUT_MS = Number(option("timeout", "150")) * 1000;
 
 const CITIES = [
   { name: "Kuala Lumpur, MY", lat: 3.14, lon: 101.69 },
@@ -53,7 +54,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function post(path, body) {
   for (let attempt = 0; attempt < 6; attempt += 1) {
     const started = Date.now();
-    const response = await fetch(`${BASE}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    let response;
+    try {
+      response = await fetch(`${BASE}${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), signal: AbortSignal.timeout(TIMEOUT_MS) });
+    } catch (error) {
+      const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+      process.stdout.write(`  ${path}: ${timedOut ? `no answer after ${TIMEOUT_MS / 1000} s` : `request failed (${error?.message || error})`}\n`);
+      return { status: 0, payload: { error: timedOut ? "timeout" : "network_error" }, ms: Date.now() - started };
+    }
     const payload = await response.json().catch(() => ({}));
     if (response.status === 429 || response.status === 503) {
       const wait = Number(response.headers.get("retry-after") || 10) * 1000;
@@ -82,6 +90,11 @@ for (const [index, scenario] of scenarios.slice(0, LIMIT).entries()) {
   const { location, ...input } = scenario;
   const routine = await post("/api/routine", { ...input, location });
   const r = routine.payload || {};
+  process.stdout.write(`  routine: HTTP ${routine.status} in ${(routine.ms / 1000).toFixed(1)} s${r.degraded?.status === "degraded" ? " (reduced mode)" : ""}\n`);
+  if (routine.status !== 200) {
+    rows.push({ scenario, error: `routine request failed (${routine.payload?.error || routine.status})` });
+    continue;
+  }
   if (r.status === "needs_conditions") {
     rows.push({ scenario, error: "live weather unavailable (needs_conditions)" });
     continue;
@@ -119,6 +132,7 @@ for (const [index, scenario] of scenarios.slice(0, LIMIT).entries()) {
   if (runId && r.routineContext?.available) {
     const context = await post("/api/ai/routine-context", { runId });
     const c = context.payload || {};
+    process.stdout.write(`  explanations: HTTP ${context.status} in ${(context.ms / 1000).toFixed(1)} s\n`);
     const items = [...Object.values(c.steps || {}), ...Object.values(c.ingredients || {})];
     row.context = {
       httpStatus: context.status,
