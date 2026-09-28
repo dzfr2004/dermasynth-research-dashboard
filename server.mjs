@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { resolve } from "node:path";
+import { networkInterfaces } from "node:os";
 import { createConfig, loadDotEnv, publicConfigStatus } from "./lib/config.mjs";
 import { buildOutlook, readingChanges, tomorrowChanges } from "./lib/outlook.mjs";
 import { checkProduct } from "./lib/product-check.mjs";
@@ -1962,6 +1963,16 @@ const server = createServer(async (request, response) => {
 const HOST = process.env.HOST || "127.0.0.1";
 server.listen(PORT, HOST, () => {
   console.log(`DermaSynth server listening on http://${HOST}:${PORT} (${config.liveServicesEnabled ? "live services enabled" : "demo mode"})`);
+  if (HOST === "0.0.0.0") {
+    // Print the addresses a phone on the same Wi-Fi or hotspot can use.
+    const addresses = Object.values(networkInterfaces()).flat().filter((net) => net && net.family === "IPv4" && !net.internal).map((net) => net.address);
+    if (addresses.length) {
+      console.log("On a phone on the same Wi-Fi or hotspot, open:");
+      for (const address of addresses) console.log(`  http://${address}:${PORT}/${process.env.STUDY_MODE === "on" ? "   (study link: add ?study at the end)" : ""}`);
+    } else {
+      console.log("No network found. Connect this laptop to Wi-Fi or a phone hotspot, then restart.");
+    }
+  }
   // F3: caches, rate limits, the GPT explanation cache and run counters live in
   // this process, so the app must run as ONE instance (docs/DEPLOYMENT.md).
   const workers = Number(process.env.WEB_CONCURRENCY || process.env.INSTANCE_COUNT || 1);
