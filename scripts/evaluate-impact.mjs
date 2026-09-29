@@ -4,6 +4,7 @@ import { checkProduct, parseIngredientList } from "../lib/product-check.mjs";
 import { planningUvi } from "../lib/uv.mjs";
 import { readingChanges, tomorrowChanges } from "../lib/outlook.mjs";
 import { templateRoutine } from "../lib/safety.mjs";
+import { isPrivateAddress, networkLocation } from "../lib/network-location.mjs";
 
 /**
  * Offline tests for the result-impact features:
@@ -97,6 +98,22 @@ await test("imp-08", "Changes since last time: steps and readings are described 
   const diff = tomorrowChanges({ todaySteps: ["am:low-irritation-cleansing"], tomorrowRoutine: today, readings: { uvi: 9, humidity: 55, pm25: 14, temperature: 31 }, when: "today" });
   expect(diff.changes.some((c) => c.change === "added" && /sunscreen/i.test(c.text)), "Sunscreen should be reported as added.");
   expect(!diff.changes.some((c) => /forecast/.test(c.text)), "Today's comparison must not talk about a forecast.");
+});
+
+await test("imp-09", "Network location: only for the same private network, never in demo mode, never sends a visitor's address", async () => {
+  expect(isPrivateAddress("192.168.1.5") && isPrivateAddress("::ffff:10.0.0.2") && isPrivateAddress("127.0.0.1") && isPrivateAddress("::1") && isPrivateAddress("172.20.1.1"), "private ranges");
+  expect(!isPrivateAddress("8.8.8.8") && !isPrivateAddress("172.32.0.1") && !isPrivateAddress("::ffff:203.0.113.9"), "public ranges");
+  const realFetch = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url) => { urls.push(String(url)); return new Response(JSON.stringify({ success: true, city: "Seri Iskandar", region: "Perak", country_code: "MY", latitude: 4.3616, longitude: 100.9796 }), { status: 200 }); };
+  try {
+    const cfg = { liveServicesEnabled: true, requestTimeoutMs: 2000 };
+    expect((await networkLocation({ ...cfg, liveServicesEnabled: false }, "192.168.1.5")).available === false, "should be off in demo mode");
+    expect((await networkLocation(cfg, "203.0.113.9")).reason === "remote" && urls.length === 0, "remote visitors must not trigger a lookup");
+    const r = await networkLocation(cfg, "::ffff:192.168.1.23");
+    expect(r.available && r.approximate && r.name === "Seri Iskandar, MY" && r.lat === 4.36 && r.lon === 100.98, JSON.stringify(r));
+    expect(urls.every((u) => !u.includes("192.168")), "the visitor's address must never be sent");
+  } finally { globalThis.fetch = realFetch; }
 });
 
 const passed = results.filter((r) => r.status === "passed").length;

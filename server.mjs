@@ -10,6 +10,7 @@ import { createStudyRoutes } from "./lib/study-routes.mjs";
 import { CONCERN_WORDS, plainFunction, safetyShort } from "./lib/plain-language.mjs";
 import { DEFAULT_LOCATION, getEnvironment, reverseLocation, getEnvironmentForecast, parseReportedConditions, providerReliabilitySnapshot, REPORTED_CONDITION_OPTIONS, reportedConditionsEnvironment, searchLocations } from "./lib/environment.mjs";
 import { llmTriageSecondOpinion } from "./lib/triage-llm.mjs";
+import { networkLocation } from "./lib/network-location.mjs";
 import { ExternalServiceError } from "./lib/http-client.mjs";
 import { retrieveEvidence, retrieveResearchEvidence } from "./lib/retrieval.mjs";
 import {
@@ -1820,6 +1821,12 @@ async function routeApi(request, response, url, requestId) {
       providerReliability: providerReliabilitySnapshot(),
       requestId,
     }, requestId, { "cache-control": "private, max-age=60" });
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/locations/network") {
+    enforceLocationSearchRateLimit(request);
+    const result = await networkLocation(config, request.socket.remoteAddress, { reverse: (lat, lon) => reverseLocation(config, lat, lon) });
+    return sendJson(response, 200, { ...result, requestId }, requestId);
   }
 
   if (request.method === "GET" && url.pathname === "/api/locations/reverse") {

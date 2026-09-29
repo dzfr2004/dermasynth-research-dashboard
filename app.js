@@ -3255,25 +3255,74 @@ function saveLocation(location) {
 
 // Current location from the browser (it asks the user first). Coordinates are
 // rounded to ~1 km; the name comes from the server's reverse lookup.
-async function useMyLocation({ silent = false } = {}) {
-  if (!("geolocation" in navigator)) { if (!silent) showToast("This browser can't share your location. Search for your city instead."); return false; }
-  if (!silent) { state.locationSearchNotice = "Finding your location…"; render(); }
+//
+// Browsers only share GPS with secure pages (https or localhost). Phones in the
+// user study open the app at http://192.168.x.x over the Wi-Fi, so there the
+// browser refuses without asking. In that case, and when GPS times out or is
+// unavailable, the app uses the approximate area of the network instead. It
+// never does that after the person has said no to sharing their location.
+function gpsPosition(options) {
+  return new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, options));
+}
+
+async function geolocationPermission() {
+  try { return (await navigator.permissions?.query({ name: "geolocation" }))?.state || "unknown"; } catch { return "unknown"; }
+}
+
+async function useNetworkLocation() {
   try {
-    const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }));
-    const lat = Math.round(position.coords.latitude * 100) / 100;
-    const lon = Math.round(position.coords.longitude * 100) / 100;
-    let name = "Your location";
-    try {
-      const reply = await fetch(`/api/locations/reverse?lat=${lat}&lon=${lon}`).then((r) => r.json());
-      if (reply?.name) name = reply.name;
-    } catch { /* keep the generic name */ }
-    await applyLocation({ name, lat, lon });
+    const reply = await fetch("/api/locations/network").then((r) => r.json());
+    if (!reply?.available) return false;
+    await applyLocation({ name: reply.name, lat: reply.lat, lon: reply.lon });
+    state.locationSearchNotice = `Using your approximate area (${reply.name}). If that's not right, search for your city.`;
+    render();
     return true;
-  } catch {
+  } catch { return false; }
+}
+
+async function useMyLocation({ silent = false } = {}) {
+  if (!silent) { state.locationSearchNotice = "Finding your location…"; render(); }
+  let reason = "unsupported";
+  if (window.isSecureContext && "geolocation" in navigator) {
+    try {
+      let position;
+      try {
+        position = await gpsPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+      } catch (error) {
+        if (error?.code !== 3) throw error;
+        // Timed out: one more try that may use GPS (slower, but works indoors less often).
+        position = await gpsPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+      }
+      const lat = Math.round(position.coords.latitude * 100) / 100;
+      const lon = Math.round(position.coords.longitude * 100) / 100;
+      let name = "Your location";
+      try {
+        const reply = await fetch(`/api/locations/reverse?lat=${lat}&lon=${lon}`).then((r) => r.json());
+        if (reply?.name) name = reply.name;
+      } catch { /* keep the generic name */ }
+      await applyLocation({ name, lat, lon });
+      return true;
+    } catch (error) {
+      reason = error?.code === 1 ? "denied" : error?.code === 3 ? "timeout" : "unavailable";
+    }
+  } else if (!window.isSecureContext) {
+    reason = "insecure";
+  }
+  if (reason === "denied") {
     try { window.localStorage.setItem(`${LOCATION_STORAGE_KEY}.asked`, "1"); } catch { /* ignore */ }
-    if (!silent) { state.locationSearchNotice = "Location wasn't shared. Search for your city instead."; render(); }
+    if (!silent) { state.locationSearchNotice = "Location is turned off for this site. Search for your city, or allow location in your browser settings."; render(); }
     return false;
   }
+  if (await useNetworkLocation()) return true;
+  if (!silent) {
+    state.locationSearchNotice = reason === "timeout"
+      ? "Your phone took too long to find its location. Search for your city instead."
+      : reason === "insecure"
+        ? "This connection can't share your phone's location. Search for your city instead."
+        : "Your location isn't available right now. Search for your city instead.";
+    render();
+  }
+  return false;
 }
 
 async function resetLocation() {
@@ -3619,7 +3668,12 @@ render();
     state.locationQuery = saved.name;
     void refreshEnvironment(saved, { announce: false });
   } else {
-    void refreshEnvironment(defaultLocation, { announce: false }).then(() => { if (!askedBefore) void useMyLocation({ silent: true }); });
+    // First visit on this browser: try the current location without nagging.
+    // Ask once; after a "no", only use it again if the person taps "Use my location".
+    void refreshEnvironment(defaultLocation, { announce: false }).then(async () => {
+      const permission = await geolocationPermission();
+      if (permission === "granted" || !window.isSecureContext || (!askedBefore && permission !== "denied")) void useMyLocation({ silent: true });
+    });
   }
 }
 void refreshComparisonContext(state.comparison.selectedLocation, { announce: false });
