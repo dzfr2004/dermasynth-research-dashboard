@@ -631,13 +631,17 @@ function shell(view) {
       <div class="brand"><span class="brand-mark"><img src="/assets/dermasynth-mark.svg" alt="" /></span><span class="brand-copy"><strong>DermaSynth</strong><small>Weather-aware skincare</small></span></div>
       <div class="sidebar-navigation">
         <div class="sidebar-navigation-group">
-          <p class="side-section-label">Core workflow</p>
+          ${state.expertView ? `<p class="side-section-label">Core workflow</p>
           <nav class="nav-list" aria-label="Core research workflow">
             ${navItem("dashboard", "Overview", "At a glance", "grid")}
             ${navItem("monitor", "Environment", "Live conditions", "activity")}
             ${navItem("simulator", "Routine", "Build routine", "flask")}
             ${navItem("knowledge", "Ingredient Atlas", `${ingredientCount} ingredients`, "file")}
-          </nav>
+          </nav>` : `<nav class="nav-list" aria-label="Primary navigation">
+            ${navItem("simulator", "Today", "Your routine", "sparkles")}
+            ${navItem("monitor", "Weather", "UV, humidity and haze", "sun")}
+            ${navItem("knowledge", "Ingredients", `${ingredientCount} explained`, "file")}
+          </nav>`}
         </div>
       </div>
       <section class="knowledge-card" aria-label="Knowledge base status">
@@ -1310,7 +1314,8 @@ function hazeWords(pm25) {
 function todayChips(readings = {}) {
   const uv = planningUv(readings);
   const chips = [];
-  if (uv !== null) chips.push([`UV ${Math.round(uv)}`, uvBand(uv)?.label || "", uvBand(uv)?.tone || ""]);
+  // Only the sun gets colour: UV from "high" upwards, and the sunscreen window.
+  if (uv !== null) chips.push([`UV ${Math.round(uv)}`, uvBand(uv)?.label || "", ["warn", "alert"].includes(uvBand(uv)?.tone) ? "uv" : ""]);
   if (Number.isFinite(Number(readings.humidity)) && readings.humidity !== null) chips.push([`${Math.round(readings.humidity)}%`, humidityBand(readings.humidity)?.label || "", humidityBand(readings.humidity)?.tone || ""]);
   if (Number.isFinite(Number(readings.pm25)) && readings.pm25 !== null) chips.push([hazeWords(readings.pm25) || "Haze", "", hazeBand(readings.pm25)?.tone || ""]);
   if (Number.isFinite(Number(readings.temperature)) && readings.temperature !== null) chips.push([`${Math.round(readings.temperature)} °C`, temperatureBand(readings.temperature)?.label || "", temperatureBand(readings.temperature)?.tone || ""]);

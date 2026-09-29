@@ -252,24 +252,24 @@ function injectStyles() {
   const style = document.createElement("style");
   style.textContent = `
   #study-guide { position: fixed; left: 10px; right: 10px; bottom: 16px; z-index: 60; max-width: 520px; margin: 0 auto;
-    background: #ffffff; color: #132927; border: 2px solid #287c70; border-radius: 16px; padding: 10px 12px;
-    box-shadow: 0 10px 30px rgb(9 67 58 / 22%); font-size: 16px; line-height: 1.4; }
+    background: var(--surface, #fff); color: var(--ink, #1c1c1e); border: 0.5px solid var(--line, rgb(60 60 67 / 16%)); border-radius: 20px; padding: 12px 14px;
+    box-shadow: var(--shadow-float, 0 8px 28px rgb(0 0 0 / 12%)); font-family: var(--font, -apple-system, system-ui, sans-serif); font-size: 17px; line-height: 1.4; }
   #study-guide[hidden] { display: none; }
   #study-guide p { margin: 0 0 8px; }
   #study-guide .sg-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 2px; }
-  #study-guide .sg-step { font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #145a51; margin: 0; }
-  #study-guide .sg-text { font-weight: 600; font-size: 15px; }
-  #study-guide .sg-hint { background: #fff1df; color: #5e3608; border-radius: 10px; padding: 8px 10px; font-size: 15px; }
-  #study-guide .sg-answer { width: 100%; box-sizing: border-box; min-height: 64px; font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid #bfd7cf; border-radius: 10px; margin-bottom: 8px; }
+  #study-guide .sg-step { font-size: 13px; font-weight: 600; color: var(--accent-dark, #17685c); margin: 0; }
+  #study-guide .sg-text { font-weight: 600; font-size: 17px; }
+  #study-guide .sg-hint { background: var(--warning-soft, #fff1e0); color: var(--warning, #a14b00); border-radius: 12px; padding: 8px 12px; font-size: 15px; }
+  #study-guide .sg-answer { width: 100%; box-sizing: border-box; min-height: 64px; font: inherit; font-size: 17px; padding: 10px 12px; color: var(--ink, #1c1c1e); border: 0; border-radius: 12px; background: var(--fill, rgb(118 118 128 / 12%)); margin-bottom: 8px; }
   #study-guide .sg-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  #study-guide button, #study-guide a.sg-primary { min-height: 44px; padding: 10px 14px; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
-  #study-guide .sg-primary { background: #287c70; color: #fff; border: 1px solid #287c70; flex: 1 1 auto; }
-  #study-guide .sg-secondary { background: #fff; color: #145a51; border: 1px solid #bfd7cf; }
-  #study-guide .sg-min { background: transparent; border: 0; color: #145a51; min-height: 44px; padding: 0 6px; font-size: 14px; }
-  #study-guide .sg-pill { width: 100%; background: #287c70; color: #fff; border: 0; }
-  #study-guide .sg-status { margin: 6px 0 0; min-height: 0; color: #145a51; font-weight: 600; font-size: 15px; }
+  #study-guide button, #study-guide a.sg-primary { min-height: 44px; padding: 10px 16px; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+  #study-guide .sg-primary { background: var(--accent, #1f7a6d); color: var(--on-accent, #fff); border: 0; flex: 1 1 auto; }
+  #study-guide .sg-secondary { background: var(--accent-soft, #e2f1ee); color: var(--accent-dark, #17685c); border: 0; }
+  #study-guide .sg-min { background: transparent; border: 0; color: var(--accent-dark, #17685c); min-height: 44px; padding: 0 6px; font-size: 15px; }
+  #study-guide .sg-pill { width: 100%; background: var(--accent, #1f7a6d); color: var(--on-accent, #fff); border: 0; }
+  #study-guide .sg-status { margin: 6px 0 0; min-height: 0; color: var(--accent-dark, #17685c); font-weight: 600; font-size: 15px; }
   #study-guide .sg-status:empty { display: none; }
-  #study-guide button:focus-visible, #study-guide a:focus-visible, #study-guide textarea:focus-visible { outline: 3px solid #287c70; outline-offset: 2px; }
+  #study-guide button:focus-visible, #study-guide a:focus-visible, #study-guide textarea:focus-visible { outline: 3px solid var(--accent-line, rgb(31 122 109 / 40%)); outline-offset: 2px; }
   body.has-study-guide { padding-bottom: calc(var(--study-guide-h, 0px) + 24px); }
   @media (prefers-reduced-motion: no-preference) { #study-guide { transition: bottom 0.2s ease; } }`;
   document.head.append(style);
