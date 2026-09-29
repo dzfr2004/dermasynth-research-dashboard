@@ -1771,7 +1771,16 @@ function collapsedFormPanel() {
 
 function scrollToResult() {
   const target = document.querySelector("#routine-result");
-  if (!target || window.matchMedia("(min-width: 901px)").matches) return;
+  if (!target) return;
+  if (window.matchMedia("(min-width: 901px)").matches) {
+    // Desktop: the form folds up after a run, so a page scrolled down to the
+    // button would leave the summary under the top bar. Bring the page back
+    // to the top whenever the start of the result is hidden or far down.
+    const header = document.querySelector(".topbar")?.getBoundingClientRect().bottom || 0;
+    const top = target.getBoundingClientRect().top;
+    if (top < header + 8 || top > window.innerHeight * 0.5) window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    return;
+  }
   const top = target.getBoundingClientRect().top;
   if (top >= 0 && top < window.innerHeight * 0.35) return;
   target.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
