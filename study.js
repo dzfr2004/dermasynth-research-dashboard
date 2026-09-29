@@ -402,18 +402,31 @@ function adminLogin(message) {
 }
 
 async function adminSessions(body, token) {
-  const { participants } = await api("/api/study/admin/participants", { token });
+  const { participants, currentRound } = await api("/api/study/admin/participants", { token });
   const selected = store.get("sessionStorage", "study.selected");
   const pick = (code) => { store.set("sessionStorage", "study.selected", code); adminView(); };
+  const sessions = [...new Set([...participants.map((p) => p.round), currentRound])].sort((a, b) => a - b);
+  const person = (p) => h("div", { class: "person" },
+    h("div", {}, h("strong", { text: p.code }), " ", h("span", { text: p.name }),
+      h("div", { class: "row small" },
+        h("span", { class: p.questionnaire ? "pill" : "pill no", text: p.questionnaire ? "Questionnaire done" : "No questionnaire" }),
+        h("span", { class: "muted", text: `Tasks ${p.tasksRecorded}/${config.tasks.length}` }),
+        h("label", { class: "muted" }, "Session ",
+          h("select", { "aria-label": `Session for ${p.code}`, onchange: async (e) => {
+            try { await api("/api/study/admin/round", { method: "POST", token, body: { code: p.code, round: e.target.value } }); adminView(); }
+            catch (error) { showError(body, error); }
+          } }, Array.from({ length: Math.max(3, currentRound + 1) }, (_, i) => h("option", { value: String(i + 1), text: String(i + 1), ...(p.round === i + 1 ? { selected: "" } : {}) })))))),
+    h("button", { type: "button", "aria-pressed": String(p.code === selected), text: p.code === selected ? "Recording" : "Record tasks", onclick: () => pick(p.code) }));
   body.replaceChildren(
     h("div", { class: "card" },
       h("h2", { text: `Participants (${participants.length})` }),
-      participants.length ? h("div", {}, participants.map((p) => h("div", { class: "person" },
-        h("div", {}, h("strong", { text: p.code }), " ", h("span", { text: p.name }),
-          h("div", { class: "row small" },
-            h("span", { class: p.questionnaire ? "pill" : "pill no", text: p.questionnaire ? "Questionnaire done" : "No questionnaire" }),
-            h("span", { class: "muted", text: `Tasks ${p.tasksRecorded}/${config.tasks.length}` }))),
-        h("button", { type: "button", "aria-pressed": String(p.code === selected), text: p.code === selected ? "Recording" : "Record tasks", onclick: () => pick(p.code) })))) :
+      h("p", { class: "muted small", text: `New participants join Session ${currentRound}. To start the next session, set STUDY_ROUND=${currentRound + 1} in .env and restart the server.` }),
+      participants.length ? h("div", {}, sessions.map((n) => {
+        const group = participants.filter((p) => p.round === n);
+        return h("section", { class: "session-group" },
+          h("h3", { text: `Session ${n}${n === currentRound ? " (current)" : ""} · ${group.length} ${group.length === 1 ? "tester" : "testers"}` }),
+          group.length ? h("div", {}, group.map(person)) : h("p", { class: "muted small", text: "No one yet." }));
+      })) :
         h("p", { class: "muted", text: "No one yet. Participants start at the Take part page on their phone." }),
       h("div", { class: "row" }, h("button", { type: "button", text: "Refresh", onclick: () => adminView() }))));
   const known = participants.find((p) => p.code === selected);
@@ -483,13 +496,30 @@ function withdrawCard(code, token) {
 }
 
 async function adminResults(body, token) {
-  const s = await api("/api/study/admin/summary", { token });
+  const chosen = store.get("sessionStorage", "study.round") || "all";
+  const s = await api(`/api/study/admin/summary?round=${encodeURIComponent(chosen)}`, { token });
+  const compare = s.rounds.length > 1 ? await api("/api/study/admin/compare", { token }) : null;
+  const picker = h("div", { class: "tabs", role: "tablist", "aria-label": "Session" },
+    [["all", "All sessions"], ...s.rounds.map((r) => [String(r.round), `Session ${r.round} (${r.n})`])].map(([id, text]) =>
+      h("button", { type: "button", role: "tab", "aria-selected": String(id === chosen), text, onclick: () => { store.set("sessionStorage", "study.round", id); adminView(); } })));
   const stat = (value, label) => h("div", { class: "stat" }, h("b", { text: value ?? "–" }), h("span", { text: label }));
   const download = (kind) => h("button", { type: "button", text: kind === "responses" ? "Questionnaire CSV" : "Tasks CSV", onclick: async () => saveBlob(await api(`/api/study/admin/export?kind=${kind}`, { token })) });
   const label = { dry: "Dry", combination: "Combination", oily: "Oily", sensitive: "Sensitive", "not-sure": "Not sure", never: "Never", rarely: "Rarely", monthly: "Monthly", weekly: "Weekly", daily: "Daily" };
+  const pct = (v) => (v === null || v === undefined ? "–" : `${v}%`);
+  const compareCard = compare ? h("div", { class: "card" },
+    h("h2", { text: "Sessions compared" }),
+    h("p", { class: "muted small", text: "Confirmed = the app saw the task happen or checked the typed answer. Self-reported ticks are left out." }),
+    tableWrap("Sessions compared", h("table", {},
+      h("thead", {}, h("tr", {}, ["", ...compare.rounds.map((r) => `Session ${r.round}`)].map((t, i) => h("th", { class: i ? "num" : "", text: t })))),
+      h("tbody", {},
+        h("tr", {}, h("td", { text: "Testers" }), compare.rounds.map((r) => h("td", { class: "num", text: r.participants }))),
+        h("tr", {}, h("td", { text: "SUS mean (n)" }), compare.rounds.map((r) => h("td", { class: "num", text: r.sus.n ? `${r.sus.mean} (${r.sus.n})` : "–" }))),
+        ...config.tasks.map((t, i) => h("tr", {}, h("td", { text: `${i + 1}. ${t.short} confirmed` }), compare.rounds.map((r) => h("td", { class: "num", text: pct(r.tasks[i].confirmedRate) })))))))) : null;
   body.replaceChildren(
+    picker,
+    ...(compareCard ? [compareCard] : []),
     h("div", { class: "card" },
-      h("h2", { text: "Usability (SUS)" }),
+      h("h2", { text: `Usability (SUS)${s.round ? ` · Session ${s.round}` : ""}` }),
       h("div", { class: "stats" },
         stat(s.sus.n, "questionnaires"),
         stat(s.sus.mean, "mean score (0 to 100)"),
@@ -500,12 +530,13 @@ async function adminResults(body, token) {
       h("p", { class: "muted small", text: s.sus.n ? `${s.sus.aboveBenchmark} of ${s.sus.n} scored above the average of ${s.sus.benchmark}. Adjective from Bangor, Kortum and Miller (2009). With fewer than about 12 people, report the mean with care.` : "No questionnaires yet." })),
     h("div", { class: "card" },
       h("h2", { text: "Task results" }),
-      h("p", { class: "muted small", text: "Done = success without help. Rate = done ÷ tried (skipped tasks left out). Time = median seconds, failed attempts left out." }),
+      h("p", { class: "muted small", text: "Done = success without help. Rate = done ÷ tried (skipped tasks left out). Confirmed = seen by the app or answer checked. Self = ticked by the tester without the app seeing it. Time = median seconds, failed attempts left out." }),
       tableWrap("Task results", h("table", {},
-        h("thead", {}, h("tr", {}, ["Task", "Tried", "Done", "Help", "Failed", "Rate", "Time"].map((t, i) => h("th", { class: i ? "num" : "", text: t })))),
+        h("thead", {}, h("tr", {}, ["Task", "Tried", "Done", "Help", "Failed", "Confirmed", "Self", "Rate", "Time"].map((t, i) => h("th", { class: i ? "num" : "", text: t })))),
         h("tbody", {}, s.tasks.map((t, i) => h("tr", {},
           h("td", { title: t.text, text: `${i + 1}. ${t.short}` }),
           h("td", { class: "num", text: t.attempts }), h("td", { class: "num", text: t.success }), h("td", { class: "num", text: t.helped }), h("td", { class: "num", text: t.failed }),
+          h("td", { class: "num", text: t.confirmed }), h("td", { class: "num", text: t.selfReported }),
           h("td", { class: "num", text: t.completionRate === null ? "–" : `${t.completionRate}%` }),
           h("td", { class: "num", text: t.medianSeconds === null ? "–" : `${t.medianSeconds} s` }))))))),
     h("div", { class: "card" },

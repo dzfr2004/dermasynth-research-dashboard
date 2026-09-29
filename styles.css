@@ -1622,3 +1622,14 @@ textarea:focus-visible {
 .atlas-safety svg { flex: 0 0 auto; margin-top: 2px; }
 .atlas-safety.is-warn { color: #6d420f; }
 .atlas-ingredient.is-consumer .atlas-limitations { margin-top: 10px; }
+
+/* ---- Round 1 user-study fixes ------------------------------------------ */
+.today-chip.is-sun-window { background: #fff1df; border-color: #f0c98a; color: #5e3608; }
+.step-timing.is-key { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0 4px; padding: 8px 10px; border-radius: 10px; background: #fff1df; color: #5e3608; font-weight: 700; font-size: 0.9rem; line-height: 1.4; }
+.step-timing.is-key svg { flex: 0 0 auto; margin-top: 2px; }
+.consumer-why-hint { margin: 6px 0 0; color: var(--muted); font-size: 0.88rem; }
+.why-button { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 14px; background: var(--accent-soft); border-color: var(--accent); color: var(--accent-dark); font-size: 0.9rem; }
+.skin-problem-prompt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0 0 14px; padding: 10px 14px; border: 1px solid #f2c7c9; border-radius: 14px; background: #fdf3f3; color: #6b2226; }
+.skin-problem-prompt p { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: 0.92rem; font-weight: 600; flex: 1 1 220px; }
+.skin-problem-prompt svg { flex: 0 0 auto; margin-top: 2px; }
+.skin-problem-prompt .ghost-button { min-height: 44px; }

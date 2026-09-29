@@ -73,6 +73,13 @@ await test("imp-06", "Unknown ingredients are counted as not checked, never gues
   expect(/didn't recognise/.test(none.verdict), "An all-unknown list must say nothing was recognised.");
 });
 
+await test("imp-06b", "Spaces, hyphens and underscores match the same ingredient (Round 1: 'Alpha Arbutin')", async () => {
+  for (const text of ["Aqua, Alpha Arbutin", "Aqua, Alpha-Arbutin", "Aqua, alpha_arbutin"]) {
+    const r = checkProduct({ text, repository, routine });
+    expect(r.unrecognised.length === 0, `${text}: not recognised (${r.unrecognised.join(", ")})`);
+  }
+});
+
 await test("imp-07", "Sunscreen is planned on today's peak UV, not the reading at build time", async () => {
   expect(planningUvi({ uvi: 1, uviMaxToday: 9 }) === 9, "Peak should win when higher.");
   expect(planningUvi({ uvi: 4 }) === 4, "Without a forecast the current reading is used.");

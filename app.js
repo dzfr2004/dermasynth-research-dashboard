@@ -1314,6 +1314,8 @@ function todayChips(readings = {}) {
   if (Number.isFinite(Number(readings.humidity)) && readings.humidity !== null) chips.push([`${Math.round(readings.humidity)}%`, humidityBand(readings.humidity)?.label || "", humidityBand(readings.humidity)?.tone || ""]);
   if (Number.isFinite(Number(readings.pm25)) && readings.pm25 !== null) chips.push([hazeWords(readings.pm25) || "Haze", "", hazeBand(readings.pm25)?.tone || ""]);
   if (Number.isFinite(Number(readings.temperature)) && readings.temperature !== null) chips.push([`${Math.round(readings.temperature)} °C`, temperatureBand(readings.temperature)?.label || "", temperatureBand(readings.temperature)?.tone || ""]);
+  const sunWindow = sunscreenWindowShort();
+  if (sunWindow) chips.push([`Sunscreen ${sunWindow}`, "", "sun-window"]);
   return chips.map(([main, sub, tone]) => `<span class="today-chip ${tone ? `is-${escapeHtml(tone)}` : ""}"><b>${escapeHtml(main)}</b>${sub ? ` ${escapeHtml(sub)}` : ""}</span>`).join("");
 }
 
@@ -1341,11 +1343,18 @@ function conditionsSummaryCard(meta, outlook = state.outlook) {
 }
 
 // ---- Timing and tomorrow (forecast, /api/outlook) ----------------------------
+function sunscreenWindowShort() {
+  const w = state.outlook?.data?.today?.window;
+  if (!w || w.allDayBelow || w.passed || !w.start) return "";
+  const hour = (time) => { const h = Number(String(time).slice(11, 13)); return h === 0 ? "midnight" : h === 12 ? "noon" : h < 12 ? `${h} am` : `${h - 12} pm`; };
+  return `${hour(w.start)} to ${hour(w.end)}`;
+}
+
 function sunscreenTiming() {
   const w = state.outlook?.data?.today?.window;
   if (!w || w.allDayBelow || w.passed || !w.start) return "";
   const hour = (time) => { const h = Number(String(time).slice(11, 13)); return h === 0 ? "midnight" : h === 12 ? "noon" : h < 12 ? `${h} am` : `${h - 12} pm`; };
-  return `Matters most from ${hour(w.start)} to ${hour(w.end)} today. If you're outside for long, top it up during the day.`;
+  return `Most important from ${hour(w.start)} to ${hour(w.end)} today. If you're outside for long, top it up during the day.`;
 }
 
 function tomorrowChips(tomorrow) {
@@ -1441,7 +1450,7 @@ function consumerStepItem(step, phase, entries, meta) {
   const panelId = `why-${phase}-${step.id}`;
   const stepIndex = (state.stepCounter = (state.stepCounter || 0) + 1);
   const mine = state.editingProducts ? "" : productNameFor(key);
-  return `<li class="consumer-step" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : ""}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing">${icon("sun", 12)} ${escapeHtml(timing)}</p>` : ""}${productInput(key, plain.name)}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : "Why?"}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, line) : ""}</div>` : ""}</li>`;
+  return `<li class="consumer-step" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : ""}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing is-key">${icon("sun", 14)} <span>${escapeHtml(timing)}</span></p>` : ""}${productInput(key, plain.name)}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : `${icon("sparkles", 13)} Why this?`}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, line) : ""}</div>` : ""}</li>`;
 }
 
 // ---- Impact features (1-10) -----------------------------------------------
@@ -1491,6 +1500,12 @@ function todayOneLine(meta, routine) {
   if (!parts.length) return "";
   const text = parts.join(" · ");
   return text[0].toUpperCase() + text.slice(1) + ".";
+}
+
+// Round 1 of the user study: 6 of 10 people needed a hint to find where to
+// report a skin problem, so the entry point is shown on the result itself.
+function skinProblemPrompt() {
+  return `<section class="skin-problem-prompt" aria-label="Report a skin problem"><p>${icon("shield", 15)} <span>Skin reacting badly today, for example swelling, burning or a rash?</span></p><button type="button" class="ghost-button" data-action="redirect-edit">Tell us first</button></section>`;
 }
 
 function heroCard(meta, routine) {
@@ -2133,7 +2148,7 @@ function consumerResult(routine, meta, running) {
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
   const reviewNote = meta.status === "cleared" ? "" : `<p class="consumer-status is-warn" role="status">${icon("info", 13)} Some checks asked for review, so treat this routine with extra care.</p>`;
   state.stepCounter = 0;
-  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${meta.status === "cleared" ? heroCard(meta, routine) : ""}${todayStrip(meta)}${compareCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)}</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>${productCheckCard(meta)}${tomorrowCard()}${checkinCard(meta)}</div>`;
+  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${meta.status === "cleared" ? heroCard(meta, routine) : ""}${todayStrip(meta)}${meta.status === "cleared" ? skinProblemPrompt() : ""}${compareCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)}</p><p class="consumer-why-hint">Tap <b>Why this?</b> on a step to see why it suits you today.</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>${tomorrowCard()}${productCheckCard(meta)}${checkinCard(meta)}</div>`;
 }
 
 const REDIRECT_PLAIN = [
@@ -2186,7 +2201,7 @@ function simulatorView() {
   const profileChoices = ["dry", "combination", "oily", "sensitive"].map((profile) => `<button class="profile-choice ${state.profile === profile ? "is-selected" : ""}" type="button" data-action="profile" data-profile="${profile}" aria-pressed="${state.profile === profile}" ${state.runStatus === "running" ? "disabled" : ""}>${profile[0].toUpperCase()}${profile.slice(1)}</button>`).join("");
   const locationUpdating = isLocationUpdating();
   const running = state.runStatus === "running";
-  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} About your skin</h3><p class="panel-note">Takes about a minute</p></div><div class="form-grid"><div class="field"><label id="skin-type-label">Skin type</label><div class="profile-pills" role="group" aria-labelledby="skin-type-label">${profileChoices}</div></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Anything unusual with your skin right now?</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="For example: swelling, burning after a new product, a spreading rash, blisters">${escapeHtml(state.symptoms || "")}</textarea><p class="field-help" id="symptoms-help">Leave empty if all is fine. If something needs a doctor or pharmacist, we'll say so. Not stored.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button>${state.expertView ? `<button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Today's weather</button>` : ""}</div></section>`;
+  const inputs = `<section class="panel form-panel" id="routine-preview"><div class="panel-header"><h3 class="panel-title">${icon("flask", 17)} About your skin</h3><p class="panel-note">Takes about a minute</p></div><div class="form-grid"><div class="field"><label id="skin-type-label">Skin type</label><div class="profile-pills" role="group" aria-labelledby="skin-type-label" aria-describedby="skin-type-help">${profileChoices}</div><p class="field-help" id="skin-type-help">Not sure? <b>Oily</b>: shiny by midday. <b>Dry</b>: feels tight or flaky. <b>Combination</b>: oily forehead and nose, normal or dry cheeks. <b>Sensitive</b>: stings or reddens easily.</p></div>${concernPicker()}${profilePreferenceFields()}<div class="field safety-input"><label for="symptoms">Anything unusual with your skin right now?</label><textarea id="symptoms" data-action="symptoms" maxlength="280" aria-describedby="symptoms-help" placeholder="For example: swelling, burning after a new product, a spreading rash, blisters">${escapeHtml(state.symptoms || "")}</textarea><p class="field-help" id="symptoms-help">Leave empty if all is fine. If something needs a doctor or pharmacist, we'll say so. Not stored.</p></div>${locationPicker({ label: "Location" })}</div><div class="form-actions"><button class="primary-button" type="button" data-action="simulate" ${locationUpdating || running ? "disabled" : ""}>${icon("sparkles", 15)} ${running ? "Building…" : "Build routine"}</button>${state.expertView ? `<button class="ghost-button" type="button" data-action="navigate" data-view="monitor">Today's weather</button>` : ""}</div></section>`;
   const formPanel = state.formCollapsed && !state.expertView && state.routineMeta && !running ? collapsedFormPanel() : inputs;
   const result = `<section class="sim-result" id="routine-result">${synthesizedRoutineCard(routine, state.routineMeta)}${state.expertView ? researchContextPanel(state.routineMeta) : ""}</section>`;
   return shell(`<div class="view-heading ${state.routineMeta && !state.expertView ? "has-result" : ""}"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
@@ -2298,13 +2313,12 @@ function ingredientRelationshipExplorer() {
 function knowledgeExplorerView() {
   const atlas = state.knowledgeExplorer;
   const overview = atlas?.overview || {};
-  const query = state.knowledgeQuery.trim().toLowerCase();
+  const squash = (text) => String(text || "").toLowerCase().replace(/[-‐‑–_/]+/g, " ").replace(/\s+/g, " ").trim();
+  const query = squash(state.knowledgeQuery);
   const allIngredients = Array.isArray(atlas?.ingredients) ? atlas.ingredients : [];
   const filtered = allIngredients.filter((ingredient) => {
     if (!query) return true;
-    return [ingredient.displayName, ...(ingredient.inciNames || []), ...(ingredient.aliases || [])]
-      .join(" ")
-      .toLowerCase()
+    return squash([ingredient.displayName, ...(ingredient.inciNames || []), ...(ingredient.aliases || [])].join(" "))
       .includes(query);
   });
   const results = Array.isArray(state.knowledgeSearchResult?.evidence) ? state.knowledgeSearchResult.evidence : [];

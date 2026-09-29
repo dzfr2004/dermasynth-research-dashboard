@@ -133,3 +133,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   body { background: #fff; }
   .card { box-shadow: none; }
 }
+
+/* Sessions (study rounds) */
+.session-group { margin-top: 14px; }
+.session-group h3 { margin: 0 0 6px; font-size: 1rem; }
+.person select { margin-left: 4px; min-height: 32px; }
+.tabs + .card { margin-top: 12px; }

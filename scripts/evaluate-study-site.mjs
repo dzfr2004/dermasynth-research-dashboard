@@ -172,7 +172,7 @@ try {
       expect(text.includes("P01") && !/Aina|Ben Test/.test(text), `${kind} leaks a name or misses codes`);
     }
     const responses = await (await get("/api/study/admin/export?kind=responses", TOKEN)).text();
-    expect(responses.split("\n")[0].split(",").length === 28, "responses CSV should have 28 columns");
+    expect(responses.split("\n")[0].split(",").length === 29 && responses.startsWith("code,round,"), "responses CSV should have 29 columns with a round column");
   });
   await check("Case set: fewer than 5 sentences is refused", async () => {
     const res = await post("/api/study/cases", { author: "Dr Test", cases: [{ text: "my lips are swollen", expected: "redirect" }] });
@@ -208,6 +208,15 @@ try {
     const { code } = await (await post("/api/study/consent", consent("Chen Test"))).json();
     expect(code === "P04", `got ${code}`);
   });
+  await check("Sessions: everyone so far is Session 1; a participant can be moved and moved back", async () => {
+    const { participants, currentRound } = await (await get("/api/study/admin/participants", TOKEN)).json();
+    expect(currentRound === 1 && participants.every((p) => p.round === 1), JSON.stringify(participants.map((p) => [p.code, p.round])));
+    const moved = await (await post("/api/study/admin/round", { code: "P04", round: 2 }, TOKEN)).json();
+    const s2 = await (await get("/api/study/admin/summary?round=2", TOKEN)).json();
+    const bad = await post("/api/study/admin/round", { code: "P04", round: 12 }, TOKEN);
+    await post("/api/study/admin/round", { code: "P04", round: 1 }, TOKEN);
+    expect(moved.round === 2 && s2.participants === 1 && s2.round === 2 && bad.status === 400, `moved ${JSON.stringify(moved)} s2 ${s2.participants} bad ${bad.status}`);
+  });
 
   // ---- phone browser ----
   let chromium;
@@ -221,7 +230,7 @@ try {
   if (!browser) {
     console.log("Phone browser checks skipped (Playwright or Chromium not installed).");
   } else {
-    const context = await browser.newContext({ viewport: { width: 375, height: 740 }, isMobile: true, hasTouch: true, bypassCSP: true }); // bypassCSP only so axe can be injected
+    const context = await browser.newContext({ viewport: { width: 375, height: 740 }, isMobile: true, hasTouch: true, reducedMotion: "reduce", bypassCSP: true }); // bypassCSP only so axe can be injected
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
@@ -230,8 +239,9 @@ try {
       expect(!wide, `sideways scroll on ${where}`);
     };
     const axe = async (where, target = page) => {
+      await target.waitForTimeout(300); // let the view settle so contrast is measured on the final colours
       await target.addScriptTag({ content: axeSource });
-      const found = await target.evaluate(async () => (await window.axe.run(document, { runOnly: ["wcag2a", "wcag2aa"] })).violations.filter((v) => ["serious", "critical"].includes(v.impact)).map((v) => v.id));
+      const found = await target.evaluate(async () => (await window.axe.run(document, { runOnly: ["wcag2a", "wcag2aa"] })).violations.filter((v) => ["serious", "critical"].includes(v.impact)).map((v) => `${v.id} (${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join("; ")})`));
       expect(found.length === 0, `${where}: ${found.join(", ")}`);
     };
     await check("Phone: home, consent and questionnaire pages fit and pass accessibility", async () => {
@@ -278,7 +288,7 @@ try {
       await axe("admin results");
     });
     await check("Phone: with STUDY_MODE on, opening the app shows an invitation that leads to consent; ?study goes straight there", async () => {
-      const g = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, bypassCSP: true });
+      const g = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce", bypassCSP: true });
       const q = await g.newPage();
       q.on("pageerror", (e) => errors.push(`invite: ${e.message}`));
       await q.goto(`${base}/`);
@@ -292,7 +302,7 @@ try {
       await g.close();
     });
     await check("Phone: guided mode walks a participant through all 7 tasks and saves each result", async () => {
-      const g = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, bypassCSP: true, acceptDownloads: true });
+      const g = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce", bypassCSP: true, acceptDownloads: true });
       const q = await g.newPage();
       q.on("pageerror", (e) => errors.push(`guided: ${e.message}`));
       await q.goto(`${base}/study#consent`);
@@ -310,11 +320,18 @@ try {
       // 1 build a routine
       await q.locator('[data-action="simulate"]').first().click();
       await step(2);
-      // 2 open a Why? panel
+      // 2 ticking "I've done it" before doing it asks for confirmation; then open a Why this? panel
+      await q.click("#study-guide >> text=I've done it");
+      await q.waitForSelector("#study-guide >> text=Yes, I did it", { timeout: 4000 });
+      expect(await q.isVisible("#study-guide >> text=hasn't seen this happen"), "no confirmation message");
+      expect((await q.locator('[data-action="toggle-why"]').first().textContent()).includes("Why this?"), "Why button label");
       await q.locator('[data-action="toggle-why"]').first().click();
       await step(3);
-      // 3 type the sun answer
-      await q.fill("#study-guide textarea", "Use sunscreen, it matters most from 8 am to 6 pm");
+      // 3 type the sun answer (the window is shown as a chip on Today)
+      // Offline there is no UV forecast, so no window; when a window is shown in the step, the chip must be there too.
+      const hasWindow = /Most important from/.test(await q.textContent("#app"));
+      expect(!hasWindow || (await q.isVisible(".today-chip.is-sun-window")), "sunscreen window chip missing");
+      await q.fill("#study-guide textarea", "Use sunscreen, especially around 12 pm");
       await q.click("#study-guide >> text=Submit answer");
       await step(4);
       // 4 check the example product
@@ -345,6 +362,8 @@ try {
       expect(saved.length === 7, `saved ${saved.length} of 7`);
       expect(by.t1 === "success" && by.t2 === "success" && by.t3 === "success" && by.t4 === "success" && by.t5 === "failed" && by.t6 === "success" && by.t7 === "success", JSON.stringify(by));
       expect(saved.every((r) => r.outcome === "failed" || Number.isFinite(r.seconds)), "times missing");
+      const notes = Object.fromEntries(saved.map((r) => [r.taskId, r.notes || ""]));
+      expect(notes.t2 === "detected by the app" && notes.t4 === "detected by the app" && notes.t6 === "detected by the app", `detection notes ${JSON.stringify(notes)}`);
       await q.click("#study-guide >> text=Open the questionnaire");
       await q.waitForSelector("#q-code");
       expect((await q.inputValue("#q-code")) === code, "code not carried to the questionnaire");
@@ -353,6 +372,26 @@ try {
     await check("Phone: no JavaScript errors", async () => expect(errors.length === 0, errors.join("; ")));
     await browser.close();
   }
+  // ---- Session 2: restart with STUDY_ROUND=2 on the same database ----
+  const second = await startServer({ ...env, STUDY_ADMIN_TOKEN: TOKEN, STUDY_ROUND: "2" });
+  try {
+    const at = (path, token) => fetch(`${second.base}${path}`, { headers: token ? { "x-study-token": token } : {} });
+    await check("Session 2: new testers join Session 2, earlier ones stay in Session 1, results filter and compare by session", async () => {
+      const res = await fetch(`${second.base}/api/study/consent`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(consent("Round Two")) });
+      const { code } = await res.json();
+      const { participants, currentRound } = await (await at("/api/study/admin/participants", TOKEN)).json();
+      const mine = participants.find((p) => p.code === code);
+      expect(currentRound === 2 && mine?.round === 2 && participants.filter((p) => p.round === 1).length >= 2, JSON.stringify(participants.map((p) => [p.code, p.round])));
+      const one = await (await at("/api/study/admin/summary?round=1", TOKEN)).json();
+      const two = await (await at("/api/study/admin/summary?round=2", TOKEN)).json();
+      const all = await (await at("/api/study/admin/summary", TOKEN)).json();
+      expect(two.participants === 1 && two.sus.n === 0 && one.participants + two.participants === all.participants, `r1 ${one.participants} r2 ${two.participants} all ${all.participants}`);
+      const cmp = await (await at("/api/study/admin/compare", TOKEN)).json();
+      expect(cmp.rounds.length === 2 && cmp.rounds[0].round === 1 && cmp.rounds[1].round === 2 && "confirmedRate" in cmp.rounds[0].tasks[0], "compare shape");
+      const tasksCsv = await (await at("/api/study/admin/export?kind=tasks", TOKEN)).text();
+      expect(tasksCsv.startsWith("code,round,task_id,outcome,confirmed,"), tasksCsv.split("\n")[0]);
+    });
+  } finally { second.child.kill(); }
 } finally {
   child.kill();
   await rm(dir, { recursive: true, force: true });

@@ -62,12 +62,20 @@ async function start() {
   document.body.append(card);
   document.body.classList.add("has-study-guide");
 
-  let storyClicked = false;
+  // What the participant actually did during the current task (reset on each task).
+  const seen = { why: false, product: false, story: false, storyOpened: false, tomorrowText: "" };
   let finishing = false;
+  let confirming = false;
 
   document.addEventListener("click", (event) => {
-    if (event.target.closest?.('[data-action="story-download"], [data-action="story-share"]')) storyClicked = true;
+    const t = event.target;
+    if (t.closest?.('[data-action="story-download"], [data-action="story-share"]')) seen.story = true;
+    if (t.closest?.('[data-action="story-open"]')) seen.storyOpened = true;
+    if (t.closest?.('[data-action="toggle-why"]')) seen.why = true;
+    if (t.closest?.('[data-action="pc-run"]')) seen.product = true;
   }, true);
+  // Saving the story image by pressing and holding it (common on iPhone) counts too.
+  document.addEventListener("contextmenu", (event) => { if (event.target.closest?.(".story-preview, #story-modal img")) seen.story = true; }, true);
 
   const current = () => tasks[guide.index];
   const save = () => write(KEY, guide);
@@ -116,36 +124,56 @@ async function start() {
       guide.hinted = false;
       guide.taskStartedAt = Date.now();
       save();
-      storyClicked = false;
+      Object.assign(seen, { why: false, product: false, story: false, storyOpened: false, tomorrowText: "" });
+      confirming = false;
       finishing = false;
       render();
     }, 1400);
   }
 
+  // Hours of day (0-23) mentioned in a phrase such as "10 am to 5 pm", "2pm", "noon" or "14:00".
+  function hoursIn(text) {
+    const out = [];
+    const re = /\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)?|\b(noon|midday)\b/gi;
+    let m;
+    while ((m = re.exec(text))) {
+      if (m[4]) { out.push(12); continue; }
+      let h = Number(m[1]);
+      const ap = (m[3] || "").toLowerCase().replace(/\./g, "");
+      if (h > 24 || (!ap && !m[2])) continue; // a bare number ("UV 9", "every 3 hours") is not a time
+      if (ap === "pm" && h < 12) h += 12;
+      if (ap === "am" && h === 12) h = 0;
+      out.push(h);
+    }
+    return out;
+  }
+
+  // Sun: correct when the answer names sun protection AND gives a time inside today's window.
   function sunAnswerOk(answer) {
     const text = document.body.innerText || "";
-    const window = /Matters most from ([^.\n]+?) today/i.exec(text)?.[1] || "";
-    const numbers = window.match(/\d+/g) || [];
+    const window = /(?:Most important|Matters most) from ([^.\n]+?) today/i.exec(text)?.[1] || /Sunscreen (\d[^\n]*?(?:am|pm|noon)[^\n]*?(?:am|pm|noon))/i.exec(text)?.[1] || "";
     const sun = /sun ?screen|sun ?block|spf|sun protection|protect/i.test(answer);
-    const time = numbers.length ? numbers.some((n) => new RegExp(`\\b${n}\\b`).test(answer)) : true;
-    return { ok: sun && time, window };
+    const range = hoursIn(window);
+    const said = hoursIn(answer);
+    const time = range.length >= 2 ? said.some((h) => h >= range[0] && h <= range[range.length - 1]) : said.length > 0;
+    return { ok: sun && time, window: window || "no window shown" };
   }
 
   // Tomorrow: the answer should share at least one meaningful word with what the Tomorrow card says.
   function tomorrowAnswerOk(answer) {
-    const cardText = [...document.querySelectorAll(".tomorrow-card")].map((n) => n.innerText).join(" ").toLowerCase();
+    const cardText = ([...document.querySelectorAll(".tomorrow-card")].map((n) => n.innerText).join(" ") || seen.tomorrowText).toLowerCase();
     const stop = new Set(["the", "and", "for", "but", "not", "are", "was", "use", "get", "can", "one", "its", "you", "any", "all", "tomorrow", "today", "your", "with", "that", "this", "will", "from", "have", "than", "more", "less", "still", "needed", "likely", "because", "skip", "routine", "skin", "weather", "data"]);
     const words = (answer.toLowerCase().match(/[a-z0-9.]{3,}/g) || []).filter((w) => !stop.has(w));
     const hit = words.find((w) => cardText.includes(w));
-    return { ok: Boolean(cardText && hit), window: cardText ? `tomorrow card mentions "${hit || "none of the answer's words"}"` : "no Tomorrow card on screen" };
+    return { ok: Boolean(cardText && hit), window: cardText ? `tomorrow card mentions "${hit || "none of the answer's words"}"` : "Tomorrow card never loaded" };
   }
 
   function detected(task) {
     switch (task.check) {
       case "routine": return Boolean(document.querySelector(".consumer-step")) && !document.querySelector(".clinical-redirect");
-      case "why": return Boolean(document.querySelector('[data-action="toggle-why"][aria-expanded="true"]'));
-      case "product": return Boolean(document.querySelector(".pc-verdict"));
-      case "story": return storyClicked;
+      case "why": return seen.why && Boolean(document.querySelector('[data-action="toggle-why"][aria-expanded="true"], .consumer-why:not([hidden])'));
+      case "product": return seen.product && Boolean(document.querySelector(".pc-verdict"));
+      case "story": return seen.story;
       case "redirect": return Boolean(document.querySelector(".clinical-redirect"));
       default: return false;
     }
@@ -185,7 +213,12 @@ async function start() {
             const label = task.check === "sun-answer" ? "app window" : "check";
             complete(check.ok ? (guide.hinted ? "helped" : "success") : "failed", `answer: ${answer}${check.window ? ` | ${label}: ${check.window}` : ""}${check.ok ? "" : " | did not match, review"}`, "Answer saved, thank you.");
           }, text: "Submit answer" })
-          : el("button", { type: "button", class: "sg-primary", onclick: () => complete(guide.hinted ? "helped" : "success", "self-reported: pressed I've done it (not detected)"), text: "I've done it" }),
+          : confirming
+            ? el("button", { type: "button", class: "sg-primary", onclick: () => complete(guide.hinted ? "helped" : "success", `self-reported: confirmed I did it (not detected${seen.storyOpened ? "; story preview was opened" : ""})`), text: "Yes, I did it" })
+            : el("button", { type: "button", class: "sg-primary", onclick: () => {
+              if (detected(task)) { complete(guide.hinted ? "helped" : "success", "detected by the app"); return; }
+              confirming = true; render("The app hasn't seen this happen yet. Please try the task on the screen first. If you really did it, tap 'Yes, I did it'.");
+            }, text: "I've done it" }),
         el("button", { type: "button", class: "sg-secondary", onclick: () => {
           if (!guide.hinted) { guide.hinted = true; save(); render(); return; }
           complete("failed", "gave up after the hint", "Skipped. No problem, on to the next one.");
@@ -205,6 +238,8 @@ async function start() {
 
     const task = current();
     if (!task || finishing) return;
+    const tomorrowNow = [...document.querySelectorAll(".tomorrow-card:not(.is-loading)")].map((n) => n.innerText).join(" ");
+    if (tomorrowNow) seen.tomorrowText = tomorrowNow;
     if (detected(task)) complete(guide.hinted ? "helped" : "success", "detected by the app");
   }
 
