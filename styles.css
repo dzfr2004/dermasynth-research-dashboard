@@ -1778,11 +1778,69 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .toast { color: var(--on-inverse); background: var(--inverse); box-shadow: var(--shadow-float); }
 .story-sheet, .presentation-guide { border: 0; background: var(--surface); box-shadow: var(--shadow-float); }
 
-/* ---- Consumer layout: one centred reading column on wide screens ---- */
+/* ---- Consumer layout on tablets and desktops ---- */
 @media (min-width: 701px) {
-  .is-consumer .content { max-width: 800px; }
-  .is-consumer .simulator-grid, .is-consumer .simulator-grid.is-form-collapsed { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .is-consumer .view-heading.has-result { display: none; }
+  .is-consumer .simulator-grid.has-result { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+}
+/* Tablet: one centred reading column */
+@media (min-width: 701px) and (max-width: 1099px) {
+  .is-consumer .content { max-width: 820px; }
+  .is-consumer .simulator-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+}
+/* Desktop: use the width. Page content and the top bar share one 1280 px frame. */
+@media (min-width: 1100px) {
+  .is-consumer { --frame: 1280px; --gutter: clamp(24px, 3vw, 48px); }
+  .is-consumer .content { max-width: var(--frame); padding: 28px var(--gutter) 64px; }
+  .is-consumer .topbar, .is-consumer .scope-banner { padding-inline: max(var(--gutter), calc((100% - var(--frame)) / 2 + var(--gutter))); }
+
+  /* Routine page before a result: the form beside the preview */
+  .is-consumer .simulator-grid:not(.has-result) { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .is-consumer .simulator-grid:not(.has-result) .sim-result { position: sticky; top: 96px; }
+
+  /* Result: summary and routine on the left, today's context on the right.
+     The page order stays the same as on a phone; grid placement does the rest. */
+  .is-consumer .consumer-result { display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: auto auto auto auto auto auto 1fr auto; column-gap: 24px; row-gap: 0; align-items: start; }
+  .is-consumer .consumer-result > * { margin: 0 0 16px; }
+  .is-consumer .consumer-result > .hero-line { grid-column: 1; grid-row: 1 / 4; }
+  .is-consumer .consumer-result > .today-strip { grid-column: 2; grid-row: 1; }
+  .is-consumer .consumer-result > .skin-problem-prompt { grid-column: 2; grid-row: 2; }
+  .is-consumer .consumer-result > .compare-card { grid-column: 2; grid-row: 3; }
+  .is-consumer .consumer-result > .consumer-card { grid-column: 1; grid-row: 4 / 8; }
+  .is-consumer .consumer-result > .tomorrow-card { grid-column: 2; grid-row: 4; }
+  .is-consumer .consumer-result > .checkin-card { grid-column: 2; grid-row: 5; }
+  .is-consumer .consumer-result > .product-card { grid-column: 2; grid-row: 6; }
+  .is-consumer .consumer-result > .consumer-card.is-loading, .is-consumer .consumer-result > .consumer-card.is-error { grid-row: auto; }
+  .is-consumer .hero-line { padding: 24px 28px; }
+  .is-consumer .hero-text { font-size: 1.75rem; line-height: 1.25; }
+  .is-consumer .skin-problem-prompt { flex-direction: column; align-items: flex-start; }
+  .is-consumer .skin-problem-prompt p { flex: none; }
+  .is-consumer .product-card .pc-actions { flex-wrap: wrap; }
+
+  .is-consumer .consumer-result > .hero-line { align-self: stretch; display: flex; flex-direction: column; }
+  .is-consumer .consumer-result > .hero-line .hero-actions { margin-top: auto; padding-top: 16px; }
+  /* The UV chart keeps its text near body size instead of scaling with the card */
+  .is-consumer .weather-layout .uv-timeline svg { display: block; max-width: 520px; margin-inline: auto; }
+  /* Morning and evening side by side once the routine column is wide enough */
+  .is-consumer .consumer-card { container-type: inline-size; }
+  @container (min-width: 720px) {
+    .consumer-phases { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+  }
+
+  /* Weather: the big reading card on the left, location and tomorrow on the right */
+  .is-consumer .weather-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; grid-template-rows: auto auto auto 1fr; column-gap: 24px; row-gap: 0; align-items: start; margin-top: 8px; }
+  .is-consumer .weather-layout .weather-stack { display: contents; }
+  .is-consumer .weather-layout > *, .is-consumer .weather-layout .weather-stack > * { margin: 0 0 16px; }
+  .is-consumer .weather-layout .monitor-location-panel { grid-column: 2; grid-row: 1; }
+  .is-consumer .weather-layout .today-card { grid-column: 1; grid-row: 1 / 5; }
+  .is-consumer .weather-layout .tomorrow-card { grid-column: 2; grid-row: 2; }
+  .is-consumer .weather-layout .weather-cta { grid-column: 2; grid-row: 3; }
+  .is-consumer .weather-layout .today-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+  /* Ingredients: as many columns as fit */
+  .is-consumer .atlas-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .is-consumer .atlas-controls { grid-template-columns: minmax(280px, 0.7fr) minmax(0, 1.3fr); }
+  .is-consumer .atlas-search input { font-size: 1.0625rem; min-height: 44px; }
 }
 
 /* ---- Phone ---- */
