@@ -1859,18 +1859,14 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .ghost-button, .refresh-button, .pill-button, .location-search-button, .why-button, .why-button[aria-expanded="true"], .skin-problem-prompt .ghost-button { min-height: 44px; }
 }
 
-/* Expert view's research cards were dark by design; they keep the dark
-   palette in both themes by redefining the tokens inside them. */
+/* Expert view's research cards were dark in the original design. They now
+   follow the theme like every other card: text that was light-on-dark uses
+   the normal ink colour, and filled buttons inside keep white text. */
 .monitor-card, .synthesized-routine-card, .ingredient-research-card, .research-context-card, .relationship-inspector, .presentation-guide, .mobile-more-sheet {
-  --surface: #1c1c1e; --surface-soft: #2c2c2e; --fill: rgb(255 255 255 / 14%); --inverse: #f2f2f7; --on-inverse: #000;
-  --ink: #f5f5f7; --muted: #aeaeb2; --faint: #98989d; --on-accent: #ffffff;
-  --line: rgb(255 255 255 / 16%); --line-strong: rgb(255 255 255 / 28%);
-  --accent: #1a7f71; --accent-dark: #5fd3bf; --accent-soft: rgb(95 211 191 / 18%); --accent-line: rgb(95 211 191 / 40%); --mint: rgb(95 211 191 / 18%);
-  --warning: #ffb347; --warning-soft: rgb(255 179 71 / 16%); --warning-line: rgb(255 179 71 / 35%);
-  --danger: #ff6b61; --danger-soft: rgb(255 107 97 / 16%); --danger-line: rgb(255 107 97 / 35%);
-  --success: #5fd3bf; --success-soft: rgb(95 211 191 / 18%);
-  color: var(--ink); background: #1c1c1e;
+  --on-accent: var(--ink);
+  color: var(--ink); background: var(--surface); border: 0; box-shadow: none;
 }
+:is(.monitor-card, .synthesized-routine-card, .ingredient-research-card, .research-context-card, .relationship-inspector, .presentation-guide, .mobile-more-sheet) :is(.primary-button, .pill-button.is-primary, [aria-pressed="true"].filter-chip, .is-selected) { color: #ffffff; }
 .ingredient-system-chip { border: 0; background: var(--surface); }
 .ingredient-system-roster-head, .ingredient-system-roster-head > span { color: var(--ink); }
 .concern-choice small { opacity: 1; }
@@ -1902,3 +1898,4 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 textarea { white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; overflow-x: hidden; }
 textarea::placeholder { white-space: pre-wrap; overflow-wrap: break-word; text-overflow: clip; }
 .field textarea { min-height: 88px; padding: 12px 14px; line-height: 1.4; }
+.hero-context-card { --on-accent: var(--ink); color: var(--ink); background: var(--surface); border: 0.5px solid var(--line); }
