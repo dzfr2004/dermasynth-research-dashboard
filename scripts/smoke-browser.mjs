@@ -225,8 +225,13 @@ for (const width of [375, 1280]) {
     const text = (await page.locator(".hero-text").innerText()).trim();
     expect(text.length > 15 && /sunscreen|UV/i.test(text), `Summary missing or unexpected: "${text}"`);
   });
-  await check(`${label}-collapsed`, `${label}: the form folds into "Edit my skin details" and the result is in view`, async () => {
-    expect(await page.locator(".form-panel.is-collapsed").count() === 1, "Form did not collapse.");
+  await check(`${label}-collapsed`, label === "desktop" ? `${label}: "About your skin" stays open on the left and the result is beside it` : `${label}: the form folds into "Edit my skin details" and the result is in view`, async () => {
+    if (label === "desktop") {
+      const [form, result] = await Promise.all([page.locator(".simulator-grid > .form-panel").boundingBox(), page.locator("#routine-result").boundingBox()]);
+      expect(form && result && form.x + form.width <= result.x && !(await page.locator(".form-panel.is-collapsed").count()), "Form is not open to the left of the result.");
+    } else {
+      expect(await page.locator(".form-panel.is-collapsed").count() === 1, "Form did not collapse.");
+    }
     const top = await page.locator("#routine-result").evaluate((el) => el.getBoundingClientRect().top);
     expect(top < 400, `Result starts ${Math.round(top)} px down the screen.`);
   });
@@ -284,7 +289,7 @@ for (const width of [375, 1280]) {
     expect(!violations.length, violations.join("; "));
   });
   await check(`${label}-redirect`, `${label}: symptoms that need care show the check-up screen and no routine`, async () => {
-    await page.locator('[data-action="edit-form"]').click();
+    if (await page.locator('[data-action="edit-form"]').count()) await page.locator('[data-action="edit-form"]').click();
     await page.waitForSelector("#symptoms", { timeout: 5000 });
     await page.fill("#symptoms", "my lips started swelling after a new cream");
     await page.locator('[data-action="simulate"]').first().click();
