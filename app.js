@@ -1524,19 +1524,31 @@ function uvTimeline(outlook = state.outlook) {
   const today = outlook?.data?.today;
   const hours = Array.isArray(today?.hourly) ? today.hourly : [];
   if (hours.length < 6) return "";
-  const w = 320; const h = 96; const padX = 8; const top = 12; const base = 70;
+  // The line is drawn in a 0-100 box stretched to the card's width; labels are
+  // HTML placed by percentage, so the chart fills the card and text stays at
+  // normal size on any screen.
   const maxUv = Math.max(11, ...hours.map((p) => p.uvi));
-  const x = (time) => padX + (Number(String(time).slice(11, 13)) / 23) * (w - padX * 2);
-  const y = (uvi) => base - (uvi / maxUv) * (base - top);
-  const line = hours.map((p, i) => `${i ? "L" : "M"}${x(p.time).toFixed(1)},${y(p.uvi).toFixed(1)}`).join(" ");
-  const area = `${line} L${x(hours.at(-1).time).toFixed(1)},${base} L${x(hours[0].time).toFixed(1)},${base} Z`;
+  const hourOf = (time) => Number(String(time).slice(11, 13)) + Number(String(time).slice(14, 16) || 0) / 60;
+  const x = (time) => (hourOf(time) / 23) * 100;
+  const y = (uvi) => 100 - (uvi / maxUv) * 100;
+  const pct = (v) => `${Math.max(0, Math.min(100, v)).toFixed(2)}%`;
+  const line = hours.map((p, i) => `${i ? "L" : "M"}${x(p.time).toFixed(2)},${y(p.uvi).toFixed(2)}`).join(" ");
+  const area = `${line} L${x(hours.at(-1).time).toFixed(2)},100 L${x(hours[0].time).toFixed(2)},100 Z`;
   const win = today.window;
-  const winRect = win && win.start && win.end ? `<rect class="uv-window" x="${x(win.start).toFixed(1)}" y="${top + 2}" width="${(x(win.end) - x(win.start)).toFixed(1)}" height="${base - top - 2}" rx="6"/>` : "";
-  const thresholdY = win ? y(win.threshold) : null;
+  const hasWindow = Boolean(win && win.start && win.end);
+  const winRect = hasWindow ? `<rect class="uv-window" x="${x(win.start).toFixed(2)}" y="0" width="${(x(win.end) - x(win.start)).toFixed(2)}" height="100"/>` : "";
+  const threshold = Number.isFinite(Number(win?.threshold)) ? y(win.threshold) : null;
   const nowX = today.now ? x(today.now) : null;
   const peak = win?.peak;
-  const label = win?.start && win?.end ? `UV today: ${win.threshold} or higher from ${hourLabel(win.start)} to ${hourLabel(win.end)}, peaking at ${Math.round(peak?.uvi ?? 0)} around ${hourLabel(peak?.time)}.` : "UV today stays low.";
-  return `<figure class="uv-timeline"><svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeHtml(label)}">${winRect}<path class="uv-area" d="${area}"/><path class="uv-line" d="${line}"/>${thresholdY !== null ? `<line class="uv-threshold" x1="${padX}" x2="${w - padX}" y1="${thresholdY.toFixed(1)}" y2="${thresholdY.toFixed(1)}"/>` : ""}${nowX !== null ? `<line class="uv-now" x1="${nowX.toFixed(1)}" x2="${nowX.toFixed(1)}" y1="${top - 8}" y2="${base}"/><text class="uv-now-label" x="${nowX.toFixed(1)}" y="${top - 1}" text-anchor="middle">now</text>` : ""}${peak ? `<circle class="uv-peak" cx="${x(peak.time).toFixed(1)}" cy="${y(peak.uvi).toFixed(1)}" r="3.5"/>` : ""}${["06", "12", "18"].map((hh) => `<text class="uv-axis" x="${x(`2000-01-01T${hh}:00`).toFixed(1)}" y="${h - 8}" text-anchor="middle">${hh === "12" ? "noon" : hh === "06" ? "6 am" : "6 pm"}</text>`).join("")}</svg><figcaption><span class="uv-key is-window"></span> sunscreen matters · <span class="uv-key is-line"></span> UV through the day</figcaption></figure>`;
+  const label = hasWindow ? `UV today: ${win.threshold} or higher from ${hourLabel(win.start)} to ${hourLabel(win.end)}, peaking at ${Math.round(peak?.uvi ?? 0)} around ${hourLabel(peak?.time)}.` : peak ? `UV today peaks at ${Math.round(peak.uvi)} around ${hourLabel(peak.time)}.` : "UV today stays low.";
+  const ticks = [["00", "12 am"], ["06", "6 am"], ["12", "noon"], ["18", "6 pm"], ["23", "11 pm"]];
+  return `<figure class="uv-timeline" role="img" aria-label="${escapeHtml(label)}"><div class="uv-plot">
+    <svg class="uv-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${winRect}<path class="uv-area" d="${area}"/>${threshold !== null ? `<line class="uv-threshold" x1="0" x2="100" y1="${threshold.toFixed(2)}" y2="${threshold.toFixed(2)}"/>` : ""}<path class="uv-line" d="${line}"/>${nowX !== null ? `<line class="uv-now" x1="${nowX.toFixed(2)}" x2="${nowX.toFixed(2)}" y1="0" y2="100"/>` : ""}</svg>
+    ${peak ? `<span class="uv-peak" style="left: ${pct(x(peak.time))}; top: ${pct(y(peak.uvi))}"></span><span class="uv-peak-label" style="left: ${pct(x(peak.time))}; top: ${pct(y(peak.uvi))}">UV ${Math.round(peak.uvi)}</span>` : ""}
+    ${nowX !== null ? `<span class="uv-now-label${nowX > 88 ? " is-end" : ""}" style="left: ${pct(nowX)}">now</span>` : ""}
+    ${threshold !== null ? `<span class="uv-threshold-label" style="top: ${pct(threshold)}">UV ${escapeHtml(String(win.threshold))}</span>` : ""}
+  </div><div class="uv-axis" aria-hidden="true">${ticks.map(([hh, t], i) => `<span class="${i === 0 ? "is-start" : i === ticks.length - 1 ? "is-end" : ""}" style="left: ${pct(x(`2000-01-01T${hh}:00`))}">${t}</span>`).join("")}</div>
+  <figcaption>${hasWindow ? `<span class="uv-key is-window"></span> sunscreen matters · ` : ""}<span class="uv-key is-line"></span> UV through the day · <span class="uv-key is-threshold"></span> sunscreen level</figcaption></figure>`;
 }
 function hourLabel(time) {
   const h = Number(String(time || "").slice(11, 13));
