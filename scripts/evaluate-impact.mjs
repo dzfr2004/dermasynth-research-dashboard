@@ -5,6 +5,9 @@ import { planningUvi } from "../lib/uv.mjs";
 import { readingChanges, tomorrowChanges } from "../lib/outlook.mjs";
 import { templateRoutine } from "../lib/safety.mjs";
 import { isPrivateAddress, networkLocation } from "../lib/network-location.mjs";
+import { prefetchSlotSearches, retrieveSlotCandidates } from "../lib/candidate-retrieval.mjs";
+import { cachedSearch, clearSearchCache } from "../lib/search-cache.mjs";
+import { createConfig } from "../lib/config.mjs";
 
 /**
  * Offline tests for the result-impact features:
@@ -114,6 +117,57 @@ await test("imp-09", "Network location: only for the same private network, never
     expect(r.available && r.approximate && r.name === "Seri Iskandar, MY" && r.lat === 4.36 && r.lon === 100.98, JSON.stringify(r));
     expect(urls.every((u) => !u.includes("192.168")), "the visitor's address must never be sent");
   } finally { globalThis.fetch = realFetch; }
+});
+
+await test("imp-10", "Search cache: a repeated or prefetched search is reused, cleared on re-sync, off at 0, failures not kept", async () => {
+  const realFetch = globalThis.fetch;
+  let searches = 0;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes("api.pinecone.io/indexes/")) return new Response(JSON.stringify({ host: "idx.test", embed: { field_map: { text: "chunk_text" } } }), { status: 200 });
+    searches += 1;
+    await new Promise((r) => setTimeout(r, 30));
+    return new Response(JSON.stringify({ result: { hits: [{ _score: 0.9, fields: { ingredient_ids: ["glycerin"] } }] } }), { status: 200 });
+  };
+  const base = { liveServicesEnabled: true, requestTimeoutMs: 2000, pinecone: { apiKey: "k", index: "imp10", evidenceNamespace: "ev", textField: "chunk_text" } };
+  const env = { readings: { uvi: 9, humidity: 80, pm25: 10 } };
+  const ask = (cfg) => retrieveSlotCandidates({ config: cfg, corpus: [], categoryIds: ["comfort-hydration"], concern: "acne", environment: env });
+  try {
+    clearSearchCache();
+    const cfg = { ...base, searchCacheMs: 60_000 };
+    const first = await ask(cfg);
+    await ask(cfg);
+    expect(searches === 1, `repeat should reuse the search, ran ${searches}`);
+    expect(first.get("comfort-hydration").mode === "hybrid-bm25-dense-rrf", "dense result used");
+    // Prefetch while "GPT" is working, then the real call picks up the running search.
+    clearSearchCache(); searches = 0;
+    expect(prefetchSlotSearches({ config: cfg, categoryIds: ["comfort-hydration", "daytime-photoprotection"], concern: "acne", environment: env }) === 2, "two prefetched");
+    const later = await ask(cfg);
+    expect(searches === 2 && later.get("comfort-hydration").ranked[0].ingredientId === "glycerin", `prefetched search reused, ran ${searches}`);
+    clearSearchCache(); await ask(cfg);
+    expect(searches === 3, "cleared cache searches again");
+    searches = 0; const off = { ...base, searchCacheMs: 0 };
+    await ask(off); await ask(off);
+    expect(searches === 2 && prefetchSlotSearches({ config: off, categoryIds: ["comfort-hydration"], concern: "acne", environment: env }) === 0, "0 turns the cache and prefetch off");
+    let calls = 0;
+    const failing = () => { calls += 1; return Promise.reject(new Error("down")); };
+    await cachedSearch(60_000, "imp10-fail", failing).catch(() => {});
+    await new Promise((r) => setTimeout(r, 0));
+    await cachedSearch(60_000, "imp10-fail", failing).catch(() => {});
+    expect(calls === 2, "a failed search must not be cached");
+  } finally { globalThis.fetch = realFetch; clearSearchCache(); }
+});
+
+await test("imp-11", "GPT time limits are on by default (25 s per routine, 20 s per explanation set)", async () => {
+  const keys = ["GPT_ROUTINE_BUDGET_MS", "GPT_CONTEXT_BUDGET_MS"];
+  const saved = keys.map((k) => process.env[k]);
+  try {
+    keys.forEach((k) => delete process.env[k]);
+    const cfg = createConfig();
+    expect(cfg.openai.routineBudgetMs === 25_000 && cfg.openai.contextBudgetMs === 20_000, JSON.stringify([cfg.openai.routineBudgetMs, cfg.openai.contextBudgetMs]));
+    process.env.GPT_ROUTINE_BUDGET_MS = "0";
+    expect(createConfig().openai.routineBudgetMs === 0, "0 still turns the limit off");
+  } finally { keys.forEach((k, i) => { if (saved[i] === undefined) delete process.env[k]; else process.env[k] = saved[i]; }); }
 });
 
 const passed = results.filter((r) => r.status === "passed").length;

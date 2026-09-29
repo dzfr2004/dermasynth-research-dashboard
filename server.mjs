@@ -36,6 +36,7 @@ import {
   ALLOWED_REACTIVITY_LEVELS,
   CONCERN_CATALOG,
   ROUTINE_CATEGORY_CATALOG,
+  createCategoryRoutine,
   firstSafetyPass,
   normaliseConcern,
   secondSafetyPass,
@@ -47,7 +48,8 @@ import { budgetSummary, createGptBudget, currentGptBudget, describeOpenAiError, 
 import { functionalClass } from "./lib/ingredient-evidence-corpus.mjs";
 import { evidenceGrade } from "./lib/ingredient-evidence-notes.mjs";
 import { getEwgReference } from "./lib/kb-reference.mjs";
-import { retrieveSlotCandidates } from "./lib/candidate-retrieval.mjs";
+import { prefetchSlotSearches, retrieveSlotCandidates } from "./lib/candidate-retrieval.mjs";
+import { clearSearchCache, searchCacheStats } from "./lib/search-cache.mjs";
 import { buildIngredientEvidenceCorpus } from "./lib/ingredient-evidence-corpus.mjs";
 import { postSelectionSafetyPass } from "./lib/post-selection-safety.mjs";
 import { effectiveReactivity } from "./lib/personalisation.mjs";
@@ -360,6 +362,8 @@ async function handleKnowledgeAdmin(request, response, url, requestId) {
 
     if (request.method === "POST" && path === "pinecone/flush") {
       const summary = await pineconeSync().flush({ repo });
+      // The index changed, so cached search results may be out of date.
+      clearSearchCache();
       return sendJson(response, 200, { summary, requestId }, requestId);
     }
 
@@ -878,6 +882,27 @@ function selectionUnavailable(status, notice) {
  * the final output. Returns the selection plus everything the run report and
  * selection log need.
  */
+/**
+ * The categories a routine can have are fixed by the concern, the weather and
+ * two GPT choices (the evidence subset and the extra hydration step), so the
+ * likely set is the union of the rule-built routine with and without the extra
+ * hydration step. Returns how many searches were started.
+ */
+function prefetchIngredientSearches({ concern, environment, evidence, profile, finishPreference, reactivityLevel, exposureContext, genericRoutine }) {
+  if (!config.ingredientSelectionEnabled || !config.ingredientDb?.enabled) return 0;
+  try {
+    const ids = new Set();
+    const add = (routine) => [...(routine?.am || []), ...(routine?.pm || [])].forEach((step) => { const id = String(step?.id || "").toLowerCase(); if (id) ids.add(id); });
+    add(genericRoutine);
+    for (const includeHydration of [true, false]) {
+      add(createCategoryRoutine({ concern, environment, evidence, includeHydration, profile, finishPreference, reactivityLevel, exposureContext }));
+    }
+    return prefetchSlotSearches({ config, categoryIds: [...ids], concern, environment, policy: getRuntimePolicy() });
+  } catch {
+    return 0;
+  }
+}
+
 async function selectNamedIngredients({ routine, profile, finishPreference, concern, environment, reactivityLevel, allowLlmSelection, stages }) {
   const repo = knowledgeRepo();
   const selectionStarted = Date.now();
@@ -1385,6 +1410,10 @@ async function handleRoutineRun(input, requestId) {
     });
   }
 
+  // Start the ingredient searches for the categories this routine can end up
+  // with while GPT picks the categories (they are picked up from the cache).
+  const prefetchedCategories = prefetchIngredientSearches({ concern, environment, evidence: retrieval.eligibleEvidence, profile, finishPreference, reactivityLevel: statedReactivityLevel, exposureContext, genericRoutine });
+
   let routine;
   const synthesisStarted = Date.now();
   try {
@@ -1399,6 +1428,7 @@ async function handleRoutineRun(input, requestId) {
       exposureContext,
     });
     stages.push(stage("synthesis", "completed", synthesisStarted, {
+      prefetchedIngredientSearches: prefetchedCategories,
       mode: routine.generation?.mode || "allowlisted-category-selection",
       selectedEvidenceIds: routine.generation?.selectionEvidenceIds || [],
     }));
@@ -1525,10 +1555,11 @@ async function routeApi(request, response, url, requestId) {
         postSelectionSafetyPass: true,
         selectionLog: Boolean(config.selectionLog.enabled),
         gptBudgetMs: { routine: config.openai.routineBudgetMs || "off", explanations: config.openai.contextBudgetMs || "off" },
+        searchCache: { ttlMs: config.searchCacheMs || "off", ...searchCacheStats() },
         runOutcomes: runOutcomeSummary(),
         // F3: identifies the process, so two different ids behind one URL
         // reveal an accidental multi-instance deployment.
-        instance: { id: INSTANCE_ID, startedAt: INSTANCE_STARTED_AT, inMemoryState: ["rate limits", "weather and forecast caches", "GPT explanation cache", "model fallback memory", "run counters"] },
+        instance: { id: INSTANCE_ID, startedAt: INSTANCE_STARTED_AT, inMemoryState: ["rate limits", "weather and forecast caches", "search cache", "GPT explanation cache", "model fallback memory", "run counters"] },
       },
       requestId,
     }, requestId);
