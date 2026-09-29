@@ -1798,27 +1798,19 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .is-consumer .simulator-grid:not(.has-result) { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: start; }
   .is-consumer .simulator-grid:not(.has-result) .sim-result { position: sticky; top: 96px; }
 
-  /* Result: summary and routine on the left, today's context on the right.
-     The page order stays the same as on a phone; grid placement does the rest. */
-  .is-consumer .consumer-result { display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-rows: auto auto auto auto auto auto 1fr auto; column-gap: 24px; row-gap: 0; align-items: start; }
-  .is-consumer .consumer-result > * { margin: 0 0 16px; }
-  .is-consumer .consumer-result > .hero-line { grid-column: 1; grid-row: 1 / 4; }
-  .is-consumer .consumer-result > .today-strip { grid-column: 2; grid-row: 1; }
-  .is-consumer .consumer-result > .skin-problem-prompt { grid-column: 2; grid-row: 2; }
-  .is-consumer .consumer-result > .compare-card { grid-column: 2; grid-row: 3; }
-  .is-consumer .consumer-result > .consumer-card { grid-column: 1; grid-row: 4 / 8; }
-  .is-consumer .consumer-result > .tomorrow-card { grid-column: 2; grid-row: 4; }
-  .is-consumer .consumer-result > .checkin-card { grid-column: 2; grid-row: 5; }
-  .is-consumer .consumer-result > .product-card { grid-column: 2; grid-row: 6; }
-  .is-consumer .consumer-result > .consumer-card.is-loading, .is-consumer .consumer-result > .consumer-card.is-error { grid-row: auto; }
+  /* Result: summary and routine on the left, today's context on the right,
+     as two independent columns (app.js renders .result-main and .result-side
+     at this width), so neither column leaves gaps to match the other. */
+  .is-consumer .consumer-result.is-split { display: grid; grid-template-columns: minmax(0, 1fr) 360px; column-gap: 24px; align-items: start; }
+  .is-consumer .result-main > *, .is-consumer .result-side > * { margin: 0 0 16px; }
+  /* Four reading tiles do not fit a 360 px column; show them two by two. */
+  .is-consumer .result-side .today-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .is-consumer .hero-line { padding: 24px 28px; }
   .is-consumer .hero-text { font-size: 1.75rem; line-height: 1.25; }
   .is-consumer .skin-problem-prompt { flex-direction: column; align-items: flex-start; }
   .is-consumer .skin-problem-prompt p { flex: none; }
   .is-consumer .product-card .pc-actions { flex-wrap: wrap; }
 
-  .is-consumer .consumer-result > .hero-line { align-self: stretch; display: flex; flex-direction: column; }
-  .is-consumer .consumer-result > .hero-line .hero-actions { margin-top: auto; padding-top: 16px; }
   /* The UV chart keeps its text near body size instead of scaling with the card */
   /* Morning and evening side by side once the routine column is wide enough */
   .is-consumer .consumer-card { container-type: inline-size; }

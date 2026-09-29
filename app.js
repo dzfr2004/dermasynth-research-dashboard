@@ -2165,7 +2165,15 @@ function consumerResult(routine, meta, running) {
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
   const reviewNote = meta.status === "cleared" ? "" : `<p class="consumer-status is-warn" role="status">${icon("info", 13)} Some checks asked for review, so treat this routine with extra care.</p>`;
   state.stepCounter = 0;
-  return `<div class="consumer-result ${state.animateEnter ? "is-entering" : ""}">${meta.status === "cleared" ? heroCard(meta, routine) : ""}${todayStrip(meta)}${meta.status === "cleared" ? skinProblemPrompt() : ""}${compareCard(meta)}<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)}</p><p class="consumer-why-hint">Tap <b>Why this?</b> on a step to see why it suits you today.</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>${tomorrowCard()}${productCheckCard(meta)}${checkinCard(meta)}</div>`;
+  const heroHtml = `${meta.status === "cleared" ? heroCard(meta, routine) : ""}`;
+  const topSide = `${todayStrip(meta)}${meta.status === "cleared" ? skinProblemPrompt() : ""}${compareCard(meta)}`;
+  const routineHtml = `<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)}</p><p class="consumer-why-hint">Tap <b>Why this?</b> on a step to see why it suits you today.</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>`;
+  const bottomSide = `${tomorrowCard()}${productCheckCard(meta)}${checkinCard(meta)}`;
+  const enter = state.animateEnter ? "is-entering" : "";
+  // Wide screens: two independent columns, so a tall card on one side never
+  // leaves empty space on the other. Phones keep one column in reading order.
+  if (isWideLayout()) return `<div class="consumer-result is-split ${enter}"><div class="result-main">${heroHtml}${routineHtml}</div><aside class="result-side" aria-label="Today's weather and tools">${topSide}${bottomSide}</aside></div>`;
+  return `<div class="consumer-result ${enter}">${heroHtml}${topSide}${routineHtml}${bottomSide}</div>`;
 }
 
 const REDIRECT_PLAIN = [
@@ -2405,6 +2413,13 @@ function render() {
 // for reduced motion.
 let viewTransitionBusy = false;
 let deferredRender = null;
+
+// Matches the desktop breakpoint in styles.css (@media (min-width: 1100px)).
+const WIDE_LAYOUT_QUERY = "(min-width: 1100px)";
+function isWideLayout() {
+  try { return window.matchMedia(WIDE_LAYOUT_QUERY).matches; } catch { return false; }
+}
+try { window.matchMedia(WIDE_LAYOUT_QUERY).addEventListener("change", () => scheduleRender()); } catch { /* old browsers keep the first layout */ }
 
 function prefersReducedMotion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
