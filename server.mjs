@@ -439,6 +439,22 @@ function pruneWindow(map, windowMs) {
   }
 }
 
+const weekRequests = new Map();
+const WEEK_WINDOW_MS = 60_000;
+const WEEK_MAX_PER_WINDOW = 12;
+function enforceWeekRateLimit(request) {
+  pruneWindow(weekRequests, WEEK_WINDOW_MS);
+  const client = clientKey(request);
+  const existing = weekRequests.get(client);
+  if (existing) {
+    if (existing.count >= WEEK_MAX_PER_WINDOW) throw new HttpError(429, "Too many weekly plans. Please wait a minute and try again.", { "retry-after": "60" });
+    existing.count += 1;
+    return;
+  }
+  if (weekRequests.size >= LOCATION_SEARCH_CLIENTS_MAX) weekRequests.delete(weekRequests.keys().next().value);
+  weekRequests.set(client, { windowStartedAt: Date.now(), count: 1, inFlight: 0 });
+}
+
 function enforceLocationSearchRateLimit(request) {
   pruneWindow(locationSearchRequests, LOCATION_SEARCH_WINDOW_MS);
   const client = clientKey(request);
@@ -882,6 +898,53 @@ function selectionUnavailable(status, notice) {
  * the final output. Returns the selection plus everything the run report and
  * selection log need.
  */
+/**
+ * Weekly planner ingredients. Each future day's routine (rule-based, from that
+ * day's forecast) goes through the same named-ingredient selection as today's
+ * run without GPT: the approved, retrieved pool for each step, the candidate
+ * score for that day's readings, then the post-selection safety pass. Where a
+ * day keeps a step from today and today's ingredient is still in that day's
+ * pool, today's ingredient is kept, so the plan only changes when the weather
+ * or the step changes. Returns { "am:category": { id, name, sameAsToday } } per day.
+ */
+async function weekIngredients({ days, todaySteps = [], todayIngredients, profile, finishPreference, concern, reactivityLevel }) {
+  if (!config.ingredientSelectionEnabled || !config.ingredientDb?.enabled) return null;
+  const repo = knowledgeRepo();
+  const policy = getRuntimePolicy();
+  const names = new Map(repo.listIngredients().map((record) => [record.ingredient_id, record.display_name]));
+  const today = Object.fromEntries(Object.entries(todayIngredients).filter(([, id]) => names.has(id)));
+  let corpus = [];
+  try { corpus = buildIngredientEvidenceCorpus({ ingredients: repo.listIngredients(), sources: repo.listSources() }); } catch { corpus = []; }
+  const selectionMap = Object.fromEntries(Object.entries(today).map(([key, id]) => [key.split(":")[1], id]));
+  return Promise.all(days.map(async (day) => {
+    if (day.isToday) return Object.fromEntries(Object.entries(today).map(([key, id]) => [key, { id, name: names.get(id), sameAsToday: true }]));
+    const routine = day.routine;
+    if (!routine) return {};
+    const environment = { readings: day.readings };
+    const categoryIds = [...(routine.am || []), ...(routine.pm || [])].map((step) => String(step?.id || "").toLowerCase()).filter(Boolean);
+    try {
+      const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds, concern, environment, policy });
+      const selection = selectApprovedIngredientCandidates({ enabled: true, repository: repo, routine, profile, finishPreference, concern, environment, reactivityLevel, slotRetrieval, selectionMap });
+      const post = postSelectionSafetyPass({ entries: selection.entries, concern, reactivityLevel, environment });
+      // A routine names at most a few ingredients (the policy's per-run
+      // limit), so a step that is in today's routine without a named
+      // ingredient stays unnamed on other days too. Otherwise a day with
+      // fewer steps would name one and look like a change when it is not.
+      const todayStepSet = new Set(todaySteps);
+      const shown = post.entries.filter((entry) => {
+        const key = `${entry.phase}:${entry.categoryId}`;
+        return today[key] || !todayStepSet.has(key);
+      });
+      return Object.fromEntries(shown.map((entry) => {
+        const key = `${entry.phase}:${entry.categoryId}`;
+        return [key, { id: entry.ingredientId, name: entry.displayName, sameAsToday: today[key] === entry.ingredientId }];
+      }));
+    } catch {
+      return {};
+    }
+  }));
+}
+
 /**
  * The categories a routine can have are fixed by the concern, the weather and
  * two GPT choices (the evidence subset and the extra hydration step), so the
@@ -1916,8 +1979,33 @@ async function routeApi(request, response, url, requestId) {
     const exposureContext = optionalChoice(input.exposureContext, ALLOWED_EXPOSURE_CONTEXTS, "exposure context") || "mixed";
     const todaySteps = (Array.isArray(input.todaySteps) ? input.todaySteps : []).slice(0, 16).map((s) => String(s)).filter((s) => /^(am|pm):[a-z-]{3,40}$/.test(s));
     try {
-      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, finishPreference, reactivityLevel, exposureContext, todaySteps, week: Boolean(config.weeklyPlannerEnabled && input.week) });
+      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, finishPreference, reactivityLevel, exposureContext, todaySteps });
       return sendJson(response, 200, { ...outlook, requestId }, requestId, { "cache-control": "private, max-age=300" });
+    } catch {
+      return sendJson(response, 200, { available: false, reason: "forecast_unavailable", requestId }, requestId);
+    }
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/week") {
+    if (!config.weeklyPlannerEnabled) return sendJson(response, 200, { available: false, reason: "weekly_planner_off", requestId }, requestId);
+    enforceWeekRateLimit(request);
+    const input = await readJson(request);
+    const profile = requiredChoice(input.profile, ALLOWED_PROFILES, "profile", "combination");
+    const concern = requiredConcern(input.concern);
+    const finishPreference = optionalChoice(input.finishPreference, ALLOWED_FINISH_PREFERENCES, "finish preference");
+    const reactivityLevel = optionalChoice(input.reactivityLevel, ALLOWED_REACTIVITY_LEVELS, "reactivity level");
+    const exposureContext = optionalChoice(input.exposureContext, ALLOWED_EXPOSURE_CONTEXTS, "exposure context") || "mixed";
+    const todaySteps = (Array.isArray(input.todaySteps) ? input.todaySteps : []).slice(0, 16).map((s) => String(s)).filter((s) => /^(am|pm):[a-z-]{3,40}$/.test(s));
+    const todayIngredients = Object.fromEntries(Object.entries(input.todayIngredients && typeof input.todayIngredients === "object" ? input.todayIngredients : {})
+      .slice(0, 16)
+      .map(([key, id]) => [String(key), String(id || "").toLowerCase()])
+      .filter(([key, id]) => /^(am|pm):[a-z-]{3,40}$/.test(key) && /^[a-z0-9-]{2,80}$/.test(id)));
+    try {
+      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, finishPreference, reactivityLevel, exposureContext, todaySteps, week: true });
+      if (!outlook.available || !outlook.week) return sendJson(response, 200, { available: false, reason: outlook.reason || "forecast_unavailable", requestId }, requestId);
+      const picks = await weekIngredients({ days: outlook.week.days, todaySteps, todayIngredients, profile, finishPreference, concern, reactivityLevel }).catch(() => null);
+      const days = outlook.week.days.map((day, index) => ({ ...day, ingredients: picks?.[index] || {} }));
+      return sendJson(response, 200, { available: true, source: outlook.source, week: { ...outlook.week, days }, requestId }, requestId, { "cache-control": "private, max-age=300" });
     } catch {
       return sendJson(response, 200, { available: false, reason: "forecast_unavailable", requestId }, requestId);
     }

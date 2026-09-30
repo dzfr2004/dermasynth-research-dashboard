@@ -277,6 +277,7 @@ const state = {
   openWhy: {},
   whyJustOpened: "",
   outlook: { status: "idle" },
+  week: { status: "idle" },
   resultView: "today",
   selectedLocation: { ...defaultLocation },
   locationQuery: "",
@@ -1438,7 +1439,7 @@ function weekWeather(day) {
 
 /** Table model shared by the on-screen planner and the exported image. */
 function weekModel() {
-  const week = state.outlook?.data?.week;
+  const week = state.week?.data?.week;
   const days = Array.isArray(week?.days) ? week.days : [];
   if (!days.length) return null;
   const phases = ["am", "pm"].map((phase) => {
@@ -1446,13 +1447,18 @@ function weekModel() {
     for (const day of days) for (const id of day.steps?.[phase] || []) { const g = weekGroupOf(id); if (!groups.includes(g)) groups.push(g); }
     const rank = (g) => { const i = WEEK_ORDER[phase].indexOf(g); return i === -1 ? 99 : i; };
     groups.sort((a, b) => rank(a) - rank(b));
+    // Each cell names the ingredient to look for that day; steps with no named
+    // ingredient (cleansing, for example) show a tick, and sunscreen adds its hours.
     const cell = (day, g) => {
       const id = (day.steps?.[phase] || []).find((x) => weekGroupOf(x) === g);
       if (!id && (day.unknown || []).includes(g)) return { on: false, unknown: true, text: "No forecast", key: "unknown" };
       if (!id) return { on: false, text: "", key: "off" };
-      if (WEEK_GROUPS[g]) return { on: true, text: WEEK_GROUPS[g].short[id], key: id };
-      if (id === "daytime-photoprotection" && day.uvWindow?.start) return { on: true, text: `${shortHour(day.uvWindow.start)}–${shortHour(day.uvWindow.end)}`, key: id };
-      return { on: true, text: "", key: id };
+      const ingredient = day.ingredients?.[`${phase}:${id}`] || null;
+      const hours = id === "daytime-photoprotection" && day.uvWindow?.start ? `${shortHour(day.uvWindow.start)}–${shortHour(day.uvWindow.end)}` : "";
+      const stepName = plainStep({ id }).name;
+      if (ingredient) return { on: true, text: ingredient.name, sub: hours, title: stepName, key: `${id}|${ingredient.id}` };
+      if (WEEK_GROUPS[g]) return { on: true, text: WEEK_GROUPS[g].short[id], title: stepName, key: id };
+      return { on: true, text: hours, title: stepName, key: id };
     };
     const rows = groups.map((g) => {
       const cells = days.map((day) => cell(day, g));
@@ -1469,7 +1475,7 @@ function weekModel() {
 }
 
 function resultSwitch() {
-  if (!state.outlook?.data?.week?.days?.length) return "";
+  if (!state.week?.data?.week?.days?.length) return "";
   const view = state.resultView === "week" ? "week" : "today";
   const button = (id, label, iconName) => `<button type="button" data-action="result-view" data-view="${id}" aria-pressed="${view === id}" class="${view === id ? "is-active" : ""}">${icon(iconName, 14)} ${label}</button>`;
   return `<div class="result-switch" role="group" aria-label="Show the routine for">${button("today", "Today", "sun")}${button("week", "This week", "grid")}</div>`;
@@ -1481,13 +1487,13 @@ function weekCard() {
   const cellHtml = (c) => {
     if (c.unknown) return `<td class="is-off is-unknown"><span aria-hidden="true">?</span><span class="sr-only">No air forecast yet</span></td>`;
     if (!c.on) return `<td class="is-off${c.changed ? " is-changed" : ""}"><span aria-hidden="true">–</span><span class="sr-only">Skip</span></td>`;
-    return `<td class="is-on${c.changed ? " is-changed" : ""}">${c.text ? escapeHtml(c.text) : `${icon("check", 14)}<span class="sr-only">Yes</span>`}${c.changed ? `<span class="sr-only"> (changes from today)</span>` : ""}</td>`;
+    return `<td class="is-on${c.changed ? " is-changed" : ""}"${c.title ? ` title="${escapeHtml(c.title)}"` : ""}>${c.text ? `<span class="week-ing">${escapeHtml(c.text)}</span>` : `${icon("check", 14)}<span class="sr-only">Yes</span>`}${c.sub ? `<span class="week-hours">${escapeHtml(c.sub)}</span>` : ""}${c.changed ? `<span class="sr-only"> (changes from today)</span>` : ""}</td>`;
   };
   const head = `<tr><th scope="col" class="week-corner"><span class="sr-only">Step</span></th>${model.days.map((d) => `<th scope="col"><span class="week-day">${escapeHtml(d.day)}</span><span class="week-date">${escapeHtml(d.date)}</span></th>`).join("")}</tr><tr class="week-weather"><th scope="row">Weather</th>${model.days.map((d) => `<td>${d.weather.map((w) => `<span>${escapeHtml(w)}</span>`).join("")}</td>`).join("")}</tr>`;
   const body = model.phases.filter((p) => p.rows.length).map((p) => `<tbody><tr class="week-phase"><th scope="colgroup" colspan="${model.days.length + 1}">${icon(p.phase === "am" ? "sun" : "sparkles", 14)} ${p.title}</th></tr>${p.rows.map((row) => `<tr><th scope="row">${escapeHtml(row.label)}</th>${row.cells.map(cellHtml).join("")}</tr>`).join("")}</tbody>`).join("");
   const unknown = model.phases.some((p) => p.rows.some((r) => r.cells.some((c) => c.unknown)));
   const summary = `${model.changedDays ? `${model.changedDays} of the next 6 days need a change from today. Highlighted cells show what changes.` : "The forecast keeps the same routine all week."}${unknown ? " ? means the air-quality forecast does not reach that day yet." : ""}`;
-  return `<section class="week-card" aria-labelledby="week-title"><div class="week-head"><h3 id="week-title">${icon("grid", 15)} This week</h3><button type="button" class="pill-button" data-action="week-export">${icon("share", 14)} Save as image</button></div><p class="week-sub">${escapeHtml(summary)} Sunscreen shows the hours it matters most.</p><div class="week-scroll" role="region" aria-label="Weekly planner (scrolls sideways)" tabindex="0"><table class="week-table"><caption class="sr-only">Skincare steps for today and the next six days</caption><thead>${head}</thead>${body}</table></div><p class="week-note">${icon("info", 13)} ${escapeHtml(model.note)}</p><p class="tomorrow-source">${escapeHtml(state.outlook?.data?.source || "")}</p></section>`;
+  return `<section class="week-card" aria-labelledby="week-title"><div class="week-head"><h3 id="week-title">${icon("grid", 15)} This week</h3><button type="button" class="pill-button" data-action="week-export">${icon("share", 14)} Save as image</button></div><p class="week-sub">${escapeHtml(summary)} Each cell is the ingredient to look for that day; sunscreen also shows the hours it matters most.</p><div class="week-scroll" role="region" aria-label="Weekly planner (scrolls sideways)" tabindex="0"><table class="week-table"><caption class="sr-only">Skincare steps for today and the next six days</caption><thead>${head}</thead>${body}</table></div><p class="week-note">${icon("info", 13)} ${escapeHtml(model.note)}</p><p class="tomorrow-source">${escapeHtml(state.week?.data?.source || "")}</p></section>`;
 }
 
 // Landscape export (1920 x 1080), drawn like the story image.
@@ -1593,9 +1599,16 @@ function drawWeek(ctx, model, info) {
           ctx.restore();
           if (c.text) {
             ctx.fillStyle = S.deep;
-            ctx.font = `600 ${Math.round(rowH * 0.36)}px ${S.sans}`;
+            let size = Math.round(rowH * (c.sub ? 0.3 : 0.34));
+            ctx.font = `600 ${size}px ${S.sans}`;
+            while (ctx.measureText(c.text).width > colW - 20 && size > 13) { size -= 1; ctx.font = `600 ${size}px ${S.sans}`; }
             const tw = ctx.measureText(c.text).width;
-            ctx.fillText(c.text, cx + (colW - tw) / 2, y + 4 + ph * 0.66);
+            ctx.fillText(c.text, cx + (colW - tw) / 2, y + 4 + ph * (c.sub ? 0.47 : 0.64));
+            if (c.sub) {
+              ctx.font = `500 ${Math.round(rowH * 0.24)}px ${S.sans}`;
+              const sw = ctx.measureText(c.sub).width;
+              ctx.fillText(c.sub, cx + (colW - sw) / 2, y + 4 + ph * 0.84);
+            }
           } else {
             drawCheck(ctx, cx + colW / 2, y + 4 + ph / 2, Math.round(ph * 0.42), S.deep);
           }
@@ -1654,7 +1667,7 @@ async function refreshOutlook() {
   state.outlook = { status: "loading", runId };
   const todaySteps = [...(routine.am || []).map((s) => `am:${s.id}`), ...(routine.pm || []).map((s) => `pm:${s.id}`)];
   try {
-    const body = { profile: state.profile, concern: state.concern, location: locationPayload(), todaySteps, exposureContext: state.exposureContext || "mixed", week: true };
+    const body = { profile: state.profile, concern: state.concern, location: locationPayload(), todaySteps, exposureContext: state.exposureContext || "mixed" };
     if (state.finishPreference) body.finishPreference = state.finishPreference;
     if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
     const response = await fetch("/api/outlook", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -1664,6 +1677,29 @@ async function refreshOutlook() {
   } catch {
     if (state.outlook.runId !== runId) return;
     state.outlook = { status: "idle", runId };
+  }
+  scheduleRender({ animated: true });
+}
+
+async function refreshWeek() {
+  const meta = state.routineMeta;
+  const routine = state.generatedRoutine;
+  if (!meta || meta.status !== "cleared" || !routine) { state.week = { status: "idle" }; return; }
+  const runId = meta.routineContext?.runId || meta.requestId || "";
+  state.week = { status: "loading", runId };
+  const todaySteps = [...(routine.am || []).map((s) => `am:${s.id}`), ...(routine.pm || []).map((s) => `pm:${s.id}`)];
+  const todayIngredients = Object.fromEntries((meta.ingredientCandidates?.entries || []).map((e) => [`${e.phase}:${e.categoryId}`, e.ingredientId]));
+  try {
+    const body = { profile: state.profile, concern: state.concern, location: locationPayload(), todaySteps, todayIngredients, exposureContext: state.exposureContext || "mixed" };
+    if (state.finishPreference) body.finishPreference = state.finishPreference;
+    if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
+    const response = await fetch("/api/week", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const data = await response.json().catch(() => ({}));
+    if (state.week.runId !== runId) return;
+    state.week = data?.available ? { status: "available", runId, data } : { status: "idle", runId };
+  } catch {
+    if (state.week.runId !== runId) return;
+    state.week = { status: "idle", runId };
   }
   scheduleRender({ animated: true });
 }
@@ -3840,6 +3876,7 @@ async function generateRoutine({ reportedConditions = null, standardRoutine = fa
     requestAnimationFrame(scrollToResult);
     refreshRoutineContext();
     refreshOutlook();
+    refreshWeek();
     if (payload.status === "needs_conditions") {
       showToast("We couldn't get today's weather. Tell us the conditions to continue.");
     } else if (payload.status === "cleared") {

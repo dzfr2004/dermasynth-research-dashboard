@@ -1906,7 +1906,7 @@ textarea::placeholder { white-space: pre-wrap; overflow-wrap: break-word; text-o
 .week-table { width: 100%; min-width: 640px; border-collapse: separate; border-spacing: 4px; table-layout: fixed; font-size: 0.8125rem; }
 .week-table th, .week-table td { text-align: center; vertical-align: middle; }
 .week-table thead th[scope="col"] { padding: 6px 2px 2px; font-weight: 600; }
-.week-table .week-corner, .week-table tbody th[scope="row"], .week-table .week-weather th { position: sticky; left: 0; z-index: 1; width: 118px; padding-right: 8px; text-align: left; background: var(--surface); font-weight: 600; }
+.week-table .week-corner, .week-table tbody th[scope="row"], .week-table .week-weather th { position: sticky; left: 0; z-index: 1; width: 104px; padding-right: 8px; text-align: left; background: var(--surface); font-weight: 600; }
 .week-day { display: block; font-size: 0.9375rem; }
 .week-date { display: block; color: var(--muted); font-size: 0.75rem; font-weight: 500; }
 .week-table thead tr:first-child th:nth-child(2) .week-day { color: var(--accent-dark); }
@@ -1935,3 +1935,6 @@ textarea::placeholder { white-space: pre-wrap; overflow-wrap: break-word; text-o
 .week-table td.is-unknown { color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); background: repeating-linear-gradient(135deg, transparent 0 6px, var(--fill) 6px 12px); }
 /* The wide week table scrolls inside its card instead of widening the page. */
 .consumer-result, .week-card { min-width: 0; max-width: 100%; }
+.week-table td.is-on { height: auto; min-height: 34px; padding: 6px 3px; border-radius: 14px; line-height: 1.2; }
+.week-ing { display: block; font-size: 0.6875rem; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: break-word; }
+.week-hours { display: block; margin-top: 2px; font-size: 0.6875rem; font-weight: 500; opacity: 0.85; }

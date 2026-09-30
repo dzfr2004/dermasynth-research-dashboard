@@ -125,21 +125,21 @@ async function axeViolations(page) {
   });
 }
 
-// Stand-in for /api/outlook with the weekly planner switched on (the smoke
-// server runs without live weather, so the real endpoint has no forecast).
+// Stand-in for /api/week (the smoke server runs without live weather, so the
+// real endpoint has no forecast).
 function weekOutlookFixture() {
   const start = new Date();
   const iso = (i) => new Date(start.getTime() + i * 864e5).toISOString().slice(0, 10);
   const am = ["low-irritation-cleansing", "light-hydration", "daytime-photoprotection"];
   const pm = ["low-irritation-cleansing", "lightweight-moisturising", "overnight-comfort"];
-  const days = Array.from({ length: 7 }, (_, i) => ({ date: iso(i), isToday: i === 0, readings: { uvi: i === 3 ? 2 : 9, humidity: 80, temperature: 32, temperatureMin: 25, pm25: i > 4 ? null : 20 }, precipitation: 40, sky: "partly cloudy", uvWindow: i === 3 ? null : { start: `${iso(i)}T09:00`, end: `${iso(i)}T17:00`, peak: { uvi: 9, time: `${iso(i)}T13:00` } }, steps: { am: i === 3 ? am.filter((x) => x !== "daytime-photoprotection") : am, pm }, unknown: i > 4 ? ["antioxidant-context"] : [], changes: [], sameAsToday: i !== 3 }));
-  return { available: true, source: "Weather data by Open-Meteo.com", today: null, tomorrow: null, week: { days, note: "Forecasts further ahead are less certain." } };
+  const days = Array.from({ length: 7 }, (_, i) => ({ date: iso(i), isToday: i === 0, readings: { uvi: i === 3 ? 2 : 9, humidity: 80, temperature: 32, temperatureMin: 25, pm25: i > 4 ? null : 20 }, precipitation: 40, sky: "partly cloudy", uvWindow: i === 3 ? null : { start: `${iso(i)}T09:00`, end: `${iso(i)}T17:00`, peak: { uvi: 9, time: `${iso(i)}T13:00` } }, steps: { am: i === 3 ? am.filter((x) => x !== "daytime-photoprotection") : am, pm }, unknown: i > 4 ? ["antioxidant-context"] : [], changes: [], sameAsToday: i !== 3, ingredients: { "am:light-hydration": { id: "sodium-hyaluronate", name: "Sodium Hyaluronate", sameAsToday: true }, ...(i === 3 ? {} : { "am:daytime-photoprotection": { id: "zinc-oxide", name: "Zinc Oxide", sameAsToday: true } }), "pm:lightweight-moisturising": { id: i === 2 ? "glycerin" : "squalane", name: i === 2 ? "Glycerin" : "Squalane", sameAsToday: i !== 2 } } }));
+  return { available: true, source: "Weather data by Open-Meteo.com", week: { days, note: "Forecasts further ahead are less certain." } };
 }
 
 for (const width of [375, 1280]) {
   const label = width < 500 ? "phone" : "desktop";
   const { page, context, errors } = await openPage(width);
-  await page.route("**/api/outlook", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(weekOutlookFixture()) }));
+  await page.route("**/api/week", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(weekOutlookFixture()) }));
   await check(`${label}-landing`, `${label}: a consumer lands on the routine page`, async () => {
     expect((await page.locator("#page-title").innerText()).trim() === "Your routine", "Landing page is not the routine page.");
   });
@@ -300,13 +300,15 @@ for (const width of [375, 1280]) {
     const violations = await axeViolations(page);
     expect(!violations.length, violations.join("; "));
   });
-  await check(`${label}-week`, `${label}: "This week" shows a 7-day planner that fits the screen and exports a landscape image`, async () => {
+  await check(`${label}-week`, `${label}: "This week" shows each day's ingredients in a 7-day planner that fits the screen and exports a landscape image`, async () => {
     await page.waitForSelector(".result-switch", { timeout: 15000 });
     await page.locator('[data-action="result-view"][data-view="week"]').click();
     await page.waitForSelector(".week-table", { timeout: 5000 });
     const cols = await page.locator(".week-table thead tr:first-child th").count();
     expect(cols === 8, `Expected 7 days plus the label column, got ${cols - 1} days.`);
-    expect(await page.locator(".week-table td.is-changed").count() >= 1, "The low-UV day is not highlighted.");
+    expect(await page.locator(".week-table td.is-changed").count() >= 2, "The low-UV day and the changed ingredient are not highlighted.");
+    const cells = await page.locator(".week-table td.is-on .week-ing").allInnerTexts();
+    expect(cells.includes("Zinc Oxide") && cells.includes("Squalane") && cells.includes("Glycerin"), `Ingredients not shown: ${cells.slice(0, 8).join(", ")}`);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow <= 1, `The page scrolls sideways by ${overflow} px.`);
     await page.locator('[data-action="week-export"]').click();
