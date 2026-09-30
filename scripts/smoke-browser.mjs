@@ -125,9 +125,21 @@ async function axeViolations(page) {
   });
 }
 
+// Stand-in for /api/outlook with the weekly planner switched on (the smoke
+// server runs without live weather, so the real endpoint has no forecast).
+function weekOutlookFixture() {
+  const start = new Date();
+  const iso = (i) => new Date(start.getTime() + i * 864e5).toISOString().slice(0, 10);
+  const am = ["low-irritation-cleansing", "light-hydration", "daytime-photoprotection"];
+  const pm = ["low-irritation-cleansing", "lightweight-moisturising", "overnight-comfort"];
+  const days = Array.from({ length: 7 }, (_, i) => ({ date: iso(i), isToday: i === 0, readings: { uvi: i === 3 ? 2 : 9, humidity: 80, temperature: 32, temperatureMin: 25, pm25: i > 4 ? null : 20 }, precipitation: 40, sky: "partly cloudy", uvWindow: i === 3 ? null : { start: `${iso(i)}T09:00`, end: `${iso(i)}T17:00`, peak: { uvi: 9, time: `${iso(i)}T13:00` } }, steps: { am: i === 3 ? am.filter((x) => x !== "daytime-photoprotection") : am, pm }, unknown: i > 4 ? ["antioxidant-context"] : [], changes: [], sameAsToday: i !== 3 }));
+  return { available: true, source: "Weather data by Open-Meteo.com", today: null, tomorrow: null, week: { days, note: "Forecasts further ahead are less certain." } };
+}
+
 for (const width of [375, 1280]) {
   const label = width < 500 ? "phone" : "desktop";
   const { page, context, errors } = await openPage(width);
+  await page.route("**/api/outlook", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(weekOutlookFixture()) }));
   await check(`${label}-landing`, `${label}: a consumer lands on the routine page`, async () => {
     expect((await page.locator("#page-title").innerText()).trim() === "Your routine", "Landing page is not the routine page.");
   });
@@ -287,6 +299,23 @@ for (const width of [375, 1280]) {
   await check(`${label}-result-a11y`, `${label}: the routine result has no serious accessibility violations`, async () => {
     const violations = await axeViolations(page);
     expect(!violations.length, violations.join("; "));
+  });
+  await check(`${label}-week`, `${label}: "This week" shows a 7-day planner that fits the screen and exports a landscape image`, async () => {
+    await page.waitForSelector(".result-switch", { timeout: 15000 });
+    await page.locator('[data-action="result-view"][data-view="week"]').click();
+    await page.waitForSelector(".week-table", { timeout: 5000 });
+    const cols = await page.locator(".week-table thead tr:first-child th").count();
+    expect(cols === 8, `Expected 7 days plus the label column, got ${cols - 1} days.`);
+    expect(await page.locator(".week-table td.is-changed").count() >= 1, "The low-UV day is not highlighted.");
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow <= 1, `The page scrolls sideways by ${overflow} px.`);
+    await page.locator('[data-action="week-export"]').click();
+    await page.waitForSelector("#story-modal.is-landscape .story-preview", { timeout: 8000 });
+    const size = await page.locator("#story-modal .story-preview").evaluate((img) => [img.naturalWidth, img.naturalHeight]);
+    expect(size[0] === 1920 && size[1] === 1080, `Image is ${size.join(" x ")}.`);
+    await page.locator("#story-modal .story-close").click();
+    await page.locator('[data-action="result-view"][data-view="today"]').click();
+    await page.waitForSelector(".consumer-step", { timeout: 5000 });
   });
   await check(`${label}-redirect`, `${label}: symptoms that need care show the check-up screen and no routine`, async () => {
     if (await page.locator('[data-action="edit-form"]').count()) await page.locator('[data-action="edit-form"]').click();

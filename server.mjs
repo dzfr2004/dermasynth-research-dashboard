@@ -1916,7 +1916,7 @@ async function routeApi(request, response, url, requestId) {
     const exposureContext = optionalChoice(input.exposureContext, ALLOWED_EXPOSURE_CONTEXTS, "exposure context") || "mixed";
     const todaySteps = (Array.isArray(input.todaySteps) ? input.todaySteps : []).slice(0, 16).map((s) => String(s)).filter((s) => /^(am|pm):[a-z-]{3,40}$/.test(s));
     try {
-      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, finishPreference, reactivityLevel, exposureContext, todaySteps });
+      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, finishPreference, reactivityLevel, exposureContext, todaySteps, week: Boolean(config.weeklyPlannerEnabled && input.week) });
       return sendJson(response, 200, { ...outlook, requestId }, requestId, { "cache-control": "private, max-age=300" });
     } catch {
       return sendJson(response, 200, { available: false, reason: "forecast_unavailable", requestId }, requestId);
