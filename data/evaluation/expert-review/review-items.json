@@ -1,0 +1,182 @@
+{
+  "generatedAt": "2026-11-05T10:45:54.466Z",
+  "matrixVersion": "2026-07-27.1",
+  "flagsVersion": "2026-09-23.1",
+  "pairs": [
+    {
+      "first": "Retinol",
+      "second": "Benzoyl Peroxide",
+      "ids": [
+        "retinol",
+        "benzoyl-peroxide"
+      ]
+    },
+    {
+      "first": "Retinol",
+      "second": "Glycolic Acid",
+      "ids": [
+        "retinol",
+        "glycolic-acid"
+      ]
+    },
+    {
+      "first": "Retinol",
+      "second": "Mandelic Acid",
+      "ids": [
+        "retinol",
+        "mandelic-acid"
+      ]
+    },
+    {
+      "first": "Retinol",
+      "second": "Salicylic Acid",
+      "ids": [
+        "retinol",
+        "salicylic-acid"
+      ]
+    },
+    {
+      "first": "Benzoyl Peroxide",
+      "second": "Glycolic Acid",
+      "ids": [
+        "benzoyl-peroxide",
+        "glycolic-acid"
+      ]
+    },
+    {
+      "first": "Benzoyl Peroxide",
+      "second": "Mandelic Acid",
+      "ids": [
+        "benzoyl-peroxide",
+        "mandelic-acid"
+      ]
+    },
+    {
+      "first": "Benzoyl Peroxide",
+      "second": "Salicylic Acid",
+      "ids": [
+        "benzoyl-peroxide",
+        "salicylic-acid"
+      ]
+    },
+    {
+      "first": "Glycolic Acid",
+      "second": "Salicylic Acid",
+      "ids": [
+        "glycolic-acid",
+        "salicylic-acid"
+      ]
+    },
+    {
+      "first": "Glycolic Acid",
+      "second": "Mandelic Acid",
+      "ids": [
+        "glycolic-acid",
+        "mandelic-acid"
+      ]
+    },
+    {
+      "first": "Mandelic Acid",
+      "second": "Salicylic Acid",
+      "ids": [
+        "mandelic-acid",
+        "salicylic-acid"
+      ]
+    }
+  ],
+  "photosensitising": [
+    "Glycolic Acid",
+    "Lactic Acid",
+    "Mandelic Acid",
+    "Citric Acid",
+    "Salicylic Acid",
+    "Retinol",
+    "Retinal",
+    "Retinyl Palmitate"
+  ],
+  "highIntensityExfoliants": [
+    "Glycolic Acid",
+    "Lactic Acid",
+    "Mandelic Acid",
+    "Citric Acid",
+    "Salicylic Acid",
+    "Gluconolactone",
+    "Retinol",
+    "Retinal",
+    "Retinyl Palmitate"
+  ],
+  "prescriptionOnly": [
+    "Tretinoin",
+    "Adapalene",
+    "Isotretinoin",
+    "Tazarotene",
+    "Trifarotene",
+    "Clindamycin",
+    "Hydroquinone",
+    "Hydrocortisone",
+    "Betamethasone Valerate",
+    "Clobetasol Propionate"
+  ],
+  "routines": [
+    {
+      "id": "R1",
+      "profile": "Oily skin, breakouts, low reactivity; hot, humid and hazy day",
+      "morning": [
+        "Antioxidant: Resveratrol",
+        "Sun protection: Titanium Dioxide"
+      ],
+      "evening": [
+        "Lightweight moisturiser: Niacinamide",
+        "Texture renewal (exfoliant): Salicylic Acid"
+      ]
+    },
+    {
+      "id": "R2",
+      "profile": "Dry skin, dryness, moderate reactivity; cool, dry and clear day",
+      "morning": [
+        "Comfort hydrating layer: Sodium Hyaluronate",
+        "Sun protection: Titanium Dioxide"
+      ],
+      "evening": [
+        "Barrier-support moisturiser: Ceramide EOP",
+        "Overnight comfort step: Ceramide NP"
+      ]
+    },
+    {
+      "id": "R3",
+      "profile": "Combination skin, uneven tone, low reactivity; very high UV",
+      "morning": [
+        "Sun protection: Titanium Dioxide"
+      ],
+      "evening": [
+        "Lightweight moisturiser: Niacinamide",
+        "Texture renewal (exfoliant): Gluconolactone",
+        "Overnight comfort step: Madecassoside"
+      ]
+    },
+    {
+      "id": "R4",
+      "profile": "Sensitive skin, redness, high reactivity; hot and humid day",
+      "morning": [
+        "Comfort hydrating layer: Glycerin",
+        "Sun protection: Titanium Dioxide"
+      ],
+      "evening": [
+        "Barrier-support moisturiser: Squalane",
+        "Overnight comfort step: Madecassoside"
+      ]
+    },
+    {
+      "id": "R5",
+      "profile": "Combination skin, sensitive barrier, moderate reactivity; hazy day",
+      "morning": [
+        "Comfort hydrating layer: Beta-Glucan",
+        "Sun protection: Titanium Dioxide"
+      ],
+      "evening": [
+        "Barrier-support moisturiser: Squalane",
+        "Overnight comfort step: Madecassoside"
+      ]
+    }
+  ]
+}

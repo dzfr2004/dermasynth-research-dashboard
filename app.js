@@ -1,3 +1,4 @@
+import { attachSky } from "./sky.js";
 const app = document.querySelector("#app");
 
 const defaultLocation = Object.freeze({
@@ -11,6 +12,7 @@ const VIEW_META = Object.freeze({
   monitor: { title: "Environment", subtitle: "Live location-aware research context", hash: "environment" },
   simulator: { title: "Your routine", subtitle: "Today's skincare routine", hash: "routine" },
   knowledge: { title: "Ingredient Atlas", subtitle: "Source-linked research records", hash: "atlas" },
+  shelf: { title: "My shelf", subtitle: "The products you own", hash: "shelf" },
 });
 
 const CORE_VIEWS = Object.freeze(["dashboard", "monitor", "simulator", "knowledge"]);
@@ -259,6 +261,14 @@ const state = {
   reactivityLevel: "",
   exposureContext: "mixed",
   concern: "acne",
+  // Up to MAX_CONCERNS picks; the first is the main concern (kept in sync
+  // with state.concern, which older code paths still read).
+  concerns: ["acne"],
+  shelf: [],
+  shelfCheck: null,
+  shelfCheckStatus: "idle",
+  shelfEditor: null,
+  shelfSelected: null,
   symptoms: "",
   generatedRoutine: null,
   routineMeta: null,
@@ -392,7 +402,13 @@ function environmentSourceLabel() {
 }
 
 function locationLabel() {
-  return state.selectedLocation?.name || activeEnvironment().location?.name || defaultLocation.name;
+  return tidyPlaceName(state.selectedLocation?.name || activeEnvironment().location?.name || defaultLocation.name);
+}
+
+// "Kuala Lumpur, Kuala Lumpur, MY" reads as "Kuala Lumpur, MY".
+function tidyPlaceName(name) {
+  const parts = String(name || "").split(",").map((part) => part.trim()).filter(Boolean);
+  return parts.filter((part, i) => i === 0 || part.toLowerCase() !== parts[i - 1].toLowerCase()).join(", ");
 }
 
 function cueLabel() {
@@ -427,6 +443,32 @@ function isQuotaFallback() {
 
 function concernOption(id = state.concern) {
   return concernOptions.find((option) => option.id === id) || concernOptions[0];
+}
+
+const MAX_CONCERNS = 3;
+
+function selectedConcerns() {
+  const list = Array.isArray(state.concerns) && state.concerns.length ? state.concerns : [state.concern || "acne"];
+  return [...new Set(list)].slice(0, MAX_CONCERNS);
+}
+
+/** "Breakout-prone appearance + Uneven-tone context", main concern first. */
+function concernSummary() {
+  return selectedConcerns().map((id) => concernOption(id).label).join(" + ");
+}
+
+function toggleConcern(id) {
+  const current = selectedConcerns();
+  let next;
+  if (current.includes(id)) {
+    // Keep at least one concern selected.
+    next = current.length > 1 ? current.filter((item) => item !== id) : current;
+  } else {
+    next = current.length < MAX_CONCERNS ? [...current, id] : current;
+  }
+  state.concerns = next;
+  state.concern = next[0];
+  return next !== current;
 }
 
 function normaliseRoutineStep(step, index) {
@@ -593,6 +635,8 @@ function icon(name, size = 18, stroke = 1.8) {
     share: '<path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>',
     bell: '<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15L6 16Z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
     sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
+    bottle: '<path d="M10 2h4v3.5c1.8.7 3 2.3 3 4.2V20a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9.7c0-1.9 1.2-3.5 3-4.2Z"/><path d="M7 14h10"/>',
+    close: '<path d="M6 6l12 12M18 6 6 18"/>',
   };
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.info}</svg>`;
 }
@@ -615,14 +659,14 @@ function mobileNavItem(id, label, iconName) {
 function mobileNavigation() {
   const items = state.expertView
     ? [["dashboard", "Overview", "grid"], ["monitor", "Environment", "activity"], ["simulator", "Routine", "flask"], ["knowledge", "Atlas", "file"]]
-    : [["simulator", "Today", "sparkles"], ["monitor", "Weather", "sun"], ["knowledge", "Ingredients", "file"]];
+    : [["simulator", "Today", "sparkles"], ["monitor", "Weather", "sun"], ["shelf", "Shelf", "bottle"], ["knowledge", "Ingredients", "file"]];
   return `<nav class="mobile-nav" style="--nav-items: ${items.length}" aria-label="Primary navigation">${items.map(([id, label, iconName]) => mobileNavItem(id, label, iconName)).join("")}</nav>`;
 }
 
 function shell(view) {
   const ingredientCount = Number(state.knowledgeExplorer?.overview?.ingredientCount) || incorporatedIngredientRecords().length;
   const currentMeta = VIEW_META[state.activeView] || VIEW_META.dashboard;
-  const CONSUMER_TITLES = { simulator: "Your routine", monitor: "Weather", knowledge: "Ingredients" };
+  const CONSUMER_TITLES = { simulator: "Your routine", monitor: "Weather", knowledge: "Ingredients", shelf: "My shelf" };
   const title = !state.expertView && CONSUMER_TITLES[state.activeView] ? CONSUMER_TITLES[state.activeView] : currentMeta.title;
   const modeClass = activeEnvironment().mode === "live" ? "" : ["degraded", "unavailable"].includes(activeEnvironment().mode) ? "is-warning" : "is-neutral";
   const cueClass = state.routineMeta?.status === "cleared" ? "" : "is-warning";
@@ -642,6 +686,7 @@ function shell(view) {
           </nav>` : `<nav class="nav-list" aria-label="Primary navigation">
             ${navItem("simulator", "Today", "Your routine", "sparkles")}
             ${navItem("monitor", "Weather", "UV, humidity and haze", "sun")}
+            ${navItem("shelf", "My shelf", state.shelf.length ? `${state.shelf.length} product${state.shelf.length === 1 ? "" : "s"}` : "Your products", "bottle")}
             ${navItem("knowledge", "Ingredients", `${ingredientCount} explained`, "file")}
           </nav>`}
         </div>
@@ -958,7 +1003,7 @@ function reportPanel() {
       ? new Date(state.runStartedAt).toLocaleString()
       : "Not run";
   const reportRows = [
-    ["Concern", concernOption().label],
+    ["Concern", concernSummary()],
     ["Environment", `${locationLabel()} · ${environmentModeLabel()}`],
     ["Evidence", grounding.evidenceCount ?? "—"],
     ["Evidence gate", Number.isFinite(Number(grounding.sufficiencyScore)) ? `${grounding.passed ? "Passed" : "Not passed"} · sufficiency ${safelyNumber(grounding.sufficiencyScore)}` : "Not reported"],
@@ -1039,7 +1084,7 @@ function environmentComparisonPanel() {
   const alternateByKey = new Map(alternateCards.map((item) => [item.key, item]));
   const explanationRows = comparisonFeatureRows();
   const comparisonReady = Boolean(alternate);
-  return `<section class="panel environment-comparison" aria-labelledby="comparison-title"><div class="panel-header"><div><h3 class="panel-title" id="comparison-title">${icon("activity", 17)} Location comparison</h3><p class="panel-note">Two locations · no GPT synthesis</p></div><span class="pill is-neutral">Same ${escapeHtml(concernOption().label)} context</span></div><div class="comparison-picker-row">${comparisonLocationPicker()}</div>${comparisonReady ? `<div class="comparison-sides"><article class="comparison-side"><div class="comparison-side-head"><span>Primary</span><strong>${escapeHtml(locationLabel())}</strong><small>${escapeHtml(environmentModeLabel())} · ${escapeHtml(state.lastUpdated)}</small></div>${primaryCards.map((item) => { const other = alternateByKey.get(item.key); return `<div class="comparison-metric"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)} <small>${escapeHtml(item.unit)}</small></strong><em>${escapeHtml(numericalDelta(item.value, other?.value))} vs comparison</em></div>`; }).join("")}</article><article class="comparison-side is-alternate"><div class="comparison-side-head"><span>Comparison</span><strong>${escapeHtml(comparisonLocationLabel())}</strong><small>${escapeHtml(comparison.environment?.mode || "labelled")} · ${escapeHtml(comparison.updatedAt || "not reported")}</small></div>${alternateCards.map((item) => { const original = primaryCards.find((candidate) => candidate.key === item.key); return `<div class="comparison-metric"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)} <small>${escapeHtml(item.unit)}</small></strong><em>${escapeHtml(numericalDelta(original?.value, item.value))} vs primary</em></div>`; }).join("")}</article></div>${explanationRows ? `<div class="comparison-explanation"><div><strong>Transparent contribution comparison</strong><span>Configured additive-surrogate Shapley values; this visual does not express clinical risk or a treatment decision.</span></div><div class="comparison-explanation-head"><span>Input</span><span>${escapeHtml(locationLabel())}</span><span>${escapeHtml(comparisonLocationLabel())}</span><span>Δ</span></div>${explanationRows}</div>` : `<p class="comparison-empty">The comparison location has labelled environmental readings. Contribution values will appear when both transparent explanation responses are available.</p>`}` : `<div class="comparison-empty"><strong>Preparing a second environmental snapshot.</strong><span>Select another location to compare UV, humidity, PM2.5, and the same configured non-clinical contribution model.</span></div>`}</section>`;
+  return `<section class="panel environment-comparison" aria-labelledby="comparison-title"><div class="panel-header"><div><h3 class="panel-title" id="comparison-title">${icon("activity", 17)} Location comparison</h3><p class="panel-note">Two locations · no GPT synthesis</p></div><span class="pill is-neutral">Same ${escapeHtml(concernSummary())} context</span></div><div class="comparison-picker-row">${comparisonLocationPicker()}</div>${comparisonReady ? `<div class="comparison-sides"><article class="comparison-side"><div class="comparison-side-head"><span>Primary</span><strong>${escapeHtml(locationLabel())}</strong><small>${escapeHtml(environmentModeLabel())} · ${escapeHtml(state.lastUpdated)}</small></div>${primaryCards.map((item) => { const other = alternateByKey.get(item.key); return `<div class="comparison-metric"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)} <small>${escapeHtml(item.unit)}</small></strong><em>${escapeHtml(numericalDelta(item.value, other?.value))} vs comparison</em></div>`; }).join("")}</article><article class="comparison-side is-alternate"><div class="comparison-side-head"><span>Comparison</span><strong>${escapeHtml(comparisonLocationLabel())}</strong><small>${escapeHtml(comparison.environment?.mode || "labelled")} · ${escapeHtml(comparison.updatedAt || "not reported")}</small></div>${alternateCards.map((item) => { const original = primaryCards.find((candidate) => candidate.key === item.key); return `<div class="comparison-metric"><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)} <small>${escapeHtml(item.unit)}</small></strong><em>${escapeHtml(numericalDelta(original?.value, item.value))} vs primary</em></div>`; }).join("")}</article></div>${explanationRows ? `<div class="comparison-explanation"><div><strong>Transparent contribution comparison</strong><span>Configured additive-surrogate Shapley values; this visual does not express clinical risk or a treatment decision.</span></div><div class="comparison-explanation-head"><span>Input</span><span>${escapeHtml(locationLabel())}</span><span>${escapeHtml(comparisonLocationLabel())}</span><span>Δ</span></div>${explanationRows}</div>` : `<p class="comparison-empty">The comparison location has labelled environmental readings. Contribution values will appear when both transparent explanation responses are available.</p>`}` : `<div class="comparison-empty"><strong>Preparing a second environmental snapshot.</strong><span>Select another location to compare UV, humidity, PM2.5, and the same configured non-clinical contribution model.</span></div>`}</section>`;
 }
 
 function forecastSynthesisCard() {
@@ -1209,7 +1254,7 @@ async function refreshWeatherOutlook() {
   state.weatherOutlook = { status: "loading", key };
   const todaySteps = currentStepKeys();
   try {
-    const response = await fetch("/api/outlook", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ profile: state.profile, concern: state.concern, location: locationPayload(), todaySteps, exposureContext: state.exposureContext || "mixed" }) });
+    const response = await fetch("/api/outlook", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ profile: state.profile, concern: state.concern, concerns: selectedConcerns(), location: locationPayload(), todaySteps, exposureContext: state.exposureContext || "mixed" }) });
     const data = await response.json().catch(() => ({}));
     if (state.weatherOutlook?.key !== key) return;
     state.weatherOutlook = data?.available ? { status: "available", key, data } : { status: "idle", key };
@@ -1231,7 +1276,16 @@ function monitorView() {
 
 function concernPicker() {
   const disabled = state.runStatus === "running";
-  return `<div class="field concern-field"><label id="concern-label">Main skin concern</label><div class="concern-grid" role="group" aria-labelledby="concern-label">${concernOptions.map((option) => `<button type="button" class="concern-choice ${state.concern === option.id ? "is-selected" : ""}" data-action="concern-choice" data-concern="${option.id}" aria-pressed="${state.concern === option.id}" ${disabled ? "disabled" : ""}><strong>${escapeHtml(option.label)}</strong><small>${escapeHtml(option.description)}</small></button>`).join("")}</div></div>`;
+  const picked = selectedConcerns();
+  const full = picked.length >= MAX_CONCERNS;
+  const choice = (option) => {
+    const index = picked.indexOf(option.id);
+    const selected = index !== -1;
+    const blocked = !selected && full;
+    const tag = selected ? `<span class="concern-order">${index === 0 ? "Main" : `#${index + 1}`}</span>` : "";
+    return `<button type="button" class="concern-choice ${selected ? "is-selected" : ""} ${blocked ? "is-blocked" : ""}" data-action="concern-choice" data-concern="${option.id}" aria-pressed="${selected}" ${blocked ? 'aria-disabled="true"' : ""} ${disabled ? "disabled" : ""}><strong>${tag}${escapeHtml(option.label)}</strong><small>${escapeHtml(option.description)}</small></button>`;
+  };
+  return `<div class="field concern-field"><label id="concern-label">Skin concerns</label><p class="field-help" id="concern-help">Pick up to ${MAX_CONCERNS}. The first one you pick is your main concern. ${picked.length}/${MAX_CONCERNS} chosen.</p><div class="concern-grid" role="group" aria-labelledby="concern-label" aria-describedby="concern-help">${concernOptions.map(choice).join("")}</div></div>`;
 }
 
 function profilePreferenceFields() {
@@ -1653,7 +1707,7 @@ async function buildWeekImage() {
   drawWeek(canvas.getContext("2d"), model, {
     range: `${first.date} to ${last.date}`,
     place: locationLabel() === "Your location" ? "Near you" : locationLabel(),
-    profile: `${state.profile[0].toUpperCase()}${state.profile.slice(1)} skin · ${concernOption().label}`,
+    profile: `${state.profile[0].toUpperCase()}${state.profile.slice(1)} skin · ${concernSummary()}`,
   });
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   return blob ? { blob, width: canvas.width, height: canvas.height } : null;
@@ -1667,7 +1721,7 @@ async function refreshOutlook() {
   state.outlook = { status: "loading", runId };
   const todaySteps = [...(routine.am || []).map((s) => `am:${s.id}`), ...(routine.pm || []).map((s) => `pm:${s.id}`)];
   try {
-    const body = { profile: state.profile, concern: state.concern, location: locationPayload(), todaySteps, exposureContext: state.exposureContext || "mixed" };
+    const body = { profile: state.profile, concern: state.concern, concerns: selectedConcerns(), location: locationPayload(), todaySteps, exposureContext: state.exposureContext || "mixed" };
     if (state.finishPreference) body.finishPreference = state.finishPreference;
     if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
     const response = await fetch("/api/outlook", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -1690,7 +1744,7 @@ async function refreshWeek() {
   const todaySteps = [...(routine.am || []).map((s) => `am:${s.id}`), ...(routine.pm || []).map((s) => `pm:${s.id}`)];
   const todayIngredients = Object.fromEntries((meta.ingredientCandidates?.entries || []).map((e) => [`${e.phase}:${e.categoryId}`, e.ingredientId]));
   try {
-    const body = { profile: state.profile, concern: state.concern, location: locationPayload(), todaySteps, todayIngredients, exposureContext: state.exposureContext || "mixed" };
+    const body = { profile: state.profile, concern: state.concern, concerns: selectedConcerns(), location: locationPayload(), todaySteps, todayIngredients, exposureContext: state.exposureContext || "mixed" };
     if (state.finishPreference) body.finishPreference = state.finishPreference;
     if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
     const response = await fetch("/api/week", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -1750,8 +1804,15 @@ function consumerStepItem(step, phase, entries, meta) {
   const open = Boolean(state.openWhy?.[key]);
   const panelId = `why-${phase}-${step.id}`;
   const stepIndex = (state.stepCounter = (state.stepCounter || 0) + 1);
-  const mine = state.editingProducts ? "" : productNameFor(key);
-  return `<li class="consumer-step" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b></span>` : ""}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing is-key">${icon("sun", 14)} <span>${escapeHtml(timing)}</span></p>` : ""}${productInput(key, plain.name)}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : `${icon("sparkles", 13)} Why this?`}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, line) : ""}</div>` : ""}</li>`;
+  const fromShelf = state.editingProducts ? null : shelfStepFor(key);
+  const mine = state.editingProducts || fromShelf ? "" : productNameFor(key);
+  const checklist = meta?.status === "cleared";
+  const done = checklist && isStepDone(key);
+  const isNew = Boolean(state.changeInfo?.added?.includes(key));
+  const swap = state.changeInfo?.swapped?.[key] || null;
+  const tags = `${isNew ? `<span class="change-tag is-new">New today</span>` : ""}${swap ? `<span class="change-tag">Changed</span>` : ""}`;
+  const tick = checklist ? `<button type="button" class="step-tick ${done ? "is-done" : ""} ${state.justTicked === key ? "is-popping" : ""}" data-action="step-done" data-key="${escapeHtml(key)}" aria-pressed="${done}" aria-label="${escapeHtml(`${done ? "Done" : "Mark done"}: ${plain.name}`)}"><span class="step-tick-dot">${done ? icon("check", 14, 2.6) : ""}</span></button>` : "";
+  return `<li class="consumer-step ${checklist ? "has-check" : ""} ${done ? "is-done" : ""} ${isNew || swap ? "is-changed" : ""}" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}">${tick}<div class="consumer-step-main"><strong>${escapeHtml(plain.name)}${tags}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b>${swap ? ` <span class="swap-was">(was ${escapeHtml(swap.from)})</span>` : ""}</span>` : ""}${fromShelf?.product ? `<button type="button" class="my-product is-shelf" data-action="shelf-show" data-id="${escapeHtml(fromShelf.product.id)}">${icon("bottle", 13)}<span>From your shelf: <b>${escapeHtml(shelfDisplayName(fromShelf.product))}</b></span></button>` : ""}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing is-key">${icon("sun", 14)} <span>${escapeHtml(timing)}</span></p>` : ""}${productInput(key, plain.name)}</div>${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : `${icon("sparkles", 13)} Why this?`}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, line) : ""}</div>` : ""}</li>`;
 }
 
 // ---- Impact features (1-10) -----------------------------------------------
@@ -1820,31 +1881,66 @@ function uvTimeline(outlook = state.outlook) {
   const today = outlook?.data?.today;
   const hours = Array.isArray(today?.hourly) ? today.hourly : [];
   if (hours.length < 6) return "";
-  // The line is drawn in a 0-100 box stretched to the card's width; labels are
-  // HTML placed by percentage, so the chart fills the card and text stays at
-  // normal size on any screen.
+  // Drawn in a 0-100 box stretched to the card's width; labels are HTML
+  // placed by percentage, so the chart fills the card and text stays crisp.
   const maxUv = Math.max(11, ...hours.map((p) => p.uvi));
   const hourOf = (time) => Number(String(time).slice(11, 13)) + Number(String(time).slice(14, 16) || 0) / 60;
   const x = (time) => (hourOf(time) / 23) * 100;
-  const y = (uvi) => 100 - (uvi / maxUv) * 100;
+  const y = (uvi) => 100 - (uvi / maxUv) * 92;
   const pct = (v) => `${Math.max(0, Math.min(100, v)).toFixed(2)}%`;
-  const line = hours.map((p, i) => `${i ? "L" : "M"}${x(p.time).toFixed(2)},${y(p.uvi).toFixed(2)}`).join(" ");
-  const area = `${line} L${x(hours.at(-1).time).toFixed(2)},100 L${x(hours[0].time).toFixed(2)},100 Z`;
+  // A gently smoothed line (Catmull-Rom to Bezier) reads as a sky, not a graph.
+  const pts = hours.map((p) => [x(p.time), y(p.uvi)]);
+  let line = `M${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)}`;
+  for (let i = 0; i < pts.length - 1; i += 1) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, Math.min(100, p1[1] + (p2[1] - p0[1]) / 6)];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, Math.min(100, p2[1] - (p3[1] - p1[1]) / 6)];
+    line += ` C${c1[0].toFixed(2)},${c1[1].toFixed(2)} ${c2[0].toFixed(2)},${c2[1].toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`;
+  }
+  const area = `${line} L${pts.at(-1)[0].toFixed(2)},100 L${pts[0][0].toFixed(2)},100 Z`;
   const win = today.window;
   const hasWindow = Boolean(win && win.start && win.end);
-  const winRect = hasWindow ? `<rect class="uv-window" x="${x(win.start).toFixed(2)}" y="0" width="${(x(win.end) - x(win.start)).toFixed(2)}" height="100"/>` : "";
   const threshold = Number.isFinite(Number(win?.threshold)) ? y(win.threshold) : null;
   const nowX = today.now ? x(today.now) : null;
+  // UV right now, read off the hourly curve.
+  let nowUv = null;
+  if (today.now) {
+    const h = hourOf(today.now);
+    const after = hours.findIndex((p) => hourOf(p.time) >= h);
+    if (after > 0) { const a = hours[after - 1], b = hours[after]; const t = (h - hourOf(a.time)) / Math.max(0.01, hourOf(b.time) - hourOf(a.time)); nowUv = a.uvi + (b.uvi - a.uvi) * t; }
+    else if (after === 0) nowUv = hours[0].uvi;
+  }
   const peak = win?.peak;
   const label = hasWindow ? `UV today: ${win.threshold} or higher from ${hourLabel(win.start)} to ${hourLabel(win.end)}, peaking at ${Math.round(peak?.uvi ?? 0)} around ${hourLabel(peak?.time)}.` : peak ? `UV today peaks at ${Math.round(peak.uvi)} around ${hourLabel(peak.time)}.` : "UV today stays low.";
-  const ticks = [["00", "12 am"], ["06", "6 am"], ["12", "noon"], ["18", "6 pm"], ["23", "11 pm"]];
-  return `<figure class="uv-timeline" role="img" aria-label="${escapeHtml(label)}"><div class="uv-plot">
-    <svg class="uv-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${winRect}<path class="uv-area" d="${area}"/>${threshold !== null ? `<line class="uv-threshold" x1="0" x2="100" y1="${threshold.toFixed(2)}" y2="${threshold.toFixed(2)}"/>` : ""}<path class="uv-line" d="${line}"/>${nowX !== null ? `<line class="uv-now" x1="${nowX.toFixed(2)}" x2="${nowX.toFixed(2)}" y1="0" y2="100"/>` : ""}</svg>
-    ${peak ? `<span class="uv-peak" style="left: ${pct(x(peak.time))}; top: ${pct(y(peak.uvi))}"></span><span class="uv-peak-label" style="left: ${pct(x(peak.time))}; top: ${pct(y(peak.uvi))}">UV ${Math.round(peak.uvi)}</span>` : ""}
-    ${nowX !== null ? `<span class="uv-now-label${nowX > 88 ? " is-end" : ""}" style="left: ${pct(nowX)}">now</span>` : ""}
-    ${threshold !== null ? `<span class="uv-threshold-label" style="top: ${pct(threshold)}">UV ${escapeHtml(String(win.threshold))}</span>` : ""}
-  </div><div class="uv-axis" aria-hidden="true">${ticks.map(([hh, t], i) => `<span class="${i === 0 ? "is-start" : i === ticks.length - 1 ? "is-end" : ""}" style="left: ${pct(x(`2000-01-01T${hh}:00`))}">${t}</span>`).join("")}</div>
-  <figcaption>${hasWindow ? `<span class="uv-key is-window"></span> sunscreen matters · ` : ""}<span class="uv-key is-line"></span> UV through the day · <span class="uv-key is-threshold"></span> sunscreen level</figcaption></figure>`;
+  const ticks = [["00", "12 am"], ["06", "6 am"], ["12", "Noon"], ["18", "6 pm"], ["23", "11 pm"]];
+  const drawKey = `${today.now || ""}|${hours.length}`;
+  const draw = state.uvDrawn !== drawKey && !prefersReducedMotion();
+  if (draw) setTimeout(() => { state.uvDrawn = drawKey; }, 1600);
+  const winX1 = hasWindow ? x(win.start) : 0, winX2 = hasWindow ? x(win.end) : 0;
+  return `<figure class="uv-timeline ${draw ? "is-drawing" : ""}" role="img" aria-label="${escapeHtml(label)}">
+  <div class="uv-plot">
+    ${hasWindow ? `<div class="uv-window-band" style="left: ${pct(winX1)}; width: ${pct(winX2 - winX1)}"></div>` : ""}
+    <svg class="uv-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="uvStroke" x1="0" y1="100" x2="0" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" class="uv-s0"/><stop offset=".45" class="uv-s1"/><stop offset=".8" class="uv-s2"/><stop offset="1" class="uv-s3"/></linearGradient>
+        <linearGradient id="uvFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="uv-f0"/><stop offset="1" class="uv-f1"/></linearGradient>
+        ${nowX !== null ? `<clipPath id="uvPast"><rect x="0" y="-10" width="${nowX.toFixed(2)}" height="120"/></clipPath><clipPath id="uvFuture"><rect x="${nowX.toFixed(2)}" y="-10" width="${(100 - nowX).toFixed(2)}" height="120"/></clipPath>` : ""}
+      </defs>
+      <line class="uv-grid" x1="${x("2000-01-01T06:00").toFixed(2)}" x2="${x("2000-01-01T06:00").toFixed(2)}" y1="0" y2="100"/><line class="uv-grid" x1="${x("2000-01-01T12:00").toFixed(2)}" x2="${x("2000-01-01T12:00").toFixed(2)}" y1="0" y2="100"/><line class="uv-grid" x1="${x("2000-01-01T18:00").toFixed(2)}" x2="${x("2000-01-01T18:00").toFixed(2)}" y1="0" y2="100"/>
+      <path class="uv-area" d="${area}"/>
+      ${threshold !== null ? `<line class="uv-threshold" x1="0" x2="100" y1="${threshold.toFixed(2)}" y2="${threshold.toFixed(2)}"/>` : ""}
+      ${nowX !== null
+        ? `<path class="uv-line is-past" d="${line}" pathLength="1" clip-path="url(#uvPast)"/><path class="uv-line is-future" d="${line}" pathLength="1" clip-path="url(#uvFuture)"/>`
+        : `<path class="uv-line is-past" d="${line}" pathLength="1"/>`}
+      ${nowX !== null ? `<line class="uv-now" x1="${nowX.toFixed(2)}" x2="${nowX.toFixed(2)}" y1="0" y2="100"/>` : ""}
+    </svg>
+    ${peak ? `<span class="uv-peak" style="left: ${pct(x(peak.time))}; top: ${pct(y(peak.uvi))}"></span><span class="uv-peak-label" style="left: ${pct(x(peak.time))}; top: ${pct(y(peak.uvi))}"><b>UV ${Math.round(peak.uvi)}</b> ${escapeHtml(hourLabel(peak.time))}</span>` : ""}
+    ${nowX !== null && nowUv !== null ? `<span class="uv-now-dot" style="left: ${pct(nowX)}; top: ${pct(y(nowUv))}"></span>` : ""}
+    ${nowX !== null ? `<span class="uv-now-label ${nowUv !== null && y(nowUv) < 40 ? "is-below" : nowX > 62 ? "is-left" : "is-right"}${nowX > 85 ? " is-edge-end" : nowX < 15 ? " is-edge-start" : ""}" style="left: ${pct(nowX)}; top: ${pct(nowUv !== null ? Math.min(82, y(nowUv)) : 50)}">Now${nowUv !== null ? ` · UV ${Math.round(nowUv)}` : ""}</span>` : ""}
+    ${threshold !== null ? `<span class="uv-threshold-label" style="top: ${pct(threshold)}">Sunscreen from UV ${escapeHtml(String(win.threshold))}</span>` : ""}
+  </div>
+  <div class="uv-axis" aria-hidden="true">${ticks.map(([hh, t], i) => `<span class="${i === 0 ? "is-start" : i === ticks.length - 1 ? "is-end" : ""}" style="left: ${pct(x(`2000-01-01T${hh}:00`))}">${t}</span>`).join("")}</div>
+  <figcaption><span class="uv-legend"><span class="uv-key is-line"></span>UV through the day</span>${hasWindow ? `<span class="uv-legend"><span class="uv-key is-window"></span>Sunscreen ${escapeHtml(hourLabel(win.start))} to ${escapeHtml(hourLabel(win.end))}</span>` : ""}${threshold !== null ? `<span class="uv-legend"><span class="uv-key is-threshold"></span>Sunscreen level</span>` : ""}</figcaption></figure>`;
 }
 function hourLabel(time) {
   const h = Number(String(time || "").slice(11, 13));
@@ -1862,10 +1958,11 @@ function compareCard(meta) {
       ? `<p class="compare-same">${icon("check", 14)} Same as your usual routine today.</p>`
       : `<p class="compare-title">Today's changes to your usual routine</p><ul class="tomorrow-changes">${cmp.vsUsual.changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`);
   }
-  if (cmp?.vsPrevious && !(cmp.vsPrevious.same && !cmp.vsPrevious.readingChanges?.length)) {
+  if (cmp?.vsPrevious && !(cmp.vsPrevious.same && !cmp.vsPrevious.readingChanges?.length && !Object.keys(state.changeInfo?.swapped || {}).length)) {
     const when = cmp.vsPrevious.at ? relativeDay(cmp.vsPrevious.at) : "last time";
     const readings = cmp.vsPrevious.readingChanges?.length ? `<p class="compare-readings">${escapeHtml(cmp.vsPrevious.readingChanges.join(" · "))}.</p>` : "";
-    blocks.push(`<p class="compare-title">Since your routine ${escapeHtml(when)}</p>${readings}${cmp.vsPrevious.same ? `<p class="compare-same">${icon("check", 14)} The routine itself hasn't changed.</p>` : `<ul class="tomorrow-changes">${cmp.vsPrevious.changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`}`);
+    const swaps = changeSwapsBlock();
+    blocks.push(`<p class="compare-title">${icon("refresh", 14)} What changed since ${escapeHtml(when)}</p>${readings}${cmp.vsPrevious.same ? (swaps ? "" : `<p class="compare-same">${icon("check", 14)} The steps are the same as ${escapeHtml(when)}.</p>`) : `<ul class="tomorrow-changes">${cmp.vsPrevious.changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`}${swaps}`);
   }
   if (!blocks.length) return "";
   return `<section class="compare-card" style="view-transition-name: compare-card" aria-label="What changed">${blocks.join("")}</section>`;
@@ -1922,6 +2019,489 @@ async function sendCheckin(about) {
   state.checkinThanks = true;
   renderAnimated();
   showToast("Thanks for checking in.");
+}
+
+// ---- My shelf: the products the user owns, on a real-looking shelf ---------
+const SHELF_KEY = "dermasynth.shelf.v1";
+const SHELF_MAX = 20;
+const SHELF_TYPES = [["cleanser", "Cleanser"], ["toner", "Toner or essence"], ["serum", "Serum"], ["moisturiser", "Moisturiser"], ["sunscreen", "Sunscreen"], ["exfoliant", "Exfoliant"], ["mask", "Mask"], ["oil", "Face oil"], ["other", "Other"]];
+// Soft label colours that sit well on the cream shelf: [body, ink].
+const SHELF_COLOURS = [["#dcebdc", "#2f7a57"], ["#f3dfd6", "#a65a3f"], ["#efe3c4", "#8a6418"], ["#dbe6ef", "#3d6a8a"], ["#e7def0", "#6c5a8a"], ["#f7f3ea", "#56645b"], ["#e8d7b8", "#7a5a2a"]];
+const STEP_TO_TYPE = {
+  "low-irritation-cleansing": "cleanser", "daytime-photoprotection": "sunscreen", "texture-renewal": "exfoliant", "antioxidant-context": "serum",
+  "comfort-hydration": "serum", "light-hydration": "toner", "supportive-hydration": "serum", "barrier-support-moisturising": "moisturiser",
+  "lightweight-moisturising": "moisturiser", "supportive-moisturising": "moisturiser", "overnight-comfort": "moisturiser",
+};
+
+function loadShelf() {
+  const list = readStore(SHELF_KEY, []);
+  return Array.isArray(list) ? list.filter((p) => p && typeof p.id === "string" && p.name).slice(0, SHELF_MAX) : [];
+}
+function saveShelf() { writeStore(SHELF_KEY, state.shelf); }
+function shelfProduct(id) { return state.shelf.find((p) => p.id === id) || null; }
+function shelfTypeLabel(type) { return (SHELF_TYPES.find(([id]) => id === type) || SHELF_TYPES[SHELF_TYPES.length - 1])[1]; }
+function shelfDisplayName(p) { return [p.brand, p.name].filter(Boolean).join(" "); }
+function shelfColour(id) { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return SHELF_COLOURS[h % SHELF_COLOURS.length]; }
+function titleCase(text) { return String(text || "").replace(/^./, (c) => c.toUpperCase()); }
+
+/** A drawn bottle for each product type. Shapes, not photos, so every shelf looks tidy. */
+function bottleSvg(type, id, size = 64) {
+  const [body, ink] = shelfColour(id);
+  const h = Math.round(size * 1.55);
+  const gloss = `<rect x="18" y="40" width="4" height="40" rx="2" fill="#fff" opacity=".45"/>`;
+  const label = (y, height) => `<rect x="17" y="${y}" width="26" height="${height}" rx="3" fill="#fffdf7" opacity=".9"/><rect x="21" y="${y + 5}" width="18" height="2.4" rx="1.2" fill="${ink}" opacity=".85"/><rect x="21" y="${y + 10}" width="12" height="2" rx="1" fill="${ink}" opacity=".45"/>`;
+  const shapes = {
+    cleanser: `<rect x="14" y="36" width="32" height="58" rx="9" fill="${body}" stroke="${ink}" stroke-opacity=".25"/><rect x="25" y="27" width="10" height="10" rx="2" fill="${ink}"/><rect x="28" y="17" width="4" height="11" fill="${ink}"/><rect x="21" y="12" width="18" height="6" rx="2" fill="${ink}"/><rect x="37" y="12" width="13" height="4" rx="2" fill="${ink}"/>${label(52, 22)}${gloss}`,
+    toner: `<path d="M17 38c0-6 5-9 13-9s13 3 13 9v54a2 2 0 0 1-2 2H19a2 2 0 0 1-2-2Z" fill="${body}" stroke="${ink}" stroke-opacity=".25"/><rect x="23" y="12" width="14" height="18" rx="3" fill="${ink}"/>${label(50, 24)}${gloss}`,
+    serum: `<rect x="15" y="46" width="30" height="48" rx="10" fill="${body}" stroke="${ink}" stroke-opacity=".25"/><rect x="23" y="38" width="14" height="9" rx="2" fill="${ink}"/><ellipse cx="30" cy="25" rx="7" ry="13" fill="${ink}"/>${label(58, 20)}<rect x="19" y="52" width="3.5" height="34" rx="1.75" fill="#fff" opacity=".45"/>`,
+    oil: `<rect x="15" y="46" width="30" height="48" rx="10" fill="#d9b06a" stroke="${ink}" stroke-opacity=".25"/><rect x="23" y="38" width="14" height="9" rx="2" fill="${ink}"/><ellipse cx="30" cy="25" rx="7" ry="13" fill="${ink}"/>${label(58, 20)}<rect x="19" y="52" width="3.5" height="34" rx="1.75" fill="#fff" opacity=".45"/>`,
+    moisturiser: `<rect x="7" y="60" width="46" height="34" rx="9" fill="${body}" stroke="${ink}" stroke-opacity=".25"/><rect x="5" y="47" width="50" height="15" rx="5" fill="${ink}"/>${label(68, 18)}<rect x="11" y="66" width="3.5" height="22" rx="1.75" fill="#fff" opacity=".45"/>`,
+    mask: `<rect x="5" y="66" width="50" height="28" rx="8" fill="${body}" stroke="${ink}" stroke-opacity=".25"/><rect x="3" y="55" width="54" height="13" rx="5" fill="${ink}"/>${label(72, 16)}`,
+    sunscreen: `<path d="M15 10h30l-3 62H18Z" fill="${body}" stroke="${ink}" stroke-opacity=".25"/><rect x="15" y="8" width="30" height="5" rx="1.5" fill="${ink}" opacity=".55"/><rect x="18" y="71" width="24" height="23" rx="5" fill="${ink}"/><rect x="20" y="26" width="20" height="26" rx="3" fill="#fffdf7" opacity=".9"/><circle cx="30" cy="34" r="4" fill="#c9a55a"/><rect x="24" y="42" width="12" height="2.4" rx="1.2" fill="${ink}" opacity=".7"/><rect x="19" y="16" width="3.5" height="44" rx="1.75" fill="#fff" opacity=".45"/>`,
+    exfoliant: `<path d="M18 34h24v58a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2Z" fill="${body}" stroke="${ink}" stroke-opacity=".25"/><path d="M20 22h20l2 12H18Z" fill="${ink}"/><rect x="26" y="15" width="8" height="8" rx="2" fill="${ink}"/>${label(52, 22)}${gloss}`,
+  };
+  const shape = shapes[type] || `<path d="M18 40c0-5 4-8 12-8s12 3 12 8v52a2 2 0 0 1-2 2H20a2 2 0 0 1-2-2Z" fill="${body}" stroke="${ink}" stroke-opacity=".25"/><rect x="24" y="18" width="12" height="15" rx="3" fill="${ink}"/>${label(50, 24)}${gloss}`;
+  return `<svg class="bottle-svg" width="${size}" height="${h}" viewBox="0 0 60 96" aria-hidden="true"><ellipse cx="30" cy="94" rx="20" ry="2.6" fill="#3b2a12" opacity=".18"/>${shape}</svg>`;
+}
+
+function shelfRoutinePayload() {
+  const meta = state.routineMeta;
+  if (!state.generatedRoutine || !meta || !["cleared", "review_required"].includes(meta.status)) return null;
+  const entries = (meta.ingredientCandidates?.entries || []).map((e) => ({ ingredientId: e.ingredientId, displayName: e.displayName, phase: e.phase, categoryId: e.categoryId }));
+  return { entries, steps: currentStepKeys(), concern: state.concern, reactivityLevel: meta.routine?.generation?.reactivityLevel || state.reactivityLevel || "low" };
+}
+function shelfRunKey() {
+  const meta = state.routineMeta;
+  return `${meta?.requestId || meta?.routineContext?.runId || "none"}|${state.shelf.map((p) => `${p.id}:${p.updatedAt || ""}`).join(",")}`;
+}
+
+let shelfCheckVersion = 0;
+async function refreshShelfCheck({ force = false } = {}) {
+  if (!state.shelf.length) { state.shelfCheck = null; state.shelfCheckStatus = "idle"; return; }
+  const key = shelfRunKey();
+  if (!force && state.shelfCheck?.key === key) return;
+  const version = ++shelfCheckVersion;
+  state.shelfCheckStatus = "loading";
+  try {
+    const routine = shelfRoutinePayload();
+    const response = await fetch("/api/shelf/check", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ products: state.shelf.map((p) => ({ id: p.id, name: shelfDisplayName(p), type: p.type, text: p.text || "" })), routine: routine || {} }),
+    });
+    if (!response.ok) throw new Error("The shelf check couldn't run.");
+    const data = await response.json();
+    if (version !== shelfCheckVersion) return;
+    if (!state.shelfCheck || state.shelfCheck.withRoutine !== Boolean(routine) || force) state.shelfEnterUntil = Date.now() + 1400;
+    state.shelfCheck = { ...data, key, withRoutine: Boolean(routine) };
+    state.shelfCheckStatus = "done";
+  } catch {
+    if (version !== shelfCheckVersion) return;
+    state.shelfCheckStatus = "error";
+  }
+  scheduleRender();
+}
+
+function shelfStepFor(key) {
+  const step = state.shelfCheck?.withRoutine ? state.shelfCheck.steps?.find((s) => s.key === key) : null;
+  return step?.productId ? { step, product: shelfProduct(step.productId) } : null;
+}
+
+function shelfItemButton(product, { tag = "", today = false, dim = false, index = 0, clash = false } = {}) {
+  const selected = state.shelfSelected === product.id;
+  return `<li class="shelf-slot" style="--i: ${index}"><button type="button" class="shelf-item ${today ? "is-today" : ""} ${dim ? "is-dim" : ""} ${clash ? "has-clash" : ""} ${selected ? "is-selected" : ""}" data-action="shelf-select" data-id="${escapeHtml(product.id)}" aria-pressed="${selected}" aria-label="${escapeHtml(`${shelfDisplayName(product)}${tag ? `, ${tag}` : ""}${clash ? ", clashes with another product" : ""}`)}"><span class="shelf-bottle">${bottleSvg(product.type, product.id)}</span>${clash ? `<span class="shelf-clash-dot" aria-hidden="true">!</span>` : ""}${tag ? `<span class="shelf-tag">${escapeHtml(tag)}</span>` : ""}<span class="shelf-name">${escapeHtml(shelfDisplayName(product))}</span></button></li>`;
+}
+
+function shelfGapButton(step, index) {
+  const type = STEP_TO_TYPE[step.categoryId] || "other";
+  return `<li class="shelf-slot" style="--i: ${index}"><button type="button" class="shelf-gap" data-action="shelf-add" data-type="${escapeHtml(type)}"><span class="shelf-gap-outline" aria-hidden="true">+</span><span class="shelf-name">No ${escapeHtml(step.step)} yet</span></button></li>`;
+}
+
+function shelfRow({ title, iconName, note, items }) {
+  return `<section class="shelf-row" aria-label="${escapeHtml(title)}"><div class="shelf-row-head"><span>${icon(iconName, 15)} ${escapeHtml(title)}</span>${note ? `<small>${escapeHtml(note)}</small>` : ""}</div><ul class="shelf-items">${items.join("")}</ul><div class="shelf-ledge" aria-hidden="true"></div></section>`;
+}
+
+function shelfScene() {
+  const check = state.shelfCheck;
+  const clashIds = new Set((check?.clashes || []).flatMap((c) => [c.a, c.b]));
+  if (!check?.withRoutine) {
+    return shelfRow({ title: "Your shelf", iconName: "layers", note: `${state.shelf.length} product${state.shelf.length === 1 ? "" : "s"}`, items: state.shelf.map((p, i) => shelfItemButton(p, { index: i, clash: clashIds.has(p.id) })) });
+  }
+  const rows = [];
+  let n = 0;
+  for (const [phase, title, iconName] of [["am", "Morning", "sun"], ["pm", "Evening", "sparkles"]]) {
+    const steps = check.steps.filter((s) => s.phase === phase);
+    const covered = steps.filter((s) => s.productId).length;
+    const items = steps.map((s, i) => {
+      const product = s.productId ? shelfProduct(s.productId) : null;
+      return product ? shelfItemButton(product, { tag: `Step ${i + 1} · ${titleCase(s.step)}`, today: true, index: n++, clash: clashIds.has(product.id) }) : shelfGapButton(s, n++);
+    });
+    rows.push(shelfRow({ title, iconName, note: `${covered} of ${steps.length} from your shelf`, items }));
+  }
+  const used = new Set(check.steps.map((s) => s.productId).filter(Boolean));
+  const rest = state.shelf.filter((p) => !used.has(p.id));
+  if (rest.length) rows.push(shelfRow({ title: "Not needed today", iconName: "layers", note: "Rest these today", items: rest.map((p) => shelfItemButton(p, { dim: true, index: n++, clash: clashIds.has(p.id) })) }));
+  return rows.join("");
+}
+
+function shelfDetail() {
+  const product = shelfProduct(state.shelfSelected);
+  if (!product) return "";
+  const info = state.shelfCheck?.products?.find((p) => p.id === product.id) || null;
+  const steps = (state.shelfCheck?.withRoutine ? state.shelfCheck.steps : []).filter((s) => s.productId === product.id);
+  const clashes = (state.shelfCheck?.clashes || []).filter((c) => c.a === product.id || c.b === product.id);
+  const recognised = info?.recognised || [];
+  const confirming = state.shelfConfirmRemove === product.id;
+  const stepList = steps.length
+    ? `<ul class="shelf-detail-list">${steps.map((s) => `<li class="is-good">${icon("check", 14)} <span>${escapeHtml(s.text)}</span></li>`).join("")}</ul>`
+    : state.shelfCheck?.withRoutine ? `<p class="shelf-detail-muted">Not needed in today's routine.</p>` : `<p class="shelf-detail-muted">Build today's routine to see where this fits.</p>`;
+  const cautions = [...(info?.cautions || []).map((c) => ({ level: c.level, text: c.text })), ...clashes.map((c) => ({ level: "warn", text: c.text })), ...(info?.conflicts || []).map((c) => ({ level: "warn", text: c.text }))];
+  return `<section class="panel shelf-detail" aria-labelledby="shelf-detail-title"><div class="shelf-detail-head"><span class="shelf-detail-bottle">${bottleSvg(product.type, product.id, 78)}</span><div><p class="shelf-detail-kicker">${escapeHtml(shelfTypeLabel(product.type))}</p><h3 id="shelf-detail-title">${escapeHtml(shelfDisplayName(product))}</h3>${info?.verdict && state.shelfCheck?.withRoutine ? `<p class="shelf-detail-verdict">${escapeHtml(info.verdict)}</p>` : ""}</div><button type="button" class="icon-button" data-action="shelf-close" aria-label="Close product details">${icon("close", 16)}</button></div>
+  <div class="shelf-detail-body"><h4>Today</h4>${stepList}${cautions.length ? `<h4>Good to know</h4><ul class="shelf-detail-list">${cautions.map((c) => `<li class="is-${escapeHtml(c.level)}">${icon(c.level === "info" ? "info" : "shield", 14)} <span>${escapeHtml(c.text)}</span></li>`).join("")}</ul>` : ""}
+  <h4>Ingredients DermaSynth knows</h4>${recognised.length ? `<div class="shelf-chips">${recognised.slice(0, 14).map((r) => `<span>${escapeHtml(r.name)}</span>`).join("")}</div>` : `<p class="shelf-detail-muted">${product.text ? "None of its ingredients are in DermaSynth's records yet." : "Add the ingredient list so DermaSynth can check it."}</p>`}${info?.note ? `<p class="shelf-detail-muted">${escapeHtml(info.note)}</p>` : ""}</div>
+  <div class="shelf-detail-actions"><button type="button" class="ghost-button" data-action="shelf-edit" data-id="${escapeHtml(product.id)}">${icon("sliders", 14)} Edit</button><button type="button" class="shelf-remove ${confirming ? "is-confirming" : ""}" data-action="shelf-remove" data-id="${escapeHtml(product.id)}">${icon("close", 14)} ${confirming ? "Tap again to remove" : "Remove from shelf"}</button></div></section>`;
+}
+
+function shelfEditor() {
+  const ed = state.shelfEditor;
+  if (!ed) return "";
+  const d = ed.draft;
+  const scanning = ed.scanStatus === "scanning";
+  return `<section class="panel shelf-editor" aria-labelledby="shelf-editor-title"><div class="panel-header"><h3 class="panel-title" id="shelf-editor-title">${icon("layers", 17)} ${ed.mode === "edit" ? "Edit product" : "Add a product"}</h3><p class="panel-note">Saved only in this browser</p></div>
+  <div class="shelf-scan ${scanning ? "is-busy" : ""}"><span class="shelf-scan-icon" aria-hidden="true">${scanning ? `<span class="shelf-scan-spinner"></span>` : icon("upload", 20)}</span><div class="shelf-scan-copy"><strong>${scanning ? "Reading the label…" : "Scan the ingredient list"}</strong><span>Take a clear photo of the back of the product. The AI only copies the text, the photo isn't stored, and you check it before saving.</span></div><label class="primary-button shelf-scan-button" for="shelf-scan-input">${scanning ? "Reading…" : "Take or choose a photo"}</label><input id="shelf-scan-input" class="sr-only" type="file" accept="image/*" capture="environment" data-action="shelf-scan" ${scanning ? "disabled" : ""} /></div>${ed.scanMessage ? `<p class="shelf-scan-msg ${ed.scanStatus === "error" ? "is-error" : ""}" role="status">${icon(ed.scanStatus === "error" ? "info" : "check", 14)} <span>${escapeHtml(ed.scanMessage)}</span></p>` : ""}<p class="shelf-or" aria-hidden="true"><span>or type it in</span></p>
+  <div class="form-grid shelf-form"><div class="field"><label for="shelf-name">Product name</label><input id="shelf-name" type="text" maxlength="60" autocomplete="off" data-action="shelf-field" data-field="name" value="${escapeHtml(d.name)}" placeholder="e.g. Hydrating Gel Cleanser" /></div>
+  <div class="field"><label for="shelf-brand">Brand (optional)</label><input id="shelf-brand" type="text" maxlength="40" autocomplete="off" data-action="shelf-field" data-field="brand" value="${escapeHtml(d.brand)}" /></div>
+  <fieldset class="field shelf-type-field"><legend>Type</legend><div class="shelf-type-chips">${SHELF_TYPES.map(([id, label]) => `<button type="button" class="shelf-type-chip ${d.type === id ? "is-selected" : ""}" data-action="shelf-type" data-value="${id}" aria-pressed="${d.type === id}"><span class="shelf-type-art" aria-hidden="true">${bottleSvg(id, `type-${id}`, 22)}</span><span>${escapeHtml(label)}</span></button>`).join("")}</div></fieldset>
+  <div class="field shelf-text-field"><label for="shelf-text">Ingredient list</label><textarea id="shelf-text" maxlength="4000" data-action="shelf-field" data-field="text" placeholder="Aqua, Glycerin, Niacinamide, …">${escapeHtml(d.text)}</textarea><p class="field-help">Copy it from the label or the brand's website. Without it, DermaSynth can only place the product by its type.</p></div></div>
+  ${ed.error ? `<p class="shelf-scan-msg is-error" role="alert">${escapeHtml(ed.error)}</p>` : ""}
+  <div class="form-actions"><button type="button" class="primary-button" data-action="shelf-save">${icon("check", 15)} ${ed.mode === "edit" ? "Save changes" : "Put it on my shelf"}</button><button type="button" class="ghost-button" data-action="shelf-cancel">Cancel</button></div></section>`;
+}
+
+function shelfView() {
+  const check = state.shelfCheck;
+  const hasRoutine = Boolean(shelfRoutinePayload());
+  const gaps = check?.withRoutine ? check.gaps.length : 0;
+  const clashes = check?.clashes || [];
+  const intro = !state.shelf.length
+    ? `<section class="panel shelf-empty"><div class="shelf-empty-art" aria-hidden="true">${bottleSvg("cleanser", "a1", 46)}${bottleSvg("serum", "b2", 46)}${bottleSvg("moisturiser", "c3", 46)}${bottleSvg("sunscreen", "d4", 46)}</div><h3>Your shelf is empty</h3><p>Add the products you already own. DermaSynth will line up the ones to use for today's routine, warn you about any that clash, and show the steps you have nothing for.</p><button type="button" class="primary-button" data-action="shelf-add">${icon("upload", 15)} Add your first product</button></section>`
+    : "";
+  const status = state.shelfCheckStatus === "loading" && !check ? `<p class="shelf-status" role="status">${icon("sparkles", 13)} <span class="shimmer-text">Checking your products…</span></p>` : state.shelfCheckStatus === "error" ? `<p class="shelf-status is-error" role="status">${icon("info", 13)} The shelf check couldn't run. Your products are still saved.</p>` : "";
+  const summary = state.shelf.length ? `<div class="shelf-summary">${hasRoutine ? `<span>${icon("check", 14)} ${check?.withRoutine ? `${check.steps.length - gaps} of ${check.steps.length} steps covered today` : "Matching to today's routine…"}</span>` : `<span>${icon("info", 14)} Build today's routine to see which products to use.</span><button type="button" class="text-button" data-action="navigate" data-view="simulator">Build it</button>`}${clashes.length ? `<span class="is-warn">${icon("shield", 14)} ${clashes.length} pair${clashes.length === 1 ? "" : "s"} shouldn't be layered</span>` : ""}</div>` : "";
+  return shell(`<div class="view-heading"><div><p class="hero-kicker">My shelf</p><h2>Your products, lined up for today</h2><p>${state.shelf.length ? `${state.shelf.length} of ${SHELF_MAX} spaces used. Tap a product to see where it fits.` : "Everything stays in this browser."}</p></div>${state.shelf.length && state.shelf.length < SHELF_MAX && !state.shelfEditor ? `<button type="button" class="primary-button" data-action="shelf-add">${icon("upload", 15)} Add product</button>` : ""}</div>${shelfEditor()}${intro}${state.shelf.length ? `${summary}${status}<div class="shelf-scene ${(state.shelfEnterUntil || 0) > Date.now() ? "is-entering" : ""}">${shelfScene()}</div>${shelfDetail()}` : ""}`);
+}
+
+function shelfTodayCard(meta) {
+  if (!meta || meta.status !== "cleared") return "";
+  if (!state.shelf.length) return `<section class="shelf-today-card"><div class="shelf-today-art" aria-hidden="true">${bottleSvg("serum", "x1", 34)}${bottleSvg("sunscreen", "x2", 34)}</div><div><p class="shelf-today-title">Use what you already own</p><p>Add your products to your shelf and DermaSynth will pick the right one for each step.</p></div><button type="button" class="ghost-button" data-action="navigate" data-view="shelf">Open my shelf</button></section>`;
+  const check = state.shelfCheck;
+  if (!check?.withRoutine) return "";
+  const missing = check.steps.filter((s) => !s.productId).map((s) => s.step);
+  const covered = check.steps.length - missing.length;
+  return `<section class="shelf-today-card"><div class="shelf-today-art" aria-hidden="true">${check.steps.filter((s) => s.productId).slice(0, 3).map((s) => { const p = shelfProduct(s.productId); return p ? bottleSvg(p.type, p.id, 30) : ""; }).join("")}</div><div><p class="shelf-today-title">Your shelf covers ${covered} of ${check.steps.length} steps today</p>${missing.length ? `<p>Nothing yet for: ${escapeHtml([...new Set(missing)].join(", "))}.</p>` : `<p>Everything today comes from products you own.</p>`}${check.clashes?.length ? `<p class="is-warn">${icon("shield", 13)} ${check.clashes.length} pair${check.clashes.length === 1 ? "" : "s"} on your shelf shouldn't be layered.</p>` : ""}</div><button type="button" class="ghost-button" data-action="navigate" data-view="shelf">Open my shelf</button></section>`;
+}
+
+async function shrinkPhoto(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = () => reject(new Error("That file isn't a photo DermaSynth can read. Try a JPEG or PNG.")); image.src = url; });
+    let max = 1600, quality = 0.85;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      const data = canvas.toDataURL("image/jpeg", quality);
+      if (data.length < 2_700_000) return data;
+      max *= 0.8; quality -= 0.08;
+    }
+    throw new Error("That photo is too large. Try a closer photo of just the ingredient list.");
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function scanShelfLabel(file) {
+  const ed = state.shelfEditor;
+  if (!ed || !file) return;
+  ed.scanStatus = "scanning"; ed.scanMessage = ""; ed.error = "";
+  render();
+  try {
+    const image = await shrinkPhoto(file);
+    const response = await fetch("/api/shelf/scan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ image }) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data?.error || "The label couldn't be read. Type or paste the ingredient list instead.");
+    if (state.shelfEditor !== ed) return;
+    if (data.error) throw new Error(data.error);
+    const d = ed.draft;
+    if (data.name && !d.name) d.name = data.name;
+    if (data.brand && !d.brand) d.brand = data.brand;
+    if (data.type && data.type !== "other" && (d.type === "other" || !d.text)) d.type = data.type;
+    if (data.legible) { d.text = data.ingredientsText; ed.scanMessage = "Label read. Check the ingredients against the label, then save."; ed.scanStatus = "done"; }
+    else { ed.scanMessage = "The ingredient list wasn't clear enough to read. Try a closer, sharper photo, or type it in."; ed.scanStatus = "error"; }
+  } catch (error) {
+    if (state.shelfEditor !== ed) return;
+    ed.scanStatus = "error";
+    ed.scanMessage = error instanceof Error ? error.message : "The label couldn't be read.";
+  }
+  render();
+}
+
+function openShelfEditor(product = null, type = "other") {
+  state.shelfSelected = null;
+  state.shelfEditor = product
+    ? { mode: "edit", id: product.id, draft: { name: product.name, brand: product.brand || "", type: product.type || "other", text: product.text || "" } }
+    : { mode: "add", draft: { name: "", brand: "", type, text: "" } };
+  if (state.activeView !== "shelf") { navigateView("shelf"); }
+  renderAnimated().then(() => { const box = document.querySelector(".shelf-editor"); box?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" }); document.querySelector("#shelf-name")?.focus({ preventScroll: true }); });
+}
+
+function saveShelfEditor() {
+  const ed = state.shelfEditor;
+  if (!ed) return;
+  const d = ed.draft;
+  const name = String(d.name || "").replace(/\s+/g, " ").trim().slice(0, 60);
+  const brand = String(d.brand || "").replace(/\s+/g, " ").trim().slice(0, 40);
+  if (!name && !brand) { ed.error = "Give the product a name so you can find it on your shelf."; render(); document.querySelector("#shelf-name")?.focus(); return; }
+  const now = new Date().toISOString();
+  const record = { name: name || brand, brand: name ? brand : "", type: SHELF_TYPES.some(([id]) => id === d.type) ? d.type : "other", text: String(d.text || "").slice(0, 4000), updatedAt: now };
+  let id = ed.id;
+  if (ed.mode === "edit" && shelfProduct(id)) {
+    state.shelf = state.shelf.map((p) => (p.id === id ? { ...p, ...record } : p));
+  } else {
+    if (state.shelf.length >= SHELF_MAX) { ed.error = `Your shelf is full (${SHELF_MAX} products). Remove one first.`; render(); return; }
+    id = `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    state.shelf = [...state.shelf, { id, ...record, addedAt: now }];
+  }
+  saveShelf();
+  state.shelfEditor = null;
+  state.shelfSelected = id;
+  state.shelfJustAdded = ed.mode === "add" ? id : null;
+  renderAnimated();
+  showToast(ed.mode === "edit" ? "Saved." : "Added to your shelf.");
+  refreshShelfCheck({ force: true });
+}
+
+function removeShelfProduct(id) {
+  if (state.shelfConfirmRemove !== id) { state.shelfConfirmRemove = id; render(); return; }
+  const product = shelfProduct(id);
+  state.shelf = state.shelf.filter((p) => p.id !== id);
+  state.shelfConfirmRemove = null;
+  state.shelfSelected = null;
+  saveShelf();
+  renderAnimated();
+  showToast(`${product ? shelfDisplayName(product) : "Product"} removed.`);
+  refreshShelfCheck({ force: true });
+}
+
+// ---- What changed today, and the daily checklist ---------------------------
+const DAYS_KEY = "dermasynth.routine-days.v1";
+const DONE_KEY = "dermasynth.done.v1";
+
+function dayKey(date = new Date()) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function profileSignature() { return `${state.profile}|${selectedConcerns().join("+")}`; }
+function routineIngredientMap(payload) {
+  const out = {};
+  for (const e of payload?.ingredientCandidates?.entries || []) out[`${e.phase}:${e.categoryId}`] = e.displayName;
+  return out;
+}
+
+/** The most recent routine from an earlier day, for the same skin details. */
+function previousDayRoutine() {
+  const days = readStore(DAYS_KEY, {});
+  const today = dayKey();
+  const sig = profileSignature();
+  const keys = Object.keys(days).filter((k) => k < today && days[k]?.sig === sig && Array.isArray(days[k]?.steps)).sort();
+  const key = keys[keys.length - 1];
+  return key ? { ...days[key], date: key } : null;
+}
+
+function rememberRoutineDay(payload) {
+  if (!payload?.routine || payload.status !== "cleared") return;
+  const days = readStore(DAYS_KEY, {});
+  const r = payload.environment?.readings || {};
+  days[dayKey()] = {
+    sig: profileSignature(),
+    at: new Date().toISOString(),
+    steps: currentStepKeys(payload.routine),
+    ingredients: routineIngredientMap(payload),
+    readings: { uvi: r.uvi ?? null, uviMaxToday: r.uviMaxToday ?? null, humidity: r.humidity ?? null, pm25: r.pm25 ?? null, temperature: r.temperature ?? null },
+  };
+  const keep = Object.keys(days).sort().slice(-10);
+  writeStore(DAYS_KEY, Object.fromEntries(keep.map((k) => [k, days[k]])));
+}
+
+function computeChangeInfo(base, payload) {
+  if (!base || !payload?.routine) return null;
+  const keys = currentStepKeys(payload.routine);
+  const today = routineIngredientMap(payload);
+  const before = new Set(base.steps || []);
+  const added = keys.filter((k) => !before.has(k));
+  const swapped = {};
+  for (const k of keys) {
+    const was = base.ingredients?.[k];
+    if (before.has(k) && was && today[k] && was !== today[k]) swapped[k] = { from: was, to: today[k] };
+  }
+  return { date: base.date, at: base.at, added, swapped };
+}
+
+function stepLabel(key) {
+  const [phase, id] = key.split(":");
+  const step = [...(state.generatedRoutine?.[phase] || [])].find((s) => s.id === id);
+  return `${phase === "am" ? "Morning" : "Evening"} ${step ? plainStep(step).name.toLowerCase() : "step"}`;
+}
+
+function changeSwapsBlock() {
+  const swaps = Object.entries(state.changeInfo?.swapped || {});
+  if (!swaps.length) return "";
+  return `<p class="compare-title">Ingredient swaps</p><ul class="tomorrow-changes">${swaps.map(([key, s]) => `<li class="is-changed">${escapeHtml(stepLabel(key))}: <b>${escapeHtml(s.to)}</b> instead of ${escapeHtml(s.from)}.</li>`).join("")}</ul>`;
+}
+
+// Daily checklist: tick each step as you do it; a day counts towards the
+// streak when the whole morning or the whole evening routine is ticked.
+function doneStore() { return readStore(DONE_KEY, {}); }
+function doneDay(store = doneStore(), key = dayKey()) { return store[key] || { done: {}, totals: {} }; }
+function dayComplete(day) {
+  return ["am", "pm"].some((ph) => (day?.totals?.[ph] || 0) > 0 && Object.keys(day.done || {}).filter((k) => k.startsWith(`${ph}:`)).length >= day.totals[ph]);
+}
+function streakCount() {
+  const store = doneStore();
+  const d = new Date();
+  if (!dayComplete(doneDay(store, dayKey(d)))) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (n < 400 && dayComplete(doneDay(store, dayKey(d)))) { n += 1; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function isStepDone(key) { return Boolean(doneDay().done?.[key]); }
+function phaseProgress(phase) {
+  const keys = currentStepKeys().filter((k) => k.startsWith(`${phase}:`));
+  const day = doneDay();
+  return { done: keys.filter((k) => day.done?.[k]).length, total: keys.length };
+}
+function toggleStepDone(key) {
+  const store = doneStore();
+  const today = dayKey();
+  const day = doneDay(store, today);
+  const keys = currentStepKeys();
+  day.done = { ...(day.done || {}) };
+  day.totals = { am: keys.filter((k) => k.startsWith("am:")).length, pm: keys.filter((k) => k.startsWith("pm:")).length };
+  if (day.done[key]) delete day.done[key]; else day.done[key] = true;
+  // Ticks for steps no longer in today's routine don't count.
+  for (const k of Object.keys(day.done)) if (!keys.includes(k)) delete day.done[k];
+  store[today] = day;
+  const keep = Object.keys(store).sort().slice(-90);
+  writeStore(DONE_KEY, Object.fromEntries(keep.map((k) => [k, store[k]])));
+  const phase = key.slice(0, 2);
+  const complete = Boolean(day.done[key]) && keys.filter((k) => k.startsWith(`${phase}:`)).every((k) => day.done[k]);
+  return { nowDone: Boolean(day.done[key]), completedPhase: complete ? phase : null };
+}
+function phaseHeading(phase, title, iconName, enabled) {
+  if (!enabled) return `<h4 id="${phase}-title">${icon(iconName, 16)} ${title}</h4>`;
+  const p = phaseProgress(phase);
+  const all = p.total && p.done === p.total;
+  return `<h4 id="${phase}-title" class="phase-head ${all ? "is-complete" : ""} ${state.phaseCelebrate === phase ? "is-celebrating" : ""}">${icon(iconName, 16)} ${title}<span class="phase-progress" aria-label="${p.done} of ${p.total} steps done"><span class="phase-bar"><span style="width: ${p.total ? Math.round((p.done / p.total) * 100) : 0}%"></span></span>${all ? `${icon("check", 13, 2.4)} Done` : `${p.done}/${p.total}`}</span></h4>`;
+}
+function streakChip() {
+  const n = streakCount();
+  if (!n) return `<span class="streak-chip is-empty">${icon("droplet", 13)} Tick your steps to start a streak</span>`;
+  return `<span class="streak-chip ${state.streakBumped ? "is-bumped" : ""}">${icon("droplet", 13)} ${n}-day streak</span>`;
+}
+
+// ---- Design: living sky header, build pipeline, safety seal, count-ups -----
+function skyHeadline(r = {}) {
+  const uv = Math.max(Number(r.uvi) || 0, Number(r.uviMaxToday) || 0);
+  const pm = Number(r.pm25);
+  const hum = Number(r.humidity);
+  const hour = new Date().getHours();
+  if (hour >= 20 || hour < 6) return "A quiet night. Time for your skin to repair.";
+  if (uv >= 8 && pm >= 55) return "Strong sun and hazy air today.";
+  if (uv >= 8) return "Strong sun today. Sunscreen leads.";
+  if (pm >= 55) return "Hazy air today. Protect, then cleanse well.";
+  if (hum >= 80) return "Warm and humid. Keep your layers light.";
+  if (Number.isFinite(hum) && hum < 45) return "Dry air today. Hold on to moisture.";
+  return "A mild day for your skin.";
+}
+
+function skyHero(meta) {
+  const env = meta?.environment || activeEnvironment();
+  const r = env?.readings || {};
+  const num = (v) => (Number.isFinite(Number(v)) && v !== null && v !== "" ? Math.round(Number(v)) : null);
+  const uvPeak = Math.max(Number(r.uvi) || 0, Number(r.uviMaxToday) || 0);
+  const items = [
+    ["uv", Number(r.uviMaxToday) > Number(r.uvi) || new Date().getHours() >= 17 ? "UV peak" : "UV", num(uvPeak || r.uvi), "", uvBand(uvPeak || r.uvi)],
+    ["pm", "Haze", num(r.pm25), "PM2.5", hazeBand(r.pm25)],
+    ["hum", "Humidity", num(r.humidity), "%", humidityBand(r.humidity)],
+    ["temp", "Heat", num(r.temperature), "°C", temperatureBand(r.temperature)],
+  ];
+  const date = new Date().toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  const source = env?.mode === "live" ? "Live readings" : env?.mode === "user_reported" ? "Conditions you reported" : env?.mode === "degraded" ? "Some live readings missing" : "Sample weather (not live)";
+  if (state.skyFreshUntil === undefined) state.skyFreshUntil = Date.now() + 1500;
+  const fresh = Date.now() < state.skyFreshUntil;
+  return `<section class="sky-hero ${fresh ? "is-fresh" : ""}" aria-labelledby="sky-title"><div class="sky-slot" data-sky aria-hidden="true"></div><div class="sky-scrim" aria-hidden="true"></div><div class="sky-content"><p class="sky-kicker">${icon("pin", 13)} <span>${escapeHtml(locationLabel())}</span> · <span>${escapeHtml(date)}</span></p><h2 id="sky-title" class="sky-title">${escapeHtml(skyHeadline(r))}</h2><dl class="sky-readings">${items.map(([key, label, value, unit, band]) => `<div class="sky-reading is-${band?.tone || "calm"}"><dt>${escapeHtml(label)}</dt><dd><strong ${value === null ? "" : `data-count="${value}" data-count-key="sky-${key}"`}>${value === null ? "—" : value}</strong>${unit && value !== null ? `<small>${escapeHtml(unit)}</small>` : ""}${band ? `<span class="sky-band">${escapeHtml(band.label)}</span>` : ""}</dd></div>`).join("")}</dl><div class="sky-foot"><p class="sky-source">${escapeHtml(source)}</p><button type="button" class="sky-more" data-action="navigate" data-view="monitor">Today's weather ${icon("arrow", 13)}</button></div></div></section>`;
+}
+
+const BUILD_STAGES = [
+  ["Checking your skin notes", "Anything that needs a doctor stops here"],
+  ["Reading today's weather", "UV, haze, humidity and heat"],
+  ["Searching the ingredient library", "Up to four safe options for each step"],
+  ["Choosing one per step", "The AI picks only from that shortlist"],
+  ["Running the safety checks", "Clashes, sun-sensitising actives, your skin details"],
+];
+const STAGE_MS = 900;
+
+function buildPipeline(slow) {
+  return `<ol class="build-stages" aria-label="What DermaSynth is doing">${BUILD_STAGES.map(([title, detail], i) => `<li class="build-stage" data-build-stage="${i}"><span class="build-stage-dot" aria-hidden="true"><svg class="build-stage-spin" width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10.5" fill="none" stroke-width="2.4"/><path d="M13 2.5a10.5 10.5 0 0 1 10.5 10.5" fill="none" stroke-width="2.4" stroke-linecap="round"/></svg><svg class="build-stage-tick" width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12"/><path d="m8 13.4 3.3 3.3 6.6-6.9" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail)}</small></div></li>`).join("")}</ol>${slow ? "" : ""}`;
+}
+
+function safetySeal() {
+  return `<div class="safety-seal"><svg class="safety-seal-mark" width="42" height="42" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 33 8.4v9.4c0 8.2-5.4 15.2-13 18.2-7.6-3-13-10-13-18.2V8.4L20 3.5Z" class="seal-fill"/><path d="M20 6.6 30.2 10.4v7.4c0 6.5-4.2 12.2-10.2 14.8-6-2.6-10.2-8.3-10.2-14.8v-7.4L20 6.6Z" class="seal-line"/><path d="m14.6 19.6 3.8 3.8 7.2-7.6" class="seal-tick"/></svg><div><strong>Safety checks passed</strong><span>Every step and ingredient was checked against DermaSynth's safety rules before you saw it.</span></div></div>`;
+}
+
+const countMemory = {};
+let pipelineTimer = 0;
+function afterRender() {
+  const slot = app.querySelector("[data-sky]");
+  if (slot) {
+    const env = state.routineMeta?.environment || activeEnvironment();
+    if (!attachSky(slot, env?.readings || {})) slot.classList.add("no-sky");
+  }
+  const still = prefersReducedMotion();
+  for (const el of app.querySelectorAll("[data-count]")) {
+    const to = Number(el.dataset.count);
+    const key = el.dataset.countKey;
+    if (!Number.isFinite(to) || !key) continue;
+    const from = countMemory[key] ?? 0;
+    countMemory[key] = to;
+    if (from === to || still) continue;
+    const t0 = performance.now();
+    const tick = (t) => {
+      const p = Math.min(1, (t - t0) / 900);
+      const e = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(from + (to - from) * e));
+      if (p < 1 && el.isConnected) requestAnimationFrame(tick);
+    };
+    el.textContent = String(from);
+    requestAnimationFrame(tick);
+  }
+  const pipeline = app.querySelector(".build-stages");
+  clearInterval(pipelineTimer);
+  if (pipeline && state.runStartedAt) {
+    const update = () => {
+      const list = app.querySelector(".build-stages");
+      if (!list) { clearInterval(pipelineTimer); return; }
+      // The last stage keeps spinning until the server answers.
+      const active = Math.min(BUILD_STAGES.length - 1, Math.floor((Date.now() - state.runStartedAt) / STAGE_MS));
+      list.querySelectorAll(".build-stage").forEach((li, i) => {
+        li.classList.toggle("is-done", i < active);
+        li.classList.toggle("is-active", i === active);
+      });
+    };
+    update();
+    pipelineTimer = setInterval(update, 200);
+  }
 }
 
 // 5. Check my product.
@@ -2038,7 +2618,7 @@ function saveMyRoutine() {
   if (!steps.length) return;
   const products = {};
   for (const key of steps) if (state.myRoutine?.products?.[key]) products[key] = state.myRoutine.products[key];
-  state.myRoutine = { steps, products, savedAt: new Date().toISOString(), profile: state.profile, concern: state.concern };
+  state.myRoutine = { steps, products, savedAt: new Date().toISOString(), profile: state.profile, concern: state.concern, concerns: selectedConcerns() };
   writeStore(MY_ROUTINE_KEY, state.myRoutine);
   state.editingProducts = true;
   renderAnimated();
@@ -2062,7 +2642,7 @@ function productInput(key, label) {
 // 2. After a routine, the form folds into a one-line summary.
 function collapsedFormPanel() {
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
-  return `<section class="panel form-panel is-collapsed" id="routine-preview"><div class="collapsed-form"><div><p class="collapsed-form-label">About your skin</p><p class="collapsed-form-value">${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><div class="collapsed-form-actions"><button type="button" class="ghost-button" data-action="edit-form">${icon("sliders", 14)} Edit my skin details</button><button type="button" class="text-button" data-action="simulate" ${state.runStatus === "running" || isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 13)} Rebuild</button></div></div></section>`;
+  return `<section class="panel form-panel is-collapsed" id="routine-preview"><div class="collapsed-form"><div><p class="collapsed-form-label">About your skin</p><p class="collapsed-form-value">${escapeHtml(profileWord)} skin · ${escapeHtml(concernSummary())} · ${escapeHtml(locationLabel())}</p></div><div class="collapsed-form-actions"><button type="button" class="ghost-button" data-action="edit-form">${icon("sliders", 14)} Edit my skin details</button><button type="button" class="text-button" data-action="simulate" ${state.runStatus === "running" || isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 13)} Rebuild</button></div></div></section>`;
 }
 
 function scrollToResult() {
@@ -2084,8 +2664,10 @@ function scrollToResult() {
 
 // Previous routine (for "changed since last time" and the next-day check-in).
 function previousRoutineForCompare() {
+  const day = previousDayRoutine();
+  if (day) return { steps: day.steps, readings: day.readings, at: day.at };
   const last = readStore(LAST_ROUTINE_KEY, null);
-  if (!last?.steps?.length || last.profile !== state.profile || last.concern !== state.concern) return null;
+  if (!last?.steps?.length || last.profile !== state.profile || last.concern !== state.concern || (last.concerns || [last.concern]).join("+") !== selectedConcerns().join("+")) return null;
   const at = new Date(last.at);
   if (Number.isNaN(at.getTime())) return null;
   const sameDay = at.toDateString() === new Date().toDateString();
@@ -2106,6 +2688,7 @@ function rememberRoutine(payload) {
     at: new Date().toISOString(),
     profile: state.profile,
     concern: state.concern,
+    concerns: selectedConcerns(),
     status: payload.status,
   });
 }
@@ -2214,7 +2797,7 @@ function storyData() {
     am: steps("am"),
     pm: steps("pm"),
     tomorrow: tomorrow ? (tomorrow.sameAsToday ? "Same routine as today." : tomorrowChanges.map((c) => c.text).join(" ") || tomorrow.summary || "") : "",
-    profile: `${state.profile[0].toUpperCase()}${state.profile.slice(1)} skin · ${concernOption().label}`,
+    profile: `${state.profile[0].toUpperCase()}${state.profile.slice(1)} skin · ${concernSummary()}`,
   };
 }
 
@@ -2459,7 +3042,7 @@ async function shareStory() {
 function consumerResult(routine, meta, running) {
   if (running) {
     const slow = state.runSlow;
-    return `<section class="consumer-card is-loading" aria-live="polite" aria-busy="true"><h3>${slow ? "This is taking longer than usual" : "Building your routine…"}</h3><p>${slow ? "The AI is still choosing and checking. You can keep waiting, or see the standard routine now: it uses the same safety checks and rules, without the AI's choices." : "Checking today's weather, running the safety checks and choosing ingredients. This usually takes a few seconds."}</p>${slow ? `<div class="form-actions"><button class="primary-button" type="button" data-action="standard-routine">Show the standard routine now</button><span class="consumer-wait shimmer-text">Still waiting for the AI…</span></div>` : ""}</section>`;
+    return `<section class="consumer-card is-loading build-card" aria-live="polite" aria-busy="true"><h3>${slow ? "This is taking longer than usual" : "Building your routine…"}</h3>${slow ? `<p>The AI is still choosing and checking. You can keep waiting, or see the standard routine now: it uses the same safety checks and rules, without the AI's choices.</p>` : ""}${buildPipeline(slow)}${slow ? `<div class="form-actions"><button class="primary-button" type="button" data-action="standard-routine">Show the standard routine now</button><span class="consumer-wait shimmer-text">Still waiting for the AI…</span></div>` : ""}</section>`;
   }
   if (!meta) {
     return `<section class="consumer-card is-ready" aria-live="polite"><h3>Your routine will appear here</h3><p>Choose your skin type and main concern, answer the skin question, then press <b>Build routine</b>.</p><ul class="ready-list"><li>${icon("sun", 15)} A morning and evening routine for today's weather</li><li>${icon("sparkles", 15)} The ingredient to look for in each step, and why</li><li>${icon("layers", 15)} A check for products you already own</li></ul></section>`;
@@ -2479,8 +3062,8 @@ function consumerResult(routine, meta, running) {
   state.stepCounter = 0;
   const heroHtml = `${meta.status === "cleared" ? heroCard(meta, routine) : ""}`;
   const topSide = `${todayStrip(meta)}${meta.status === "cleared" ? skinProblemPrompt() : ""}${compareCard(meta)}`;
-  const routineHtml = `<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3><p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernOption().label)}</p><p class="consumer-why-hint">Tap <b>Why this?</b> on a step to see why it suits you today.</p></div>${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title"><h4 id="am-title">${icon("sun", 16)} Morning</h4><ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title"><h4 id="pm-title">${icon("sparkles", 16)} Evening</h4><ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>`;
-  const bottomSide = `${tomorrowCard()}${productCheckCard(meta)}${checkinCard(meta)}`;
+  const routineHtml = `<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3>${meta.status === "cleared" ? streakChip() : ""}<p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernSummary())}</p><p class="consumer-why-hint">Tap <b>Why this?</b> on a step to see why it suits you today.</p></div>${meta.status === "cleared" ? safetySeal() : ""}${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section aria-labelledby="am-title">${phaseHeading("am", "Morning", "sun", meta.status === "cleared")}<ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section aria-labelledby="pm-title">${phaseHeading("pm", "Evening", "sparkles", meta.status === "cleared")}<ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>`;
+  const bottomSide = `${shelfTodayCard(meta)}${tomorrowCard()}${productCheckCard(meta)}${checkinCard(meta)}`;
   const enter = state.animateEnter ? "is-entering" : "";
   const switcher = meta.status === "cleared" ? resultSwitch() : "";
   if (switcher && state.resultView === "week") return `<div class="consumer-result ${enter}">${switcher}${weekCard()}</div>`;
@@ -2507,7 +3090,7 @@ function synthesizedRoutineCard(routine, meta) {
   const running = state.runStatus === "running";
   if (!meta && !running && !state.expertView) return consumerResult(routine, meta, running);
   if (!meta && !running) {
-    return `<section class="synthesized-routine-card is-ready" aria-live="polite"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Ready to run</p><h3>Your category preview will appear here</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status is-review">Awaiting run</span></div><div class="synth-ready-content"><span>${icon("flask", 24)}</span><div><strong>One gated request, then an inspectable result.</strong><p>Choose a research context and run the preview to see the category output, evidence grounding, safety trace, and environmental explanation together.</p></div></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>No routine categories are shown before a gated research run.</span></p></div></section>`;
+    return `<section class="synthesized-routine-card is-ready" aria-live="polite"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Ready to run</p><h3>Your category preview will appear here</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernSummary())} · ${escapeHtml(locationLabel())}</p></div><span class="synth-status is-review">Awaiting run</span></div><div class="synth-ready-content"><span>${icon("flask", 24)}</span><div><strong>One gated request, then an inspectable result.</strong><p>Choose a research context and run the preview to see the category output, evidence grounding, safety trace, and environmental explanation together.</p></div></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>No routine categories are shown before a gated research run.</span></p></div></section>`;
   }
   const notices = Array.isArray(meta?.safety?.flags) && meta.safety.flags.length ? meta.safety.flags.join(" ") : "";
   const variant = redirect ? "is-redirect" : cleared ? "is-cleared" : "is-review";
@@ -2529,7 +3112,7 @@ function synthesizedRoutineCard(routine, meta) {
     ? `<section class="ai-category-rationale"><div><span>${icon("sparkles", 14)} AI category rationale</span><small>${escapeHtml(aiRationale.cue && aiRationale.cue.score !== null && aiRationale.cue.score !== undefined ? `CUE ${Number(aiRationale.cue.score).toFixed(2)} · ${String(aiRationale.cue.status || "").replaceAll("_", " ")}` : (aiRationale.label || String(aiRationale.status).replaceAll("_", " ")))}</small></div><p>${escapeHtml(aiRationale.text)}</p><strong>${escapeHtml(aiRationale.boundary || "Deterministic safety checks remain the final authority for every displayed category.")}</strong></section>`
     : `<section class="ai-category-rationale is-unavailable"><div><span>${icon("info", 14)} AI category rationale</span><small>Not available</small></div><p>No AI category rationale is shown because the configured gate did not permit it or the GPT billing/provider connection is unavailable.</p><strong>Deterministic safety checks remain the final authority for every displayed category.</strong></section>`;
   const candidates = Array.isArray(meta?.ingredientCandidates?.entries) ? meta.ingredientCandidates.entries : [];
-  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernOption().label)} · ${escapeHtml(locationLabel())}</p></div><div class="synth-top-actions"><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span></div></div>${degradedBanner(meta)}${approvedIngredientCandidatePanel(meta)}<div class="synth-structure-label">${icon("layers", 13)} Routine structure by category</div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these recommendations?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p>${meta?.explanation?.level1?.text ? `<p class="peg-level1"><b>Environment (level 1):</b> ${escapeHtml(meta.explanation.level1.text)}</p>` : ""}${aiRationaleMarkup}</div>` : ""}</section>`;
+  return `<section class="synthesized-routine-card ${variant}" aria-live="polite" aria-busy="${running}"><div class="synth-card-top"><div><p class="routine-eyebrow">${icon("sparkles", 14)} Routine recommendations</p><h3>${escapeHtml(routine.label)}</h3><p>${escapeHtml(state.profile[0].toUpperCase() + state.profile.slice(1))} profile · ${escapeHtml(concernSummary())} · ${escapeHtml(locationLabel())}</p></div><div class="synth-top-actions"><span class="synth-status ${variant}">${escapeHtml(routineStatusLabel())}</span></div></div>${degradedBanner(meta)}${approvedIngredientCandidatePanel(meta)}<div class="synth-structure-label">${icon("layers", 13)} Routine structure by category</div><div class="synth-time-grid"><section class="synth-time-slot"><div class="synth-time-heading">${icon("sun", 16)}<span>Morning</span></div>${routineStepList(routine.am, { dark: true, ingredientCandidates: candidates, phase: "am" })}</section><section class="synth-time-slot"><div class="synth-time-heading">${icon("sparkles", 16)}<span>Evening</span></div>${routineStepList(routine.pm, { dark: true, ingredientCandidates: candidates, phase: "pm" })}</section></div><div class="synth-card-footer"><p>${icon("shield", 15)} <span>${escapeHtml(statusMessage)}</span></p><button class="reason-button is-dark" type="button" data-action="reason">${state.reasonOpen ? "Hide rationale" : "Why these recommendations?"}</button></div>${state.reasonOpen ? `<div class="synth-rationale"><strong>Result rationale</strong><p>${escapeHtml(routine.reason)}</p>${meta?.explanation?.level1?.text ? `<p class="peg-level1"><b>Environment (level 1):</b> ${escapeHtml(meta.explanation.level1.text)}</p>` : ""}${aiRationaleMarkup}</div>` : ""}</section>`;
 }
 
 function simulatorView() {
@@ -2542,7 +3125,7 @@ function simulatorView() {
   // details can be changed and rebuilt without scrolling. Phones fold it up.
   const formPanel = state.formCollapsed && !state.expertView && state.routineMeta && !running && !isWideLayout() ? collapsedFormPanel() : inputs;
   const result = `<section class="sim-result" id="routine-result">${synthesizedRoutineCard(routine, state.routineMeta)}${state.expertView ? researchContextPanel(state.routineMeta) : ""}</section>`;
-  return shell(`<div class="view-heading ${state.routineMeta && !state.expertView ? "has-result" : ""}"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"} ${state.routineMeta || running ? "has-result" : ""}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
+  return shell(`${state.expertView ? "" : skyHero(state.routineMeta)}<div class="view-heading ${state.expertView ? "" : "is-sky-replaced"} ${state.routineMeta && !state.expertView ? "has-result" : ""}"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"} ${state.routineMeta || running ? "has-result" : ""}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`);
 }
 
 function concernLabelFromId(value) {
@@ -2697,7 +3280,7 @@ function escapeHtml(value) {
 }
 
 function render() {
-  const views = { dashboard: dashboardView, monitor: monitorView, simulator: simulatorView, knowledge: knowledgeExplorerView };
+  const views = { dashboard: dashboardView, monitor: monitorView, simulator: simulatorView, knowledge: knowledgeExplorerView, shelf: shelfView };
   // Keep keyboard focus on the same button across a re-render (background
   // updates such as GPT text or the forecast arriving must not drop focus).
   const active = document.activeElement;
@@ -2711,6 +3294,7 @@ function render() {
     fieldFocus = { id: active.id, start: active.selectionStart, end: active.selectionEnd };
   }
   app.innerHTML = views[state.activeView]();
+  afterRender();
   if (focusSelector) app.querySelector(focusSelector)?.focus({ preventScroll: true });
   if (fieldFocus) {
     const field = document.getElementById(fieldFocus.id);
@@ -2790,6 +3374,7 @@ function writeViewRoute(view, history = "push") {
 
 function navigateView(view, { source = "user", history = source === "presentation" ? "replace" : "push", focus = true, scroll = true } = {}) {
   if (!VIEW_META[view]) return;
+  if (view === "simulator" && state.activeView !== view) state.skyFreshUntil = Date.now() + 1500;
   state.activeView = view;
   state.reasonOpen = false;
   state.mobileMoreOpen = false;
@@ -2799,6 +3384,7 @@ function navigateView(view, { source = "user", history = source === "presentatio
     loadKnowledgeExplorer();
   }
   if (view === "monitor" && !state.expertView) refreshWeatherOutlook();
+  if (view === "shelf") { state.shelfEnterUntil = Date.now() + 1400; refreshShelfCheck(); }
 }
 
 function applyRoute() {
@@ -3049,7 +3635,7 @@ function printableResearchReportDocument() {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>DermaSynth final-review report</title><style>
     :root { color-scheme: light; --ink:#173530; --muted:#5e716b; --line:#d8e5e0; --accent:#1b7467; --soft:#eef8f4; }
     * { box-sizing:border-box; } body { margin:0; color:var(--ink); background:#eef4f1; font:14px/1.48 Inter, Avenir Next, Arial, sans-serif; } main { width:min(920px,100%); margin:0 auto; padding:34px; background:#fff; } .masthead { display:flex; justify-content:space-between; gap:24px; padding:25px 28px; color:#effff9; border-radius:20px; background:linear-gradient(135deg,#0c3d38,#176a5e); } .mark { display:flex; align-items:center; gap:11px; color:#b9e6d9; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; } .mark::before { width:12px; height:12px; border-radius:4px; background:#8ee2ca; content:""; } h1 { margin:8px 0 0; color:#fff; font-size:31px; letter-spacing:-.05em; } .masthead p { max-width:510px; margin:8px 0 0; color:#c7e8df; } .stamp { min-width:155px; color:#b7ded4; font-size:11px; text-align:right; } .stamp strong { display:block; margin-top:4px; color:#fff; font-size:13px; } section { margin-top:24px; padding:22px; border:1px solid var(--line); border-radius:16px; } h2 { margin:0; font-size:16px; letter-spacing:-.02em; } .lead { margin:6px 0 0; color:var(--muted); font-size:12px; } .status { display:inline-block; margin-top:13px; padding:5px 9px; color:#235f54; border-radius:999px; background:#dcf1ea; font-size:11px; font-weight:800; } .environment { display:grid; grid-template-columns:repeat(4,1fr); gap:9px; margin-top:15px; } .environment div { padding:12px; border-radius:11px; background:#f6faf8; } .environment span, .environment strong { display:block; } .environment span { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; } .environment strong { margin-top:4px; font-size:17px; } .routine { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-top:15px; } .routine article { padding:15px; border-radius:12px; background:#f8fbf9; } .routine h3 { margin:0; font-size:12px; text-transform:uppercase; letter-spacing:.08em; } ol { display:grid; gap:10px; margin:13px 0 0; padding:0; list-style:none; } ol li { display:grid; grid-template-columns:22px 1fr; gap:9px; } ol b { display:grid; width:21px; height:21px; place-items:center; color:#176a5e; border-radius:50%; background:#dff2ec; font-size:10px; } ol strong, ol span { display:block; } ol span { margin-top:2px; color:var(--muted); font-size:11px; } .facts { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:14px; } .facts div { padding:11px; border-left:3px solid #9ed6c8; background:#f8fbf9; } .facts dt { color:var(--muted); font-size:10px; text-transform:uppercase; } .facts dd { margin:4px 0 0; font-weight:750; } .checks { display:grid; gap:7px; margin-top:14px; padding:0; list-style:none; } .checks li { padding:10px 11px; color:#41564f; border-radius:10px; background:#f7faf8; font-size:12px; } table { width:100%; margin-top:14px; border-collapse:collapse; font-size:12px; } th, td { padding:9px; border-bottom:1px solid var(--line); text-align:left; } th { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.06em; } .sources { display:grid; gap:10px; margin:14px 0 0; padding:0; list-style:none; } .sources li { padding:12px; border:1px solid var(--line); border-radius:10px; } .sources strong, .sources span { display:block; } .sources span, .sources p { color:var(--muted); font-size:11px; } .sources p { margin:4px 0; } a { color:#176a5e; font-size:11px; font-weight:750; } .boundary { margin-top:24px; padding:15px 17px; color:#46625a; border:1px solid #cbe7dd; border-radius:13px; background:#eff9f5; font-size:11px; } .boundary strong { color:#176a5e; } footer { margin-top:18px; color:#71827d; font-size:10px; text-align:center; } @media print { body { background:#fff; } main { padding:0; } section { break-inside:avoid; } } @media (max-width:620px) { main { padding:18px; } .masthead { display:block; } .stamp { margin-top:15px; text-align:left; } .environment, .facts, .routine { grid-template-columns:1fr 1fr; } }
-  </style></head><body><main><header class="masthead"><div><div class="mark">DermaSynth · Final-review research report</div><h1>Explainable category-preview record</h1><p>Environment inputs, category-only routine output, source links, deterministic guardrails, and configured contribution values in one printable artefact.</p></div><div class="stamp">Generated<strong>${escapeHtml(printReportDate())}</strong><br />Non-clinical research demonstrator</div></header><section><h2>Run boundary</h2><p class="lead">The report intentionally omits optional free-text safety context. It does not diagnose, prescribe, select a named ingredient, establish individual suitability, or replace qualified care.</p><span class="status">${escapeHtml(status)}</span><dl class="facts"><div><dt>Research context</dt><dd>${escapeHtml(concernOption().label)}</dd></div><div><dt>Profile input</dt><dd>${escapeHtml(state.profile)}</dd></div><div><dt>Evidence-sufficiency gate</dt><dd>${Number.isFinite(Number(grounding.sufficiencyScore)) ? `${grounding.passed ? "Passed" : "Not passed"} · ${escapeHtml(safelyNumber(grounding.sufficiencyScore))}` : "Not reported"}</dd></div><div><dt>CUE (model text)</dt><dd>${escapeHtml(cueSummary(grounding).value)}</dd></div></dl></section><section><h2>Labelled environment inputs</h2><p class="lead">${escapeHtml(locationLabel())} · ${escapeHtml(environmentModeLabel())} · ${escapeHtml(state.lastUpdated)}</p><div class="environment">${environmentRows}</div></section><section><h2>Category-only routine preview</h2><p class="lead">${escapeHtml(routine.label)}</p><div class="routine"><article><h3>Morning</h3><ol>${stepRows(routine.am)}</ol></article><article><h3>Evening</h3><ol>${stepRows(routine.pm)}</ol></article></div></section><section><h2>Deterministic guardrail trace</h2><p class="lead">${escapeHtml(String(safety.status || "Not reported").replaceAll("_", " "))}. The guardrail status is reported by the server; it is not a clinical safety guarantee.</p><ul class="checks">${safetyChecks.length ? safetyChecks.map((check) => `<li>${escapeHtml(check)}</li>`).join("") : "<li>No safety-check list was returned for this report.</li>"}</ul></section><section><h2>Configured environmental contribution view</h2><p class="lead">Exact Shapley values for the configured additive study-demo surrogate. Values explain this transparent study model only, not clinical causation.</p>${contributionRows ? `<table><thead><tr><th>Input</th><th>Reading</th><th>Shapley value</th><th>Direction</th></tr></thead><tbody>${contributionRows}</tbody></table>` : "<p class=\"lead\">No contribution values were returned for this run.</p>"}</section><section><h2>Source-linked research records</h2><p class="lead">Links are provided for final-review traceability. Their presence does not authorise a named ingredient, product, dose, frequency, compatibility, or treatment claim.</p><ul class="sources">${sourceNote}</ul></section><aside class="boundary"><strong>Scope declaration:</strong> this printable report documents a non-clinical technology demonstration. Category-source cards are source-mapped research context, remain pending qualified clinical review, and are excluded from the evidence-sufficiency gate, live category selection, ingredient activation, and routine selection.</aside><footer>DermaSynth · local final-review export · save through the browser print dialog if a PDF file is needed.</footer></main></body></html>`;
+  </style></head><body><main><header class="masthead"><div><div class="mark">DermaSynth · Final-review research report</div><h1>Explainable category-preview record</h1><p>Environment inputs, category-only routine output, source links, deterministic guardrails, and configured contribution values in one printable artefact.</p></div><div class="stamp">Generated<strong>${escapeHtml(printReportDate())}</strong><br />Non-clinical research demonstrator</div></header><section><h2>Run boundary</h2><p class="lead">The report intentionally omits optional free-text safety context. It does not diagnose, prescribe, select a named ingredient, establish individual suitability, or replace qualified care.</p><span class="status">${escapeHtml(status)}</span><dl class="facts"><div><dt>Research context</dt><dd>${escapeHtml(concernSummary())}</dd></div><div><dt>Profile input</dt><dd>${escapeHtml(state.profile)}</dd></div><div><dt>Evidence-sufficiency gate</dt><dd>${Number.isFinite(Number(grounding.sufficiencyScore)) ? `${grounding.passed ? "Passed" : "Not passed"} · ${escapeHtml(safelyNumber(grounding.sufficiencyScore))}` : "Not reported"}</dd></div><div><dt>CUE (model text)</dt><dd>${escapeHtml(cueSummary(grounding).value)}</dd></div></dl></section><section><h2>Labelled environment inputs</h2><p class="lead">${escapeHtml(locationLabel())} · ${escapeHtml(environmentModeLabel())} · ${escapeHtml(state.lastUpdated)}</p><div class="environment">${environmentRows}</div></section><section><h2>Category-only routine preview</h2><p class="lead">${escapeHtml(routine.label)}</p><div class="routine"><article><h3>Morning</h3><ol>${stepRows(routine.am)}</ol></article><article><h3>Evening</h3><ol>${stepRows(routine.pm)}</ol></article></div></section><section><h2>Deterministic guardrail trace</h2><p class="lead">${escapeHtml(String(safety.status || "Not reported").replaceAll("_", " "))}. The guardrail status is reported by the server; it is not a clinical safety guarantee.</p><ul class="checks">${safetyChecks.length ? safetyChecks.map((check) => `<li>${escapeHtml(check)}</li>`).join("") : "<li>No safety-check list was returned for this report.</li>"}</ul></section><section><h2>Configured environmental contribution view</h2><p class="lead">Exact Shapley values for the configured additive study-demo surrogate. Values explain this transparent study model only, not clinical causation.</p>${contributionRows ? `<table><thead><tr><th>Input</th><th>Reading</th><th>Shapley value</th><th>Direction</th></tr></thead><tbody>${contributionRows}</tbody></table>` : "<p class=\"lead\">No contribution values were returned for this run.</p>"}</section><section><h2>Source-linked research records</h2><p class="lead">Links are provided for final-review traceability. Their presence does not authorise a named ingredient, product, dose, frequency, compatibility, or treatment claim.</p><ul class="sources">${sourceNote}</ul></section><aside class="boundary"><strong>Scope declaration:</strong> this printable report documents a non-clinical technology demonstration. Category-source cards are source-mapped research context, remain pending qualified clinical review, and are excluded from the evidence-sufficiency gate, live category selection, ingredient activation, and routine selection.</aside><footer>DermaSynth · local final-review export · save through the browser print dialog if a PDF file is needed.</footer></main></body></html>`;
 }
 
 function printResearchReport() {
@@ -3085,7 +3671,7 @@ function recordRunSummary(payload, location) {
     id: String(payload?.requestId || `local-${Date.now()}`),
     timestamp: new Date().toLocaleString(),
     profile: state.profile,
-    concern: concernOption().label,
+    concern: concernSummary(),
     location: String(location?.name || "Location unavailable").slice(0, 80),
     status,
     cue: Number.isFinite(cue) ? cue.toFixed(2) : "—",
@@ -3195,6 +3781,28 @@ document.addEventListener("click", (event) => {
   if (action === "story-download") { downloadStory(); return; }
   if (action === "reminders") { downloadReminders(); return; }
   if (action === "save-my-routine") { saveMyRoutine(); return; }
+  if (action === "step-done") {
+    const before = streakCount();
+    const result = toggleStepDone(target.dataset.key);
+    state.justTicked = result.nowDone ? target.dataset.key : null;
+    state.phaseCelebrate = result.completedPhase;
+    const after = streakCount();
+    state.streakBumped = after > before;
+    render();
+    if (result.completedPhase) showToast(`${result.completedPhase === "am" ? "Morning" : "Evening"} routine done.${after ? ` ${after}-day streak.` : ""}`);
+    clearTimeout(state.tickTimer);
+    state.tickTimer = setTimeout(() => { state.justTicked = null; state.phaseCelebrate = null; state.streakBumped = false; }, 900);
+    return;
+  }
+  if (action === "shelf-add") { openShelfEditor(null, target.dataset.type || "other"); return; }
+  if (action === "shelf-edit") { const p = shelfProduct(target.dataset.id); if (p) openShelfEditor(p); return; }
+  if (action === "shelf-cancel") { state.shelfEditor = null; renderAnimated(); return; }
+  if (action === "shelf-save") { saveShelfEditor(); return; }
+  if (action === "shelf-type" && state.shelfEditor) { state.shelfEditor.draft.type = SHELF_TYPES.some(([id]) => id === target.dataset.value) ? target.dataset.value : "other"; render(); return; }
+  if (action === "shelf-remove") { removeShelfProduct(target.dataset.id); return; }
+  if (action === "shelf-select") { state.shelfSelected = state.shelfSelected === target.dataset.id ? null : target.dataset.id; state.shelfConfirmRemove = null; renderAnimated().then(() => { if (state.shelfSelected) document.querySelector(".shelf-detail")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "nearest" }); }); return; }
+  if (action === "shelf-close") { state.shelfSelected = null; state.shelfConfirmRemove = null; renderAnimated(); return; }
+  if (action === "shelf-show") { state.shelfSelected = target.dataset.id; navigateView("shelf"); return; }
   if (action === "products-done") { state.editingProducts = false; writeStore(MY_ROUTINE_KEY, state.myRoutine); renderAnimated(); showToast("Saved."); return; }
   if (action === "clear-my-routine") { clearMyRoutine(); return; }
   if (action === "edit-form") { state.formCollapsed = false; renderAnimated().then(() => document.querySelector("#routine-preview")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" })); return; }
@@ -3233,7 +3841,7 @@ document.addEventListener("click", (event) => {
   if (action === "comparison-location-select") { selectComparisonLocation(Number(target.dataset.comparisonLocationIndex)); return; }
   if (action === "comparison-refresh") { refreshComparisonContext(); return; }
   if (action === "profile") { if (state.runStatus === "running") return; state.profile = target.dataset.profile; resetPreviewForInputChange(); render(); return; }
-  if (action === "concern-choice") { if (state.runStatus === "running") return; state.concern = target.dataset.concern; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); return; }
+  if (action === "concern-choice") { if (state.runStatus === "running") return; if (!toggleConcern(target.dataset.concern)) return; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); return; }
   if (action === "simulate") { generateRoutine(); return; }
   if (action === "report-condition") { state.reportedConditions = { ...(state.reportedConditions || {}), [target.dataset.key]: target.dataset.value }; render(); return; }
   if (action === "toggle-expert") { state.expertView = !state.expertView; saveExpertView(state.expertView); render(); if (state.activeView === "monitor" && !state.expertView) refreshWeatherOutlook(); showToast(state.expertView ? "Expert view on: scores, traces and the run report are shown." : "Expert view off."); return; }
@@ -3288,7 +3896,9 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("change", (event) => {
   const target = event.target;
-  if (target.dataset.action === "concern") { state.concern = target.value; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); }
+  if (target.dataset.action === "shelf-scan") { const file = target.files?.[0]; target.value = ""; if (file) scanShelfLabel(file); return; }
+  if (target.dataset.action === "shelf-field" && state.shelfEditor && target.tagName === "SELECT") { state.shelfEditor.draft[target.dataset.field] = target.value; return; }
+  if (target.dataset.action === "concern") { state.concern = target.value; state.concerns = [target.value]; resetPreviewForInputChange(); render(); refreshExplainability({ shouldRender: true }); refreshComparisonContext(undefined, { announce: false }); }
   if (target.dataset.action === "finish-preference") {
     state.finishPreference = ["matte", "dewy", "no-preference"].includes(target.value) ? target.value : "";
     resetPreviewForInputChange();
@@ -3310,6 +3920,7 @@ document.addEventListener("change", (event) => {
 
 document.addEventListener("input", (event) => {
   const target = event.target;
+  if (target.dataset.action === "shelf-field" && state.shelfEditor && ["name", "brand", "type", "text"].includes(target.dataset.field)) { state.shelfEditor.draft[target.dataset.field] = target.value; state.shelfEditor.error = ""; return; }
   if (target.dataset.action === "symptoms") {
     state.symptoms = target.value.slice(0, 280);
     return;
@@ -3821,8 +4432,10 @@ async function generateRoutine({ reportedConditions = null, standardRoutine = fa
     if (requestVersion === state.routineRequestVersion && state.runStatus === "running") { state.runSlow = true; render(); }
   }, SLOW_ROUTINE_MS);
   render();
+  // On a phone the form stays above the result, so bring the live progress into view.
+  if (!state.expertView && !isWideLayout()) requestAnimationFrame(() => document.querySelector(".build-card")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" }));
   try {
-    const body = { profile: state.profile, concern: state.concern, location };
+    const body = { profile: state.profile, concern: state.concern, concerns: selectedConcerns(), location };
     if (standardRoutine) body.standardRoutine = true;
     if (state.finishPreference) body.finishPreference = state.finishPreference;
     if (state.reactivityLevel) body.reactivityLevel = state.reactivityLevel;
@@ -3830,6 +4443,7 @@ async function generateRoutine({ reportedConditions = null, standardRoutine = fa
     if (symptoms) body.symptoms = symptoms;
     if (reportedConditions) body.reportedConditions = reportedConditions;
     const previous = previousRoutineForCompare();
+    const compareBase = previousDayRoutine();
     const usual = state.myRoutine?.steps?.length ? state.myRoutine.steps : null;
     if (usual || previous) body.compare = { ...(usual ? { usualSteps: usual } : {}), ...(previous ? { previous: { steps: previous.steps, readings: previous.readings, at: previous.at } } : {}) };
     // A replaced request can still hold the server's one in-flight slot for a
@@ -3866,7 +4480,10 @@ async function generateRoutine({ reportedConditions = null, standardRoutine = fa
     }
     state.explainability = payload.explainability || state.explainability;
     recordRunSummary(payload, location);
+    state.changeInfo = payload.status === "cleared" ? computeChangeInfo(compareBase, payload) : null;
     rememberRoutine(payload);
+    rememberRoutineDay(payload);
+    refreshShelfCheck({ force: true });
     state.productCheck = null;
     state.checkinDraft = null;
     state.editingProducts = false;
@@ -3962,6 +4579,8 @@ function gptTag(item) {
 
 
 state.myRoutine = readStore(MY_ROUTINE_KEY, null);
+state.shelf = loadShelf();
+if (state.activeView === "shelf") refreshShelfCheck();
 state.openToggles = {};
 document.addEventListener("toggle", (event) => {
   const key = event.target?.dataset?.toggleKey;

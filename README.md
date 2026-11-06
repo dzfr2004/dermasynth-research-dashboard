@@ -164,13 +164,40 @@ Records are kept in `data/study/study.sqlite`, which git ignores and the knowled
 ## Run the triage, extended safety and independent sets
 
 ```sh
-npm run eval:triage              # 117 labelled symptom texts, v1 keywords vs v2 rules
+npm run eval:triage              # 148 labelled symptom texts, v1 keywords vs v2 rules
 npm run eval:triage -- --llm     # also v2 rules + GPT second opinion (needs .env keys)
-npm run eval:safety-extended     # 88 cases incl. all incompatible pairs and 210 pipeline runs
+npm run eval:safety-extended     # 93 cases incl. all incompatible pairs and 840 pipeline runs
 npm run eval:independent         # cases written by the supervisor or a dermatologist
 ```
 
 The triage report gives sensitivity and specificity per method and records the honest first blind run of the held-out set. The independent set lives in [data/evaluation/independent](data/evaluation/independent/README.md) and is reported separately. `npm test` runs the triage and extended suites.
+
+## November 2026: viva evidence
+
+One command refreshes every live (GPT) measurement used in the viva materials. Run it on the machine that holds `.env`, with no other server running; it checks that OpenAI answers first, starts its own server, and takes about 15 to 25 minutes (roughly USD 0.50):
+
+```sh
+npm run eval:viva-refresh        # all of the below
+npm run eval:viva-live           # only the end-to-end runs and repeatability (about 8 to 10 minutes)
+```
+
+The individual steps:
+
+```sh
+npm run eval:triage-blind              # guideline-based blind set (40 cases), rules alone, offline
+npm run eval:triage-blind -- --llm     # rules + GPT second opinion on the cases the frozen rules cleared
+npm run eval:cue-calibration -- --live # CUE judge v1 vs v2 on controls and planted false sentences
+npm run eval:label-scan -- --live      # 16 synthetic label photos, 2 deliberately blurred
+npm run eval:live                      # 20 end-to-end runs (needs npm start)
+npm run eval:repeatability             # 3 profiles x 5 identical requests (needs npm start)
+npm run eval:safety-traceability       # every safety rule has a status and a known source (offline)
+```
+
+- **Guideline-based blind set** (`data/evaluation/fixtures/triage-cases.blind2.v1.json`): 40 cases written on 6 Nov 2026 from NHS and DermNet red-flag guidance by someone other than the rule author (an AI writing assistant, not a clinician). The first run of each method is stored in the fixture with a fingerprint of the rule files and is never overwritten. First runs: rules alone 15/25 and 15/15; rules + GPT 25/25 and 15/15. Rules were extended afterwards (including Malay terms), so later runs on this set are optimistic.
+- **CUE judge**: prompt v2 is the default (`JUDGE_INSTRUCTIONS` in `lib/cue.mjs`). If the judge call fails it is retried once and then the draft is withheld; the lexical proxy is used only offline.
+- **Safety-rule sources**: `data/ingredients/safety-rule-sources.v1.json` lists the sources; each rule's status and source ids sit next to it in `incompatibility-matrix.v1.json` and `safety-flags.v1.json`. Current trace: 38 rules, 15 confirmed, 5 extended, 17 design choices (stricter than any source), 1 pending (tazarotene, not registered in Malaysia).
+- **Speed**: the GPT ingredient pick starts in parallel with the category pick (any skipped step is asked again), and explanations are written in parallel groups. Median wait on 6 Nov 2026: 8.7 s to the routine, 6.4 s to the explanations.
+- **AI rater panel**: `data/evaluation/ai-panel-codex/` holds simulated ratings produced by OpenAI Codex. They are not human ratings and must never be reported as a human evaluation. The human rating folders (`cue-rating/ratings/`, `ablation/ratings/`) are for real raters only.
 
 ## How the user's inputs shape the routine
 
@@ -226,7 +253,7 @@ Technical failures are shown to consumers in plain words; configuration details 
 - Every step always has a rule-based reason. The Expert view toggle on the routine card shows the rule-based and GPT versions side by side, with CUE scores.
 - CUE against people: `npm run cue:sheet` builds a blinded rating sheet from logged drafts; raters fill it; `npm run eval:cue-human` reports agreement and Cohen's kappa. Steps are in [data/evaluation/cue-rating](data/evaluation/cue-rating/README.md).
 - `npm run eval:gpt-layer` (part of `npm test`) checks these contracts offline against a mock of the OpenAI API.
-- **Output schema contract (C2):** every GPT reply is checked against the schema that was sent (`lib/schema-check.mjs`); a reply that is not JSON, misses a field, has a wrong type or an extra field counts as a failed call and the rule-based result is used. `npm run eval:gpt-schemas` (part of `npm test`) checks that each of the 7 schemas is accepted by OpenAI strict mode, matches the committed snapshot (`data/evaluation/fixtures/gpt-schemas.snapshot.json`), that matching replies are used and malformed ones rejected, and that no new GPT call is left untested. After a deliberate schema change, run `npm run eval:gpt-schemas -- --update`.
+- **Output schema contract (C2):** every GPT reply is checked against the schema that was sent (`lib/schema-check.mjs`); a reply that is not JSON, misses a field, has a wrong type or an extra field counts as a failed call and the rule-based result is used. `npm run eval:gpt-schemas` (part of `npm test`) checks that each of the 8 schemas is accepted by OpenAI strict mode, matches the committed snapshot (`data/evaluation/fixtures/gpt-schemas.snapshot.json`), that matching replies are used and malformed ones rejected, and that no new GPT call is left untested. After a deliberate schema change, run `npm run eval:gpt-schemas -- --update`.
 
 ## When live weather is unavailable
 

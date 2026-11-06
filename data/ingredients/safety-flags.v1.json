@@ -22,12 +22,264 @@
     "clobetasol-propionate"
   ],
   "photosensitising": {
-    "ids": ["glycolic-acid", "lactic-acid", "mandelic-acid", "citric-acid", "salicylic-acid", "retinol", "retinal", "retinyl-palmitate"],
+    "ids": [
+      "glycolic-acid",
+      "lactic-acid",
+      "mandelic-acid",
+      "citric-acid",
+      "salicylic-acid",
+      "retinol",
+      "retinal",
+      "retinyl-palmitate"
+    ],
     "rule": "Not allowed in a morning (AM) slot. CIR's Alpha Hydroxy Acids assessment advises sun protection because AHAs increase UV sensitivity; retinoids are conventionally applied in the evening.",
     "evidenceSourceId": "cir-alpha-hydroxy-acids"
   },
   "highIntensityExfoliants": {
-    "ids": ["glycolic-acid", "lactic-acid", "mandelic-acid", "citric-acid", "salicylic-acid", "gluconolactone", "retinol", "retinal", "retinyl-palmitate"],
+    "ids": [
+      "glycolic-acid",
+      "lactic-acid",
+      "mandelic-acid",
+      "citric-acid",
+      "salicylic-acid",
+      "gluconolactone",
+      "retinol",
+      "retinal",
+      "retinyl-palmitate"
+    ],
     "rule": "Not allowed when the barrier guardrail is active (barrier, sensitivity or dryness context, or moderate/high self-reported reactivity)."
-  }
+  },
+  "evidence": {
+    "excludedFromSelection": {
+      "retinal": {
+        "status": "confirmed",
+        "sourceIds": [
+          "aicis-eva00186"
+        ],
+        "note": "AICIS Evaluation Statement EVA00186 (26 June 2026) classifies retinal as a developmental toxicant (Reproductive toxicity Category 1B)."
+      }
+    },
+    "photosensitising": {
+      "glycolic-acid": {
+        "status": "confirmed",
+        "sourceIds": [
+          "fda-aha",
+          "cir-aha-2017"
+        ],
+        "note": "Named AHA; increases UV sensitivity."
+      },
+      "lactic-acid": {
+        "status": "confirmed",
+        "sourceIds": [
+          "fda-aha",
+          "cir-aha-2017"
+        ],
+        "note": "Named AHA; increases UV sensitivity."
+      },
+      "citric-acid": {
+        "status": "confirmed",
+        "sourceIds": [
+          "fda-aha"
+        ],
+        "note": "Named by FDA as an AHA used in cosmetics."
+      },
+      "salicylic-acid": {
+        "status": "confirmed",
+        "sourceIds": [
+          "fda-bha"
+        ],
+        "note": "CIR via FDA: formulate to avoid increased sun sensitivity; use sun protection."
+      },
+      "mandelic-acid": {
+        "status": "extended",
+        "sourceIds": [
+          "fda-aha",
+          "cir-aha-2017"
+        ],
+        "note": "Chemically an AHA but not named by FDA or CIR."
+      },
+      "retinyl-palmitate": {
+        "status": "confirmed",
+        "sourceIds": [
+          "ntp-tr568"
+        ],
+        "note": "Increased skin neoplasms under simulated solar light in mice."
+      },
+      "retinol": {
+        "status": "design-choice",
+        "sourceIds": [
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "No photosensitivity source found for retinol; follows evening use convention and the tretinoin label's UV advice."
+      },
+      "retinal": {
+        "status": "design-choice",
+        "sourceIds": [
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "No photosensitivity source found; retinal is also excluded from selection (AICIS EVA00186)."
+      }
+    },
+    "highIntensityExfoliants": {
+      "glycolic-acid": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+      },
+      "lactic-acid": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+      },
+      "mandelic-acid": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+      },
+      "citric-acid": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+      },
+      "salicylic-acid": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+      },
+      "gluconolactone": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Polyhydroxy acid, milder than AHAs. Included as the strictest design choice; no source requires it."
+      },
+      "retinol": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+      },
+      "retinal": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+      },
+      "retinyl-palmitate": {
+        "status": "design-choice",
+        "sourceIds": [
+          "cir-aha-2017",
+          "fda-bha",
+          "fda-retin-a-micro-label-2025"
+        ],
+        "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+      }
+    },
+    "prescriptionOnly": {
+      "tretinoin": {
+        "status": "confirmed",
+        "sourceIds": [
+          "npra-annex-ii-2025",
+          "npra-2018-statement",
+          "npra-appendix7"
+        ],
+        "note": "Annex II entry 375; NPRA Appendix 7 entry 4 restricts supply to dermatologists."
+      },
+      "isotretinoin": {
+        "status": "confirmed",
+        "sourceIds": [
+          "npra-appendix7",
+          "npra-annex-ii-2025"
+        ],
+        "note": "NPRA Appendix 7 entry 4: supply restricted to dermatologists; teratogenicity warning required."
+      },
+      "hydroquinone": {
+        "status": "confirmed",
+        "sourceIds": [
+          "npra-2018-statement"
+        ],
+        "note": "Pharmaceutical needing DCA registration; use under healthcare supervision."
+      },
+      "clindamycin": {
+        "status": "confirmed",
+        "sourceIds": [
+          "npra-annex-ii-2025"
+        ],
+        "note": "Annex II entry 39 (antibiotics)."
+      },
+      "hydrocortisone": {
+        "status": "confirmed",
+        "sourceIds": [
+          "npra-annex-ii-2025"
+        ],
+        "note": "Annex II entry 300 (glucocorticoids)."
+      },
+      "betamethasone-valerate": {
+        "status": "confirmed",
+        "sourceIds": [
+          "npra-annex-ii-2025"
+        ],
+        "note": "Annex II entry 300 (glucocorticoids)."
+      },
+      "clobetasol-propionate": {
+        "status": "confirmed",
+        "sourceIds": [
+          "npra-annex-ii-2025"
+        ],
+        "note": "Annex II entry 300 (glucocorticoids)."
+      },
+      "adapalene": {
+        "status": "confirmed",
+        "sourceIds": [
+          "differin-mal",
+          "npra-otc-forum-2017",
+          "doctoroncall-differin"
+        ],
+        "note": "Differin 0.1% gel is registered as MAL20010011ARZ; the A suffix marks a prescription product (NPRA). Also listed as prescription-only by a licensed pharmacy."
+      },
+      "tazarotene": {
+        "status": "pending",
+        "sourceIds": [],
+        "note": "No Malaysian registration (MAL number) found, so it cannot be sold in Malaysia; prescription-only where approved elsewhere."
+      },
+      "trifarotene": {
+        "status": "confirmed",
+        "sourceIds": [
+          "aklief-mal",
+          "npra-otc-forum-2017"
+        ],
+        "note": "Aklief Cream 50 mcg/g is registered as MAL24076001AZ; the A suffix marks a prescription product (NPRA)."
+      }
+    }
+  },
+  "evidenceReviewedAt": "2026-11-06",
+  "evidenceSourcesFile": "safety-rule-sources.v1.json"
 }

@@ -1,0 +1,409 @@
+{
+  "generatedAt": "2026-11-03T18:19:58.581Z",
+  "log": "/sessions/rcw-014rr8yeb3qqg3rpzuuwbezq/mnt/Downloads/Dermasynth_Repo/data/logs/context-log.jsonl",
+  "threshold": 0.8,
+  "items": {
+    "CUE001": {
+      "cueScore": 0.6,
+      "cueVerdict": "unsupported",
+      "method": "lexical_fallback_after_judge_error",
+      "unsupportedClaims": [
+        "You use this evening step to support texture in a routine shaped around a breakout-prone appearance.",
+        "It is linked to breakouts in the supplied records, matching your concern."
+      ],
+      "runId": "b926e94f-6af8-4f86-ad7c-fca93393e393",
+      "key": "pm:texture-renewal",
+      "attempt": 1
+    },
+    "CUE002": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "4d95d7ce-87a6-4269-9ee5-fd7e3bab2c6f",
+      "key": "pm:barrier-support-moisturising",
+      "attempt": 2
+    },
+    "CUE003": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "5be50017-ba1c-4e98-831e-f6688fb938a5",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE004": {
+      "cueScore": 0.5,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "You use light moisturising tonight because your combination skin and breakout-prone appearance call for a lighter feel."
+      ],
+      "runId": "385701bc-16f0-4fda-a682-f8de3c8b7485",
+      "key": "pm:lightweight-moisturising",
+      "attempt": 1
+    },
+    "CUE005": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Zinc Oxide fits today’s essential sun-protection step because the UV index is 11.3 and you’re concerned about breakouts."
+      ],
+      "runId": "b6401fa1-d0e0-4c43-8518-02bb92ce39f5",
+      "key": "am:daytime-photoprotection",
+      "attempt": 1
+    },
+    "CUE006": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "092d09ec-5a56-4d68-8f76-e21c31aa60ea",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE007": {
+      "cueScore": 0,
+      "cueVerdict": "unsupported",
+      "method": "lexical_fallback_after_judge_error",
+      "unsupportedClaims": [
+        "You start your morning with a gentle cleanse, giving your combination skin a mild beginning to the day."
+      ],
+      "runId": "b926e94f-6af8-4f86-ad7c-fca93393e393",
+      "key": "am:low-irritation-cleansing",
+      "attempt": 1
+    },
+    "CUE008": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Its lighter texture fits your combination skin, breakout concern and a lighter routine in 88% humidity."
+      ],
+      "runId": "9a5b31ce-398f-4e4b-818e-371c6016590b",
+      "key": "pm:lightweight-moisturising",
+      "attempt": 1
+    },
+    "CUE009": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "3082e57a-c294-4ff1-b64b-fc2a637ac05a",
+      "key": "pm:texture-renewal",
+      "attempt": 1
+    },
+    "CUE010": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "dd423743-ac54-40d1-8ec8-9a850700bf9e",
+      "key": "pm:barrier-support-moisturising",
+      "attempt": 1
+    },
+    "CUE011": {
+      "cueScore": 0.75,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Its lighter texture fits today’s lighter routine in 30°C heat and 77% humidity."
+      ],
+      "runId": "4d95d7ce-87a6-4269-9ee5-fd7e3bab2c6f",
+      "key": "am:comfort-hydration",
+      "attempt": 1
+    },
+    "CUE012": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Its lighter texture fits your combination skin and today’s lighter routine, shaped by your breakout concern and 91% humidity."
+      ],
+      "runId": "a1099028-acb3-42d6-9fc5-ef5c4b8aa37f",
+      "key": "pm:lightweight-moisturising",
+      "attempt": 1
+    },
+    "CUE013": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Its lighter texture fits the balanced routine chosen for your combination skin and today’s conditions."
+      ],
+      "runId": "0d7dc175-da80-4c8a-8daa-32163e041932",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE014": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "78fe8a0a-2a45-4c0d-9e42-15a99b9d6530",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE015": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Glycerin has the lighter texture chosen for your combination skin, breakout concern and today’s 94% humidity."
+      ],
+      "runId": "89b14d26-1277-49f2-938b-7cb945b2459e",
+      "key": "pm:lightweight-moisturising",
+      "attempt": 1
+    },
+    "CUE016": {
+      "cueScore": 0.75,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Its richer texture fits today’s richer routine at 16.7°C and 63% humidity."
+      ],
+      "runId": "a2955006-859c-4658-afd3-cfca69acf517",
+      "key": "pm:barrier-support-moisturising",
+      "attempt": 1
+    },
+    "CUE017": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "0e76010e-5842-42fe-b1a4-c00882f9841f",
+      "key": "am:comfort-hydration",
+      "attempt": 1
+    },
+    "CUE018": {
+      "cueScore": 0,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "You start your evening with gentle cleansing to wash away sunscreen and the day’s grime without making this redness-focused routine feel harsh."
+      ],
+      "runId": "0d7dc175-da80-4c8a-8daa-32163e041932",
+      "key": "pm:low-irritation-cleansing",
+      "attempt": 1
+    },
+    "CUE019": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Its richer texture fits your combination skin and today’s richer routine, chosen because humidity is 50%."
+      ],
+      "runId": "1c711037-41f4-4b3c-bcf8-d6898a70921b",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE020": {
+      "cueScore": 0.75,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "You have this moisturising step for evening comfort and barrier support because humidity is 50%, so the routine leans richer."
+      ],
+      "runId": "1c711037-41f4-4b3c-bcf8-d6898a70921b",
+      "key": "pm:barrier-support-moisturising",
+      "attempt": 2
+    },
+    "CUE021": {
+      "cueScore": 0.5,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Keep cleansing extra mild for your sensitive skin, with PM2.5 at 7.8."
+      ],
+      "runId": "4d95d7ce-87a6-4269-9ee5-fd7e3bab2c6f",
+      "key": "pm:low-irritation-cleansing",
+      "attempt": 1
+    },
+    "CUE022": {
+      "cueScore": 0.5,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "At 30°C and 77% humidity, keep it gentle and fragrance-free."
+      ],
+      "runId": "4d95d7ce-87a6-4269-9ee5-fd7e3bab2c6f",
+      "key": "am:low-irritation-cleansing",
+      "attempt": 1
+    },
+    "CUE023": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "b795e5fe-9cad-4802-a0fc-299bb9599b31",
+      "key": "pm:lightweight-moisturising",
+      "attempt": 2
+    },
+    "CUE024": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "5c3e98b0-0a10-414f-ac77-5a04bd64aae9",
+      "key": "pm:supportive-moisturising",
+      "attempt": 1
+    },
+    "CUE025": {
+      "cueScore": 0.5,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "It suits today’s 16.7°C temperature and 63% humidity."
+      ],
+      "runId": "a2955006-859c-4658-afd3-cfca69acf517",
+      "key": "am:comfort-hydration",
+      "attempt": 1
+    },
+    "CUE026": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Allantoin’s lighter texture matches today’s lighter routine for your combination skin and breakout concern in 79% humidity and 30 °C heat."
+      ],
+      "runId": "3082e57a-c294-4ff1-b64b-fc2a637ac05a",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE027": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "71dfad3f-0352-4cff-804f-f7af11e7887d",
+      "key": "am:daytime-photoprotection",
+      "attempt": 1
+    },
+    "CUE028": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Allantoin is a soothing ingredient commonly used in products made for easily irritated skin."
+      ],
+      "runId": "3177fa9f-998e-4929-b3a5-bd3a3d068e0f",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE029": {
+      "cueScore": 0.333,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Niacinamide is a form of vitamin B3 commonly used in moisturisers and serums.",
+        "Niacinamide is linked to breakouts in the supplied records, and its lighter texture suits your combination skin and today’s lighter routine."
+      ],
+      "runId": "fdb36364-78e1-41e1-9c8c-9f81cb9b3268",
+      "key": "pm:lightweight-moisturising",
+      "attempt": 1
+    },
+    "CUE030": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "5df2ef80-f620-48f7-95f6-8e4af9f198fb",
+      "key": "pm:lightweight-moisturising",
+      "attempt": 1
+    },
+    "CUE031": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "d9540b2a-a66a-4d03-8e54-7ad2d876751e",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE032": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "779330f8-74e3-4807-a28d-f0f1855105ee",
+      "key": "pm:lightweight-moisturising",
+      "attempt": 1
+    },
+    "CUE033": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "932a7b5e-2d09-4e43-b010-202878b3dc9f",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE034": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "445917a6-94b9-4935-b7ca-acc5095a65b4",
+      "key": "pm:texture-renewal",
+      "attempt": 1
+    },
+    "CUE035": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "78952a07-c4e0-431b-8ef3-86b2cf415728",
+      "key": "pm:texture-renewal",
+      "attempt": 1
+    },
+    "CUE036": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "5c3e98b0-0a10-414f-ac77-5a04bd64aae9",
+      "key": "am:supportive-hydration",
+      "attempt": 1
+    },
+    "CUE037": {
+      "cueScore": 0.667,
+      "cueVerdict": "unsupported",
+      "method": "llm_judge",
+      "unsupportedClaims": [
+        "Allantoin’s lighter texture fits today’s lighter routine for your combination skin and breakout concern."
+      ],
+      "runId": "385701bc-16f0-4fda-a682-f8de3c8b7485",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE038": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "c0aabb4c-6e96-4766-8763-03715b0a6a64",
+      "key": "am:supportive-hydration",
+      "attempt": 1
+    },
+    "CUE039": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "b795e5fe-9cad-4802-a0fc-299bb9599b31",
+      "key": "pm:overnight-comfort",
+      "attempt": 1
+    },
+    "CUE040": {
+      "cueScore": 1,
+      "cueVerdict": "supported",
+      "method": "llm_judge",
+      "unsupportedClaims": [],
+      "runId": "0c68895b-dbd4-4d7e-8fe1-6944bcec4b12",
+      "key": "pm:barrier-support-moisturising",
+      "attempt": 1
+    }
+  }
+}

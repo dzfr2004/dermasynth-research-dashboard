@@ -155,7 +155,8 @@ for (const [index, scenario] of scenarios.slice(0, LIMIT).entries()) {
 const ok = rows.filter((row) => !row.error);
 const sum = (f) => ok.reduce((s, row) => s + (f(row) || 0), 0);
 const pct = (n, d) => (d ? `${((100 * n) / d).toFixed(1)}%` : "n/a");
-const median = (values) => { const v = values.filter(Number.isFinite).sort((a, b) => a - b); return v.length ? v[Math.floor(v.length / 2)] : null; };
+// For an even count, the median is the mean of the two middle values (the earlier version took the upper one).
+const median = (values) => { const v = values.filter(Number.isFinite).sort((a, b) => a - b); if (!v.length) return null; const m = Math.floor(v.length / 2); return v.length % 2 ? v[m] : Math.round((v[m - 1] + v[m]) / 2); };
 const slots = sum((row) => row.picks.slots);
 const accepted = sum((row) => row.picks.accepted);
 const cue = ok.flatMap((row) => row.context?.cueScores || []);

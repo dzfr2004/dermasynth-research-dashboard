@@ -1,0 +1,429 @@
+{
+  "generatedAt": "2026-11-06T15:25:58.472Z",
+  "counts": {
+    "confirmed": 15,
+    "extended": 5,
+    "design-choice": 17,
+    "pending": 1
+  },
+  "total": 38,
+  "problems": [],
+  "rules": [
+    {
+      "group": "Incompatible pair",
+      "rule": "retinol + benzoyl-peroxide",
+      "pair": [
+        "retinol",
+        "benzoyl-peroxide"
+      ],
+      "status": "extended",
+      "sourceIds": [
+        "bjd-1998-retinoid-bpo",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Benzoyl peroxide oxidises tretinoin and adds irritation; applied to retinol, a related oxidisable retinoid."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "retinol + glycolic-acid",
+      "pair": [
+        "retinol",
+        "glycolic-acid"
+      ],
+      "status": "extended",
+      "sourceIds": [
+        "fda-retin-a-micro-label-2025",
+        "cir-aha-2017"
+      ],
+      "note": "Label warns against strongly drying products with tretinoin; AHAs are not named. Weaker extension."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "retinol + mandelic-acid",
+      "pair": [
+        "retinol",
+        "mandelic-acid"
+      ],
+      "status": "extended",
+      "sourceIds": [
+        "fda-retin-a-micro-label-2025",
+        "cir-aha-2017"
+      ],
+      "note": "As for glycolic acid; mandelic acid is an AHA. Weaker extension."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "retinol + salicylic-acid",
+      "pair": [
+        "retinol",
+        "salicylic-acid"
+      ],
+      "status": "extended",
+      "sourceIds": [
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Label warns that salicylic acid with tretinoin increases dryness, redness and peeling; applied to retinol."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "benzoyl-peroxide + glycolic-acid",
+      "pair": [
+        "benzoyl-peroxide",
+        "glycolic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "fda-bha",
+        "cir-aha-2017"
+      ],
+      "note": "No source addresses this pair; avoids stacking two drying or exfoliating actives in one routine."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "benzoyl-peroxide + mandelic-acid",
+      "pair": [
+        "benzoyl-peroxide",
+        "mandelic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "fda-bha",
+        "cir-aha-2017"
+      ],
+      "note": "No source addresses this pair; avoids stacking two drying or exfoliating actives in one routine."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "benzoyl-peroxide + salicylic-acid",
+      "pair": [
+        "benzoyl-peroxide",
+        "salicylic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "fda-bha",
+        "cir-aha-2017"
+      ],
+      "note": "No source addresses this pair; avoids stacking two drying or exfoliating actives in one routine."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "glycolic-acid + salicylic-acid",
+      "pair": [
+        "glycolic-acid",
+        "salicylic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha"
+      ],
+      "note": "CIR limits acid strength per product but does not address layering; avoids stacking two exfoliating acids."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "glycolic-acid + mandelic-acid",
+      "pair": [
+        "glycolic-acid",
+        "mandelic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha"
+      ],
+      "note": "CIR limits acid strength per product but does not address layering; avoids stacking two exfoliating acids."
+    },
+    {
+      "group": "Incompatible pair",
+      "rule": "mandelic-acid + salicylic-acid",
+      "pair": [
+        "mandelic-acid",
+        "salicylic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha"
+      ],
+      "note": "CIR limits acid strength per product but does not address layering; avoids stacking two exfoliating acids."
+    },
+    {
+      "group": "Excluded from selection",
+      "rule": "retinal",
+      "status": "confirmed",
+      "sourceIds": [
+        "aicis-eva00186"
+      ],
+      "note": "AICIS Evaluation Statement EVA00186 (26 June 2026) classifies retinal as a developmental toxicant (Reproductive toxicity Category 1B)."
+    },
+    {
+      "group": "Not allowed in the morning",
+      "rule": "glycolic-acid",
+      "status": "confirmed",
+      "sourceIds": [
+        "fda-aha",
+        "cir-aha-2017"
+      ],
+      "note": "Named AHA; increases UV sensitivity."
+    },
+    {
+      "group": "Not allowed in the morning",
+      "rule": "lactic-acid",
+      "status": "confirmed",
+      "sourceIds": [
+        "fda-aha",
+        "cir-aha-2017"
+      ],
+      "note": "Named AHA; increases UV sensitivity."
+    },
+    {
+      "group": "Not allowed in the morning",
+      "rule": "mandelic-acid",
+      "status": "extended",
+      "sourceIds": [
+        "fda-aha",
+        "cir-aha-2017"
+      ],
+      "note": "Chemically an AHA but not named by FDA or CIR."
+    },
+    {
+      "group": "Not allowed in the morning",
+      "rule": "citric-acid",
+      "status": "confirmed",
+      "sourceIds": [
+        "fda-aha"
+      ],
+      "note": "Named by FDA as an AHA used in cosmetics."
+    },
+    {
+      "group": "Not allowed in the morning",
+      "rule": "salicylic-acid",
+      "status": "confirmed",
+      "sourceIds": [
+        "fda-bha"
+      ],
+      "note": "CIR via FDA: formulate to avoid increased sun sensitivity; use sun protection."
+    },
+    {
+      "group": "Not allowed in the morning",
+      "rule": "retinol",
+      "status": "design-choice",
+      "sourceIds": [
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "No photosensitivity source found for retinol; follows evening use convention and the tretinoin label's UV advice."
+    },
+    {
+      "group": "Not allowed in the morning",
+      "rule": "retinal",
+      "status": "design-choice",
+      "sourceIds": [
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "No photosensitivity source found; retinal is also excluded from selection (AICIS EVA00186)."
+    },
+    {
+      "group": "Not allowed in the morning",
+      "rule": "retinyl-palmitate",
+      "status": "confirmed",
+      "sourceIds": [
+        "ntp-tr568"
+      ],
+      "note": "Increased skin neoplasms under simulated solar light in mice."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "glycolic-acid",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "lactic-acid",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "mandelic-acid",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "citric-acid",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "salicylic-acid",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "gluconolactone",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Polyhydroxy acid, milder than AHAs. Included as the strictest design choice; no source requires it."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "retinol",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "retinal",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+    },
+    {
+      "group": "Blocked by barrier guardrail",
+      "rule": "retinyl-palmitate",
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Sources advise formulating to avoid irritation and stopping on irritation; none requires blocking on a weakened barrier."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "tretinoin",
+      "status": "confirmed",
+      "sourceIds": [
+        "npra-annex-ii-2025",
+        "npra-2018-statement",
+        "npra-appendix7"
+      ],
+      "note": "Annex II entry 375; NPRA Appendix 7 entry 4 restricts supply to dermatologists."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "adapalene",
+      "status": "confirmed",
+      "sourceIds": [
+        "differin-mal",
+        "npra-otc-forum-2017",
+        "doctoroncall-differin"
+      ],
+      "note": "Differin 0.1% gel is registered as MAL20010011ARZ; the A suffix marks a prescription product (NPRA). Also listed as prescription-only by a licensed pharmacy."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "isotretinoin",
+      "status": "confirmed",
+      "sourceIds": [
+        "npra-appendix7",
+        "npra-annex-ii-2025"
+      ],
+      "note": "NPRA Appendix 7 entry 4: supply restricted to dermatologists; teratogenicity warning required."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "tazarotene",
+      "status": "pending",
+      "sourceIds": [],
+      "note": "No Malaysian registration (MAL number) found, so it cannot be sold in Malaysia; prescription-only where approved elsewhere."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "trifarotene",
+      "status": "confirmed",
+      "sourceIds": [
+        "aklief-mal",
+        "npra-otc-forum-2017"
+      ],
+      "note": "Aklief Cream 50 mcg/g is registered as MAL24076001AZ; the A suffix marks a prescription product (NPRA)."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "clindamycin",
+      "status": "confirmed",
+      "sourceIds": [
+        "npra-annex-ii-2025"
+      ],
+      "note": "Annex II entry 39 (antibiotics)."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "hydroquinone",
+      "status": "confirmed",
+      "sourceIds": [
+        "npra-2018-statement"
+      ],
+      "note": "Pharmaceutical needing DCA registration; use under healthcare supervision."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "hydrocortisone",
+      "status": "confirmed",
+      "sourceIds": [
+        "npra-annex-ii-2025"
+      ],
+      "note": "Annex II entry 300 (glucocorticoids)."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "betamethasone-valerate",
+      "status": "confirmed",
+      "sourceIds": [
+        "npra-annex-ii-2025"
+      ],
+      "note": "Annex II entry 300 (glucocorticoids)."
+    },
+    {
+      "group": "Prescription-only",
+      "rule": "clobetasol-propionate",
+      "status": "confirmed",
+      "sourceIds": [
+        "npra-annex-ii-2025"
+      ],
+      "note": "Annex II entry 300 (glucocorticoids)."
+    }
+  ]
+}

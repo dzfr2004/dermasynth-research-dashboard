@@ -1,0 +1,41 @@
+item_id,supported,notes
+CUE001,yes,Every substantive statement appears in the supplied evidence or step facts.
+CUE002,no,'Gentle choice' is interpretive; supplied facts support safety and function but not a universal gentleness claim.
+CUE003,yes,Directly supported by the overnight comfort rule.
+CUE004,yes,"All profile, concern, temperature, and humidity inputs are explicit."
+CUE005,yes,UV threshold and mineral-filter facts directly support the explanation.
+CUE006,yes,Directly supported by the evening category.
+CUE007,yes,The routine phase and skin profile are supplied.
+CUE008,yes,The supplied facts include every stated driver and glycerin function.
+CUE009,yes,The sun-sensitivity rationale is explicit.
+CUE010,yes,All stated context and readings are supplied.
+CUE011,yes,"Function, profile, weather, texture, and reactive-skin rationale are supplied."
+CUE012,yes,"The record supplies the concern, humidity, texture, and function."
+CUE013,yes,Allantoin/madecassoside context and texture facts support this.
+CUE014,yes,Directly supported by the category purpose.
+CUE015,yes,All drivers are present in the facts.
+CUE016,yes,The facts support each condition and the ceramide role.
+CUE017,no,'Often used for a sensitive skin barrier' is stronger than the supplied functional-class and fit statements.
+CUE018,yes,The step rule directly supports gentle cleansing and the redness context.
+CUE019,yes,Ceramide NP function and richer routine are supplied.
+CUE020,yes,"The supplied facts include squalane function, humidity, texture, and record limitation."
+CUE021,yes,"PM2.5, sensitive skin, and gentle cleansing facts are explicit."
+CUE022,yes,Fragrance-free and the weather are included in the plain reason/facts.
+CUE023,yes,"Functional class, record link, and lighter texture are supplied."
+CUE024,yes,The balanced texture rationale follows the stated temperature/humidity vote.
+CUE025,yes,Directly supported by dry-feeling context and readings.
+CUE026,yes,Allantoin facts and the routine drivers are supplied.
+CUE027,no,The wording 'making sunscreen essential' goes beyond the supplied requirement for a photoprotection step; it is reasonable advice but not strictly a stated fact.
+CUE028,yes,"The facts support the category, soothing function, and lighter texture."
+CUE029,yes,"The stated concern, record link, and texture fit are supplied."
+CUE030,no,'Often used for uneven tone' is not a direct supplied fact.
+CUE031,yes,Directly supported by the category.
+CUE032,yes,"The text tracks the supplied concern, readings, function, and texture vote."
+CUE033,yes,All supporting facts are present.
+CUE034,yes,Evening-only and sun-sensitivity rules are explicit.
+CUE035,yes,The supplied functional class and step rule support the PHA wording.
+CUE036,yes,"Concern, function, texture, and weather are supplied."
+CUE037,yes,Directly supported by the overnight comfort and texture facts.
+CUE038,yes,Balanced hydration and humidity/redness inputs are supplied.
+CUE039,yes,Directly supported by the category.
+CUE040,no,The claim 'often used for a sensitive skin barrier' is not explicitly in the supplied facts.

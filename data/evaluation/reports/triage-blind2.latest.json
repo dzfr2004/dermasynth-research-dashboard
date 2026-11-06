@@ -1,0 +1,135 @@
+{
+  "generatedAt": "2026-11-06T13:51:40.608Z",
+  "ruleHash": {
+    "triage": "e5282565261ba7d2",
+    "safety": "8ddf991c42042311",
+    "triageLlm": "b33fdc6b7b9adfdd"
+  },
+  "results": {
+    "rules_only": {
+      "tp": 25,
+      "fn": 0,
+      "tn": 15,
+      "fp": 0,
+      "errors": 0,
+      "sensitivity": 1,
+      "specificity": 1,
+      "byCategory": {
+        "symptom": {
+          "total": 22,
+          "correct": 22
+        },
+        "manglish": {
+          "total": 5,
+          "correct": 5
+        },
+        "cosmetic": {
+          "total": 10,
+          "correct": 10
+        },
+        "negation": {
+          "total": 3,
+          "correct": 3
+        }
+      },
+      "misses": []
+    },
+    "rules_plus_gpt": {
+      "tp": 25,
+      "fn": 0,
+      "tn": 15,
+      "fp": 0,
+      "errors": 0,
+      "sensitivity": 1,
+      "specificity": 1,
+      "byCategory": {
+        "symptom": {
+          "total": 22,
+          "correct": 22
+        },
+        "manglish": {
+          "total": 5,
+          "correct": 5
+        },
+        "cosmetic": {
+          "total": 10,
+          "correct": 10
+        },
+        "negation": {
+          "total": 3,
+          "correct": 3
+        }
+      },
+      "misses": []
+    }
+  },
+  "blindRuns": {
+    "rules_only": {
+      "date": "2026-11-06",
+      "ruleHash": {
+        "triage": "f5aa8ee21f1ac29e",
+        "safety": "8ddf991c42042311",
+        "triageLlm": "b33fdc6b7b9adfdd"
+      },
+      "tp": 15,
+      "fn": 10,
+      "tn": 15,
+      "fp": 0,
+      "errors": 0,
+      "misses": [
+        "tri-b005",
+        "tri-b006",
+        "tri-b007",
+        "tri-b009",
+        "tri-b013",
+        "tri-b016",
+        "tri-b020",
+        "tri-b021",
+        "tri-b022",
+        "tri-b023"
+      ],
+      "clearedIds": [
+        "tri-b005",
+        "tri-b006",
+        "tri-b007",
+        "tri-b009",
+        "tri-b013",
+        "tri-b016",
+        "tri-b020",
+        "tri-b021",
+        "tri-b022",
+        "tri-b023",
+        "tri-b026",
+        "tri-b027",
+        "tri-b028",
+        "tri-b029",
+        "tri-b030",
+        "tri-b031",
+        "tri-b032",
+        "tri-b033",
+        "tri-b034",
+        "tri-b035",
+        "tri-b036",
+        "tri-b037",
+        "tri-b038",
+        "tri-b039",
+        "tri-b040"
+      ],
+      "note": "Rules frozen at this hash. Rules were then extended on 2026-11-06 (fever/high temperature, baby with rash, glass test, crusts, sores with feeling unwell, new medicine, changing spot, night itch, ring rash, Malay terms); later runs on this set are therefore optimistic."
+    },
+    "rules_plus_gpt": {
+      "date": "2026-11-06",
+      "ruleHash": {
+        "triage": "e5282565261ba7d2",
+        "safety": "8ddf991c42042311",
+        "triageLlm": "b33fdc6b7b9adfdd"
+      },
+      "tp": 25,
+      "fn": 0,
+      "tn": 15,
+      "fp": 0,
+      "errors": 0,
+      "misses": []
+    }
+  }
+}

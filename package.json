@@ -50,6 +50,7 @@
     "sync:evidence-pinecone": "node scripts/sync-ingredient-evidence-pinecone.mjs",
     "eval:input-sensitivity": "node scripts/evaluate-input-sensitivity.mjs",
     "eval:triage": "node scripts/evaluate-triage.mjs",
+    "eval:triage-blind": "node scripts/evaluate-triage-blind2.mjs",
     "eval:safety-extended": "node scripts/evaluate-safety-extended.mjs",
     "eval:study-site": "node scripts/evaluate-study-site.mjs",
     "eval:independent": "node scripts/evaluate-independent-safety.mjs",
@@ -58,12 +59,19 @@
     "eval:gpt-layer": "node scripts/evaluate-gpt-layer.mjs",
     "cue:sheet": "node scripts/generate-cue-rating-sheet.mjs",
     "eval:cue-human": "node scripts/score-cue-human.mjs",
+    "eval:cue-calibration": "node scripts/evaluate-cue-calibration.mjs",
+    "eval:label-scan": "node scripts/evaluate-label-scan.mjs",
+    "eval:viva-refresh": "bash scripts/viva-refresh.sh",
+    "eval:viva-live": "bash scripts/viva-live.sh",
     "test:browser": "node scripts/smoke-browser.mjs",
     "eval:outlook": "node scripts/evaluate-outlook.mjs",
     "kb:rebuild": "node scripts/kb-rebuild.mjs",
     "eval:impact": "node scripts/evaluate-impact.mjs",
     "report:feedback": "node scripts/report-feedback.mjs",
-    "eval:gpt-schemas": "node scripts/evaluate-gpt-schemas.mjs"
+    "eval:gpt-schemas": "node scripts/evaluate-gpt-schemas.mjs",
+    "eval:repeatability": "node scripts/run-repeatability.mjs",
+    "eval:review-materials": "node scripts/build-review-materials.mjs",
+    "eval:safety-traceability": "node scripts/report-safety-traceability.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1"

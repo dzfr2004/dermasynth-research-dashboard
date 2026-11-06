@@ -1,0 +1,290 @@
+{
+  "generatedAt": "2026-11-05T10:45:54.355Z",
+  "until": "2026-10-01",
+  "runs": 76,
+  "llmSteps": 282,
+  "disagreements": 162,
+  "uniqueSituations": 47,
+  "items": {
+    "AB001": {
+      "llm": "B",
+      "llmPick": "glycerin",
+      "rulePick": "sodium-hyaluronate",
+      "runId": "a309188d-1c11-4d4f-b3e8-26c1967373f4",
+      "at": "2026-09-30T03:16:21.540Z"
+    },
+    "AB002": {
+      "llm": "B",
+      "llmPick": "dimethicone",
+      "rulePick": "ceramide-np",
+      "runId": "7ac60019-b108-4063-aa3c-fd960051b501",
+      "at": "2026-09-28T07:14:28.800Z"
+    },
+    "AB003": {
+      "llm": "B",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "29066953-44e1-401b-881e-c9d105274068",
+      "at": "2026-09-28T16:18:14.586Z"
+    },
+    "AB004": {
+      "llm": "A",
+      "llmPick": "glycerin",
+      "rulePick": "niacinamide",
+      "runId": "b6401fa1-d0e0-4c43-8518-02bb92ce39f5",
+      "at": "2026-09-29T06:21:58.378Z"
+    },
+    "AB005": {
+      "llm": "B",
+      "llmPick": "allantoin",
+      "rulePick": "madecassoside",
+      "runId": "4d95d7ce-87a6-4269-9ee5-fd7e3bab2c6f",
+      "at": "2026-09-28T15:04:12.355Z"
+    },
+    "AB006": {
+      "llm": "A",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "4d95d7ce-87a6-4269-9ee5-fd7e3bab2c6f",
+      "at": "2026-09-28T15:04:12.355Z"
+    },
+    "AB007": {
+      "llm": "B",
+      "llmPick": "squalane",
+      "rulePick": "ceramide-np",
+      "runId": "7ac60019-b108-4063-aa3c-fd960051b501",
+      "at": "2026-09-28T07:14:28.800Z"
+    },
+    "AB008": {
+      "llm": "A",
+      "llmPick": "niacinamide",
+      "rulePick": "glycerin",
+      "runId": "5df2ef80-f620-48f7-95f6-8e4af9f198fb",
+      "at": "2026-09-28T07:12:56.626Z"
+    },
+    "AB009": {
+      "llm": "A",
+      "llmPick": "dimethicone",
+      "rulePick": "squalane",
+      "runId": "a309188d-1c11-4d4f-b3e8-26c1967373f4",
+      "at": "2026-09-30T03:16:21.540Z"
+    },
+    "AB010": {
+      "llm": "B",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "86265860-d38a-411e-adb9-c9fd6d81e66b",
+      "at": "2026-09-28T16:58:30.010Z"
+    },
+    "AB011": {
+      "llm": "A",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "5df2ef80-f620-48f7-95f6-8e4af9f198fb",
+      "at": "2026-09-28T07:12:56.626Z"
+    },
+    "AB012": {
+      "llm": "B",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "68b95154-a923-427f-bbad-37749fcf254d",
+      "at": "2026-09-28T07:12:16.578Z"
+    },
+    "AB013": {
+      "llm": "B",
+      "llmPick": "beta-glucan",
+      "rulePick": "glycerin",
+      "runId": "4d95d7ce-87a6-4269-9ee5-fd7e3bab2c6f",
+      "at": "2026-09-28T15:04:12.355Z"
+    },
+    "AB014": {
+      "llm": "B",
+      "llmPick": "beta-glucan",
+      "rulePick": "glycerin",
+      "runId": "36ed4957-2602-49be-a8fe-aa091eade304",
+      "at": "2026-09-23T18:03:51.755Z"
+    },
+    "AB015": {
+      "llm": "A",
+      "llmPick": "niacinamide",
+      "rulePick": "glycerin",
+      "runId": "29066953-44e1-401b-881e-c9d105274068",
+      "at": "2026-09-28T16:18:14.586Z"
+    },
+    "AB016": {
+      "llm": "B",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "b9f6432e-fa4f-4494-b9b3-a0bbdf37b521",
+      "at": "2026-09-24T18:30:17.562Z"
+    },
+    "AB017": {
+      "llm": "A",
+      "llmPick": "beta-glucan",
+      "rulePick": "sodium-hyaluronate",
+      "runId": "c2f88e53-4963-421c-bd61-b17776ed9d41",
+      "at": "2026-09-28T07:13:55.103Z"
+    },
+    "AB018": {
+      "llm": "B",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "0e76010e-5842-42fe-b1a4-c00882f9841f",
+      "at": "2026-09-29T06:24:42.314Z"
+    },
+    "AB019": {
+      "llm": "B",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "0d7dc175-da80-4c8a-8daa-32163e041932",
+      "at": "2026-09-28T17:19:43.177Z"
+    },
+    "AB020": {
+      "llm": "A",
+      "llmPick": "ceramide-np",
+      "rulePick": "squalane",
+      "runId": "36ed4957-2602-49be-a8fe-aa091eade304",
+      "at": "2026-09-23T18:03:51.755Z"
+    },
+    "AB021": {
+      "llm": "A",
+      "llmPick": "allantoin",
+      "rulePick": "madecassoside",
+      "runId": "435c8021-4533-4d59-ac42-b986fbb8e14a",
+      "at": "2026-09-24T10:34:49.911Z"
+    },
+    "AB022": {
+      "llm": "B",
+      "llmPick": "dimethicone",
+      "rulePick": "niacinamide",
+      "runId": "b926e94f-6af8-4f86-ad7c-fca93393e393",
+      "at": "2026-09-23T18:48:51.193Z"
+    },
+    "AB023": {
+      "llm": "A",
+      "llmPick": "glycerin",
+      "rulePick": "niacinamide",
+      "runId": "8b15afc0-1df3-4799-a7af-acf667db4aeb",
+      "at": "2026-09-24T10:54:54.244Z"
+    },
+    "AB024": {
+      "llm": "B",
+      "llmPick": "glycerin",
+      "rulePick": "niacinamide",
+      "runId": "86265860-d38a-411e-adb9-c9fd6d81e66b",
+      "at": "2026-09-28T16:58:30.010Z"
+    },
+    "AB025": {
+      "llm": "A",
+      "llmPick": "allantoin",
+      "rulePick": "madecassoside",
+      "runId": "68b95154-a923-427f-bbad-37749fcf254d",
+      "at": "2026-09-28T07:12:16.578Z"
+    },
+    "AB026": {
+      "llm": "A",
+      "llmPick": "niacinamide",
+      "rulePick": "glycerin",
+      "runId": "bd4a5317-b223-47da-a24b-ea8a4b802fa9",
+      "at": "2026-09-28T15:11:01.866Z"
+    },
+    "AB027": {
+      "llm": "B",
+      "llmPick": "beta-glucan",
+      "rulePick": "sodium-hyaluronate",
+      "runId": "0e76010e-5842-42fe-b1a4-c00882f9841f",
+      "at": "2026-09-29T06:24:42.314Z"
+    },
+    "AB028": {
+      "llm": "A",
+      "llmPick": "ceramide-np",
+      "rulePick": "ceramide-eop",
+      "runId": "44efa6b0-29a7-43e7-b2da-73869b3dcdf9",
+      "at": "2026-09-28T07:11:49.778Z"
+    },
+    "AB029": {
+      "llm": "A",
+      "llmPick": "linoleic-acid",
+      "rulePick": "squalane",
+      "runId": "bd4a5317-b223-47da-a24b-ea8a4b802fa9",
+      "at": "2026-09-28T15:11:01.866Z"
+    },
+    "AB030": {
+      "llm": "A",
+      "llmPick": "allantoin",
+      "rulePick": "ceramide-np",
+      "runId": "6c7078ae-8cf1-4605-a9f9-a836db5a0271",
+      "at": "2026-09-28T07:18:09.487Z"
+    },
+    "AB031": {
+      "llm": "A",
+      "llmPick": "dimethicone",
+      "rulePick": "squalane",
+      "runId": "68b95154-a923-427f-bbad-37749fcf254d",
+      "at": "2026-09-28T07:12:16.578Z"
+    },
+    "AB032": {
+      "llm": "B",
+      "llmPick": "allantoin",
+      "rulePick": "madecassoside",
+      "runId": "36ed4957-2602-49be-a8fe-aa091eade304",
+      "at": "2026-09-23T18:03:51.755Z"
+    },
+    "AB033": {
+      "llm": "B",
+      "llmPick": "linoleic-acid",
+      "rulePick": "squalane",
+      "runId": "0b27f706-6dc2-47a3-9c4c-cc2de347b420",
+      "at": "2026-09-28T07:15:02.328Z"
+    },
+    "AB034": {
+      "llm": "A",
+      "llmPick": "ceramide-ap",
+      "rulePick": "squalane",
+      "runId": "0d7dc175-da80-4c8a-8daa-32163e041932",
+      "at": "2026-09-28T17:19:43.177Z"
+    },
+    "AB035": {
+      "llm": "A",
+      "llmPick": "dimethicone",
+      "rulePick": "glycerin",
+      "runId": "5f33aeed-e49f-4f5e-81b2-3b59c24796fe",
+      "at": "2026-09-28T07:13:24.802Z"
+    },
+    "AB036": {
+      "llm": "A",
+      "llmPick": "dimethicone",
+      "rulePick": "glycerin",
+      "runId": "5057a158-832b-40da-829f-38a98086f568",
+      "at": "2026-09-23T18:02:51.093Z"
+    },
+    "AB037": {
+      "llm": "B",
+      "llmPick": "salicylic-acid",
+      "rulePick": "gluconolactone",
+      "runId": "29066953-44e1-401b-881e-c9d105274068",
+      "at": "2026-09-28T16:18:14.586Z"
+    },
+    "AB038": {
+      "llm": "A",
+      "llmPick": "glycerin",
+      "rulePick": "niacinamide",
+      "runId": "c1ace6d1-7db2-4d25-8f35-fd8815c0448f",
+      "at": "2026-09-28T18:07:47.019Z"
+    },
+    "AB039": {
+      "llm": "A",
+      "llmPick": "zinc-oxide",
+      "rulePick": "titanium-dioxide",
+      "runId": "435c8021-4533-4d59-ac42-b986fbb8e14a",
+      "at": "2026-09-24T10:34:49.911Z"
+    },
+    "AB040": {
+      "llm": "A",
+      "llmPick": "ceramide-ap",
+      "rulePick": "squalane",
+      "runId": "86265860-d38a-411e-adb9-c9fd6d81e66b",
+      "at": "2026-09-28T16:58:30.010Z"
+    }
+  }
+}

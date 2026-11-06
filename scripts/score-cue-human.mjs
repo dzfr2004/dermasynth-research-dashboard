@@ -56,7 +56,7 @@ const normalise = (value) => {
 
 const raters = {};
 for (const file of files) {
-  const rows = parseCsv(await readFile(new URL(file, ratingDir), "utf8"));
+  const rows = parseCsv((await readFile(new URL(file, ratingDir), "utf8")).replace(/^\uFEFF/, "")); // Excel adds a byte-order mark
   const header = rows.shift().map((h) => h.trim().toLowerCase());
   const iId = header.indexOf("item_id");
   const iSup = header.indexOf("supported");
@@ -127,7 +127,7 @@ const md = [
   "",
   `CUE caught ${pct(summary.cueRecallOfUnsupported)} of the drafts the raters judged unsupported. Drafts CUE passed that the raters judged unsupported: ${confusion.cueSupported_humanUnsupported} of ${items.length} (${pct(summary.unsupportedShownRate)}); these are the ones a user would have seen.`,
   "",
-  "Note: the sheet over-samples drafts CUE rejected (all of them are included), so the agreement figures describe this sheet, not the live pass rate. The live pass rate is in the selection-log report.",
+  "Note: the sheet over-samples drafts CUE rejected (up to half the sheet), so the agreement figures describe this sheet, not the live pass rate. The live pass rate is in the selection-log report.",
   "",
 ];
 const out = new URL("../data/evaluation/reports/", import.meta.url);

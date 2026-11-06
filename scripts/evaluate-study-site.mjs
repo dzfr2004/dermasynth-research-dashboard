@@ -51,7 +51,7 @@ async function startServer(extraEnv) {
   const port = await reservePort();
   const child = spawn(process.execPath, ["server.mjs"], {
     cwd: root,
-    env: { PATH: process.env.PATH || "", PORT: String(port), LIVE_SERVICES_ENABLED: "false", INGREDIENT_DB_ENABLED: "true", INGREDIENT_SELECTION_ENABLED: "true", SELECTION_LOG_ENABLED: "false", FEEDBACK_LOG_PATH: "tmp/study-site-feedback.jsonl", OPENAI_API_KEY: "", OPENWEATHER_API_KEY: "", IQAIR_API_KEY: "", PINECONE_API_KEY: "", ...extraEnv },
+    env: { PATH: process.env.PATH || "", PORT: String(port), LIVE_SERVICES_ENABLED: "false", INGREDIENT_DB_ENABLED: "true", INGREDIENT_SELECTION_ENABLED: "true", SELECTION_LOG_ENABLED: "false", STUDY_ROUND: "1", FEEDBACK_LOG_PATH: "tmp/study-site-feedback.jsonl", OPENAI_API_KEY: "", OPENWEATHER_API_KEY: "", IQAIR_API_KEY: "", PINECONE_API_KEY: "", ...extraEnv },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let out = "";

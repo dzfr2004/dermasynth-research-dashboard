@@ -1,0 +1,647 @@
+item_id,kind,facts_given_to_the_model,text_to_rate,supported,notes
+"CUE001","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 94, temperature 25.5, pm25 8.6
+ingredient: Salicylic Acid
+step: Texture-renewal category
+step rule: The breakout-prone appearance context includes an evening texture-renewal step; it is kept out of the morning because hydroxy acids raise sun sensitivity.
+functional class: BHA exfoliant
+verified safety evidence: Paraphrased CIR conclusion: in its amended (2019) assessment the CIR Expert Panel concluded that Salicylic Acid and related salicylates are safe in the present practices of use and concentration when formulated to be non-irritating and non-sensitising. The Panel noted use restrictions (e.g., not for use in products for children under 3, other than shampoos). Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Salicylic Acid; Gluconolactone; Glycolic Acid; Mandelic Acid
+selected rank: 1 of 4
+runner up: Gluconolactone
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record lists the acne context
+what it is plain: A BHA: an oil-soluble chemical exfoliant that loosens dead skin cells, including inside pores.
+why today plain: It is one of the ingredients DermaSynth's records link to breakouts.
+safety plain: An independent US expert panel, the Cosmetic Ingredient Review (CIR), concluded it is safe as used in cosmetics.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 6 on a 1 to 10 scale (1 = lowest), Robust data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in its amended (2019) assessment the CIR Expert Panel concluded that Salicylic Acid and related salicylates are safe in the present practices of use and concentration when formulated to be non-irritating and non-sensitising. The Panel noted use restrictions (e.g., not for use in products for children under 3, other than shampoos). Paraphrased factual summary; no verbatim CIR text is stored.","You use this evening step to support texture in a routine shaped around a breakout-prone appearance. Salicylic Acid is an oil-soluble chemical exfoliant that loosens dead skin cells, including inside pores. It is linked to breakouts in the supplied records, matching your concern. You use this step in the evening because this kind of exfoliant raises sun sensitivity. The Cosmetic Ingredient Review expert panel concluded Salicylic Acid is safe as used when formulated to avoid irritation and sensitisation.","",""
+"CUE002","ingredient","research context: Sensitivity context
+skin profile: sensitive
+environmental readings: uvi 0, humidity 77, temperature 30, pm25 7.8, uviMaxToday 8.65
+ingredient: Dimethicone
+step: Barrier-support moisturising category
+step rule: The barrier guardrail is active because of your sensitive skin profile, so the conservative comfort and barrier-support variant is used.
+functional class: Emollient / occlusive
+verified safety evidence: Paraphrased CIR conclusion: in the amended Safety Assessment covering Dimethicone and related methicone/dimethicone ingredients, the CIR Expert Panel concluded these ingredients are safe in the present practices of use and concentration. These are large polymers not expected to penetrate skin. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Squalane; Dimethicone; Ceramide NP; Ceramide EOP
+selected rank: 2 of 4
+runner up: Squalane
+deciding factor versus runner up: its EWG reference score
+fit to user: its database record does not list the sensitivity context; a medium texture (silicone emollient, film-forming) for a routine that leans lighter; a soothing or protective functional class for reactive skin
+what it is plain: An emollient that also forms a light film on the skin to slow water loss.
+why today plain: It is a gentle choice for skin that reacts easily.
+user concern: sensitivity
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 5 on a 1 to 10 scale (1 = lowest), Fair data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the amended Safety Assessment covering Dimethicone and related methicone/dimethicone ingredients, the CIR Expert Panel concluded these ingredients are safe in the present practices of use and concentration. These are large polymers not expected to penetrate skin. Paraphrased factual summary; no verbatim CIR text is stored.","This evening moisturising step is included to give your sensitive skin gentle comfort and support. Dimethicone is an emollient that forms a light film on the skin. Dimethicone is a gentle choice for skin that reacts easily.","",""
+"CUE003","step","research context: Dry-feeling comfort
+skin profile: combination
+environmental readings: uvi 0, humidity 74, temperature 27.7, pm25 10.3, uviMaxToday 9.15
+phase: evening
+step: Overnight comfort category
+purpose: Overnight comfort context.
+rule: Every evening routine ends with an overnight comfort step.
+plain reason: A plain moisturiser or balm to finish your evening.","You finish your evening with a plain, comforting moisturising layer to support overnight comfort after the day’s cleansing.","",""
+"CUE004","step","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 74, temperature 27.7, pm25 10.3, uviMaxToday 9.15
+phase: evening
+step: Lightweight moisturising category
+purpose: Lightweight moisturising context.
+rule: The texture vote leans lighter (lighter: acne concern), so the lightweight hydration and moisturising variants are used.
+plain reason: Kept light today because of your breakouts concern.","You use light moisturising tonight because your combination skin and breakout-prone appearance call for a lighter feel. Humidity is 74% and the temperature is 27.7.","",""
+"CUE005","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 11.3, humidity 55, temperature 35, pm25 12.1, uviMaxToday 9
+ingredient: Zinc Oxide
+step: Daytime photoprotection category
+step rule: The UV index of 11.3 is at or above the high-UV threshold of 8, so a daytime photoprotection step is required.
+functional class: Mineral UV filter
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Zinc Salts (2024) the CIR Expert Panel concluded that the assessed zinc salts, including Zinc Oxide, are safe in the present practices of use and concentration when formulated to be non-irritating. Zinc Oxide is also a physical (mineral) UV filter. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Titanium Dioxide; Zinc Oxide
+selected rank: 2 of 2
+runner up: Titanium Dioxide
+deciding factor versus runner up: its EWG reference score
+fit to user: its database record does not list the acne context
+what it is plain: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.
+why today plain: UV is extreme today (11), so sunscreen is essential.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 2 on a 1 to 10 scale (1 = lowest), Good data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Zinc Salts (2024) the CIR Expert Panel concluded that the assessed zinc salts, including Zinc Oxide, are safe in the present practices of use and concentration when formulated to be non-irritating. Zinc Oxide is also a physical (mineral) UV filter. Paraphrased factual summary; no verbatim CIR text is stored.","You have this sun-protection step because today’s UV index is extremely high at 11.3. Zinc Oxide is a mineral UV filter that sits on the skin and reflects and absorbs UV light. Zinc Oxide fits today’s essential sun-protection step because the UV index is 11.3 and you’re concerned about breakouts.","",""
+"CUE006","step","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 11.3, humidity 52, temperature 35, pm25 12.1, uviMaxToday 9
+phase: evening
+step: Overnight comfort category
+purpose: Overnight comfort context.
+rule: Every evening routine ends with an overnight comfort step.
+plain reason: A plain moisturiser or balm to finish your evening.","You end your evening with plain, comforting moisture to complete your routine overnight.","",""
+"CUE007","step","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 94, temperature 25.5, pm25 8.6
+phase: morning
+step: Low-irritation cleansing category
+purpose: A gentle starting category for both routine phases.
+rule: The morning routine starts with low-irritation cleansing.
+plain reason: Start the day with a gentle cleanse.","You start your morning with a gentle cleanse, giving your combination skin a mild beginning to the day.","",""
+"CUE008","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 88, temperature 25.6, pm25 9.4, uviMaxToday 7.3
+ingredient: Glycerin
+step: Lightweight moisturising category
+step rule: The texture vote leans lighter (lighter: acne concern and humidity 88% (humid air)), so the lightweight hydration and moisturising variants are used.
+functional class: Humectant
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Glycerin is safe in the present practices of use and concentration described in the safety assessment. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Niacinamide; Glycerin; Squalane; Dimethicone
+selected rank: 2 of 4
+runner up: Niacinamide
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the acne context; a lighter texture (humectant) for a routine that leans lighter
+what it is plain: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.
+why today plain: Its lighter texture suits today's lighter routine.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 2 on a 1 to 10 scale (1 = lowest), Fair data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Glycerin is safe in the present practices of use and concentration described in the safety assessment. Paraphrased factual summary; no verbatim CIR text is stored.","You have this lightweight moisture step because of your breakout concern and today’s 88% humidity. Glycerin is a water-attracting ingredient that holds water in the top layer of your skin. Its lighter texture fits your combination skin, breakout concern and a lighter routine in 88% humidity.","",""
+"CUE009","step","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 79, temperature 30, pm25 7.8, uviMaxToday 8.65
+phase: evening
+step: Texture-renewal category
+purpose: Evening texture-context category.
+rule: The breakout-prone appearance context includes an evening texture-renewal step; it is kept out of the morning because hydroxy acids raise sun sensitivity.
+plain reason: Evenings only, because exfoliants make skin more sensitive to the sun.","You keep exfoliation to the evening for your breakout-prone appearance because exfoliants can make skin more sun-sensitive.","",""
+"CUE010","step","research context: Dry-feeling comfort
+skin profile: combination
+environmental readings: uvi 0, humidity 74, temperature 27.7, pm25 10.3, uviMaxToday 9.15
+phase: evening
+step: Barrier-support moisturising category
+purpose: Comfort-focused moisturising context.
+rule: The barrier guardrail is active because of this dry-feeling comfort context or your reported reactivity, so the conservative comfort and barrier-support variant is used.
+plain reason: Kept extra gentle and comforting for your skin today.","You use extra-gentle moisturising in the evening for comfort and barrier support because your combination skin feels dry today. Humidity is 74% and temperature is 27.7.","",""
+"CUE011","ingredient","research context: Sensitivity context
+skin profile: sensitive
+environmental readings: uvi 0, humidity 77, temperature 30, pm25 7.8, uviMaxToday 8.65
+ingredient: Beta-Glucan
+step: Comfort-focused hydration category
+step rule: The barrier guardrail is active because of your sensitive skin profile, so the conservative comfort and barrier-support variant is used.
+functional class: Humectant / soothing
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Microbial Polysaccharide Gums (2016) the CIR Expert Panel concluded the assessed gums, including Beta-Glucan, are safe in the present practices of use and concentration in cosmetics. Beta-glucan was reported as practically non-irritating to rabbit eyes (weakly irritating in a HET-CAM assay). Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Glycerin; Sodium Hyaluronate; Beta-Glucan; Ectoin
+selected rank: 3 of 4
+runner up: Glycerin
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the sensitivity context; a lighter texture (humectant, soothing) for a routine that leans lighter; a soothing or protective functional class for reactive skin
+what it is plain: A humectant (an ingredient that attracts and holds water) that is also used in soothing products.
+why today plain: Its lighter texture suits today's lighter routine. It is a gentle choice for skin that reacts easily.
+user concern: sensitivity
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Microbial Polysaccharide Gums (2016) the CIR Expert Panel concluded the assessed gums, including Beta-Glucan, are safe in the present practices of use and concentration in cosmetics. Beta-glucan was reported as practically non-irritating to rabbit eyes (weakly irritating in a HET-CAM assay). Paraphrased factual summary; no verbatim CIR text is stored.","This step gives your sensitive skin gentle, comforting hydration this morning. Beta-Glucan is a humectant that attracts and holds water and is also used in soothing products. Its lighter texture fits today’s lighter routine in 30°C heat and 77% humidity. It is a gentle choice when your skin reacts easily.","",""
+"CUE012","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 91, temperature 26.6, pm25 7.9, uviMaxToday 9
+ingredient: Glycerin
+step: Lightweight moisturising category
+step rule: The texture vote leans lighter (lighter: acne concern and humidity 91% (humid air)), so the lightweight hydration and moisturising variants are used.
+functional class: Humectant
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Glycerin is safe in the present practices of use and concentration described in the safety assessment. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Niacinamide; Glycerin; Squalane; Dimethicone
+selected rank: 2 of 4
+runner up: Niacinamide
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the acne context; a lighter texture (humectant) for a routine that leans lighter
+what it is plain: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.
+why today plain: Its lighter texture suits today's lighter routine.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 2 on a 1 to 10 scale (1 = lowest), Fair data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Glycerin is safe in the present practices of use and concentration described in the safety assessment. Paraphrased factual summary; no verbatim CIR text is stored.","You have this moisturising step because your breakout concern and 91% humidity call for a lighter texture. Glycerin is a humectant, an ingredient that attracts and holds water in your skin’s top layer. Its lighter texture fits your combination skin and today’s lighter routine, shaped by your breakout concern and 91% humidity.","",""
+"CUE013","ingredient","research context: Redness-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 94, temperature 25, pm25 5.6, uviMaxToday 9.1
+ingredient: Madecassoside
+step: Overnight comfort category
+step rule: Every evening routine ends with an overnight comfort step.
+functional class: Soothing
+verified safety evidence: Paraphrased CIR conclusion: the CIR Safety Assessment of Centella asiatica-Derived Ingredients (2023) addressed the Centella triterpenoid constituents, including Madecassoside, and concluded the assessed ingredients are safe in the present practices of use and concentration when formulated to be non-sensitising. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Madecassoside; Squalane; Allantoin; Ceramide NP
+selected rank: 1 of 4
+runner up: Squalane
+deciding factor versus runner up: how closely its evidence matched this step
+fit to user: its database record does not list the redness context; a lighter texture (soothing) for a balanced routine
+what it is plain: A soothing ingredient used in products made for easily irritated skin.
+why today plain: Its lighter texture suits a balanced routine.
+user concern: redness
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), None data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Safety Assessment of Centella asiatica-Derived Ingredients (2023) addressed the Centella triterpenoid constituents, including Madecassoside, and concluded the assessed ingredients are safe in the present practices of use and concentration when formulated to be non-sensitising. Paraphrased factual summary; no verbatim CIR text is stored.","You have this step to finish your evening routine with overnight comfort. Madecassoside is a soothing ingredient used in products made for easily irritated skin. Its lighter texture fits the balanced routine chosen for your combination skin and today’s conditions.","",""
+"CUE014","step","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 91, temperature 26.6, pm25 7.9, uviMaxToday 9
+phase: evening
+step: Overnight comfort category
+purpose: Overnight comfort context.
+rule: Every evening routine ends with an overnight comfort step.
+plain reason: A plain moisturiser or balm to finish your evening.","You finish your evening with a plain moisturising or comforting step for overnight.","",""
+"CUE015","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 94, temperature 25, pm25 5.6, uviMaxToday 8.05
+ingredient: Glycerin
+step: Lightweight moisturising category
+step rule: The texture vote leans lighter (lighter: acne concern and humidity 94% (humid air)), so the lightweight hydration and moisturising variants are used.
+functional class: Humectant
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Glycerin is safe in the present practices of use and concentration described in the safety assessment. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Niacinamide; Glycerin; Squalane; Dimethicone
+selected rank: 2 of 4
+runner up: Niacinamide
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the acne context; a lighter texture (humectant) for a routine that leans lighter
+what it is plain: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.
+why today plain: Its lighter texture suits today's lighter routine.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 2 on a 1 to 10 scale (1 = lowest), Fair data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Glycerin is safe in the present practices of use and concentration described in the safety assessment. Paraphrased factual summary; no verbatim CIR text is stored.","You have this lightweight moisture step because of your breakout concern and today’s 94% humidity. Glycerin is a humectant, an ingredient that attracts water and holds it in the skin’s top layer. Glycerin has the lighter texture chosen for your combination skin, breakout concern and today’s 94% humidity.","",""
+"CUE016","ingredient","research context: Dry-feeling comfort
+skin profile: dry
+environmental readings: uvi 0.3, humidity 63, temperature 16.7, pm25 0.6, uviMaxToday 3.5
+ingredient: Ceramide NP
+step: Barrier-support moisturising category
+step rule: The barrier guardrail is active because of this dry-feeling comfort context or your reported reactivity, so the conservative comfort and barrier-support variant is used.
+functional class: Barrier lipid
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Ceramides (final 2015; supplement 2020) the CIR Expert Panel concluded the assessed ceramides, including Ceramide NP, are safe in the present practices of use and concentration, provided they are not derived from bovine central-nervous-system tissue. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Ceramide EOP; Ceramide NP; Squalane; Dimethicone
+selected rank: 2 of 4
+runner up: Ceramide EOP
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record lists the dryness context; a richer texture (barrier lipid) for a routine that leans richer
+what it is plain: A barrier lipid: one of the fats naturally found in the skin's outer layer.
+why today plain: Often used for dryness. Its richer texture suits today's richer routine.
+user concern: dryness
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Ceramides (final 2015; supplement 2020) the CIR Expert Panel concluded the assessed ceramides, including Ceramide NP, are safe in the present practices of use and concentration, provided they are not derived from bovine central-nervous-system tissue. Paraphrased factual summary; no verbatim CIR text is stored.","This moisturising step is included to give your dry-feeling skin extra-gentle comfort and barrier support tonight. Ceramide NP is a barrier fat naturally found in your skin’s outer layer. Ceramide NP is often used for dryness, matching your concern and dry skin profile. Its richer texture fits today’s richer routine at 16.7°C and 63% humidity.","",""
+"CUE017","ingredient","research context: Barrier comfort
+skin profile: combination
+environmental readings: uvi 12.1, humidity 55, temperature 34.9, pm25 19.7, uviMaxToday 9.05
+ingredient: Beta-Glucan
+step: Comfort-focused hydration category
+step rule: The barrier guardrail is active because of this barrier comfort context or your reported reactivity, so the conservative comfort and barrier-support variant is used.
+functional class: Humectant / soothing
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Microbial Polysaccharide Gums (2016) the CIR Expert Panel concluded the assessed gums, including Beta-Glucan, are safe in the present practices of use and concentration in cosmetics. Beta-glucan was reported as practically non-irritating to rabbit eyes (weakly irritating in a HET-CAM assay). Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Sodium Hyaluronate; Beta-Glucan; Glycerin; Ectoin
+selected rank: 2 of 4
+runner up: Sodium Hyaluronate
+deciding factor versus runner up: how closely its evidence matched this step
+fit to user: its database record lists the barrier context; a lighter texture (humectant, soothing) for a balanced routine
+what it is plain: A humectant (an ingredient that attracts and holds water) that is also used in soothing products.
+why today plain: Often used for a sensitive skin barrier. Its lighter texture suits a balanced routine.
+user concern: a sensitive skin barrier
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Microbial Polysaccharide Gums (2016) the CIR Expert Panel concluded the assessed gums, including Beta-Glucan, are safe in the present practices of use and concentration in cosmetics. Beta-glucan was reported as practically non-irritating to rabbit eyes (weakly irritating in a HET-CAM assay). Paraphrased factual summary; no verbatim CIR text is stored.","This hydration step is included to keep your morning routine extra gentle and comforting for your sensitive skin barrier. Beta-Glucan is a soothing humectant, an ingredient that attracts and holds water. Beta-Glucan is often used for a sensitive skin barrier, and its lighter texture fits your combination skin and a balanced routine today.","",""
+"CUE018","step","research context: Redness-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 94, temperature 25, pm25 5.6, uviMaxToday 9.1
+phase: evening
+step: Low-irritation cleansing category
+purpose: A gentle starting category for both routine phases.
+rule: The evening routine starts with low-irritation cleansing.
+plain reason: Any gentle cleanser, to wash off sunscreen and the day's grime.","You start your evening with gentle cleansing to wash away sunscreen and the day’s grime without making this redness-focused routine feel harsh.","",""
+"CUE019","ingredient","research context: Uneven-tone context
+skin profile: combination
+environmental readings: uvi 3.4, humidity 50, temperature 27.4, pm25 20.5, uviMaxToday 6.35
+ingredient: Ceramide NP
+step: Overnight comfort category
+step rule: Every evening routine ends with an overnight comfort step.
+functional class: Barrier lipid
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Ceramides (final 2015; supplement 2020) the CIR Expert Panel concluded the assessed ceramides, including Ceramide NP, are safe in the present practices of use and concentration, provided they are not derived from bovine central-nervous-system tissue. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Madecassoside; Ceramide NP; Allantoin
+selected rank: 2 of 3
+runner up: Madecassoside
+deciding factor versus runner up: how closely its evidence matched this step
+fit to user: its database record does not list the pigment context; a richer texture (barrier lipid) for a routine that leans richer
+what it is plain: A barrier lipid: one of the fats naturally found in the skin's outer layer.
+why today plain: Its richer texture suits today's richer routine.
+user concern: uneven tone
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Ceramides (final 2015; supplement 2020) the CIR Expert Panel concluded the assessed ceramides, including Ceramide NP, are safe in the present practices of use and concentration, provided they are not derived from bovine central-nervous-system tissue. Paraphrased factual summary; no verbatim CIR text is stored.","You have this step to finish your evening routine with overnight comfort. Ceramide NP is a barrier lipid, one of the fats naturally found in your skin’s outer layer. Its richer texture fits your combination skin and today’s richer routine, chosen because humidity is 50%.","",""
+"CUE020","ingredient","research context: Uneven-tone context
+skin profile: combination
+environmental readings: uvi 3.4, humidity 50, temperature 27.4, pm25 20.5, uviMaxToday 6.35
+ingredient: Squalane
+step: Barrier-support moisturising category
+step rule: The texture vote leans richer (richer: humidity 50% (dry air)), so the comfort hydration and barrier-support moisturising variants are used.
+functional class: Emollient
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Squalane and Squalene are safe as cosmetic ingredients in the present practices of use and concentration (original 1982 report; re-review reaffirmed the conclusion). Both were reported as non-irritating in the data reviewed. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Squalane; Ceramide NP; Dimethicone; Ceramide EOP
+selected rank: 1 of 4
+runner up: Ceramide NP
+deciding factor versus runner up: how closely its evidence matched this step
+fit to user: its database record does not list the pigment context; a medium texture (light emollient oil) for a routine that leans richer
+what it is plain: An emollient: an ingredient that softens and smooths the skin's surface.
+why today plain: Its medium texture suits today's richer routine.
+user concern: uneven tone
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Squalane and Squalene are safe as cosmetic ingredients in the present practices of use and concentration (original 1982 report; re-review reaffirmed the conclusion). Both were reported as non-irritating in the data reviewed. Paraphrased factual summary; no verbatim CIR text is stored.","You have this moisturising step for evening comfort and barrier support because humidity is 50%, so the routine leans richer. Squalane is an emollient, a type of ingredient that softens and smooths the skin’s surface. Its medium texture fits today’s richer routine, chosen because humidity is 50%. Its record does not specifically list uneven tone.","",""
+"CUE021","step","research context: Sensitivity context
+skin profile: sensitive
+environmental readings: uvi 0, humidity 77, temperature 30, pm25 7.8, uviMaxToday 8.65
+phase: evening
+step: Low-irritation cleansing category
+purpose: A gentle starting category for both routine phases.
+rule: The evening routine starts with low-irritation cleansing, kept especially gentle because the barrier guardrail is active.
+plain reason: Any gentle cleanser, to wash off sunscreen and the day's grime; keep it extra mild.","In the evening, gently wash away sunscreen and the day’s grime. Keep cleansing extra mild for your sensitive skin, with PM2.5 at 7.8.","",""
+"CUE022","step","research context: Sensitivity context
+skin profile: sensitive
+environmental readings: uvi 0, humidity 77, temperature 30, pm25 7.8, uviMaxToday 8.65
+phase: morning
+step: Low-irritation cleansing category
+purpose: A gentle starting category for both routine phases.
+rule: The morning routine starts with low-irritation cleansing, kept especially gentle because the barrier guardrail is active.
+plain reason: Any gentle, fragrance-free cleanser, as mild as possible for your skin.","Start your morning with cleansing that is as mild as possible for your sensitive skin. At 30°C and 77% humidity, keep it gentle and fragrance-free.","",""
+"CUE023","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 60, temperature 28.2, pm25 12.8, uviMaxToday 5.05
+ingredient: Niacinamide
+step: Lightweight moisturising category
+step rule: The texture vote leans lighter (lighter: acne concern), so the lightweight hydration and moisturising variants are used.
+functional class: Barrier / brightening
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Niacinamide (and Niacin) are safe as used in cosmetics. Clinical testing reported no significant skin irritation, sensitisation, or photosensitisation at the concentrations tested. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Niacinamide; Glycerin; Squalane; Dimethicone
+selected rank: 1 of 4
+runner up: Glycerin
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record lists the acne context; a lighter texture (water-soluble barrier ingredient) for a routine that leans lighter
+what it is plain: A form of vitamin B3 used in moisturisers and serums.
+why today plain: It is one of the ingredients DermaSynth's records link to breakouts. Its lighter texture suits today's lighter routine.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Good data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Niacinamide (and Niacin) are safe as used in cosmetics. Clinical testing reported no significant skin irritation, sensitisation, or photosensitisation at the concentrations tested. Paraphrased factual summary; no verbatim CIR text is stored.","You have this lightweight moisturising step today because your breakout concern calls for a lighter texture. Niacinamide is a form of vitamin B3 used in moisturisers and serums, with barrier and brightening roles. Niacinamide appears in records connected with breakouts, and its lighter texture matches today’s lighter routine.","",""
+"CUE024","ingredient","research context: Uneven-tone context
+skin profile: combination
+environmental readings: uvi 0.1, humidity 87, temperature 12.9, pm25 3.7, uviMaxToday 2.5
+ingredient: Linoleic Acid
+step: Supportive moisturising category
+step rule: The texture vote is balanced (richer: 13 °C (cold); lighter: humidity 87% (humid air)), so the supportive hydration and moisturising variants are used.
+functional class: Barrier lipid
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Fatty Acids & Fatty Acid Salts the CIR Expert Panel concluded the assessed fatty acids, including Linoleic Acid, are safe in the present practices of use and concentration when formulated to be non-irritating and non-sensitising. Linoleic Acid is also FDA GRAS as a food substance. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Squalane; Linoleic Acid; Ceramide AP; Ectoin
+selected rank: 2 of 4
+runner up: Squalane
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the pigment context; a medium texture (emollient lipid) for a balanced routine
+what it is plain: A barrier lipid: one of the fats naturally found in the skin's outer layer.
+why today plain: Its medium texture suits a balanced routine.
+user concern: uneven tone
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Good data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Fatty Acids & Fatty Acid Salts the CIR Expert Panel concluded the assessed fatty acids, including Linoleic Acid, are safe in the present practices of use and concentration when formulated to be non-irritating and non-sensitising. Linoleic Acid is also FDA GRAS as a food substance. Paraphrased factual summary; no verbatim CIR text is stored.","You have this evening moisturising step because today’s cool, humid conditions call for a balanced texture. Linoleic Acid is a barrier lipid, one of the fats naturally found in your skin’s outer layer. Linoleic Acid has a medium texture that fits a balanced routine, with 12.9 °C pointing richer and 87% humidity pointing lighter.","",""
+"CUE025","step","research context: Dry-feeling comfort
+skin profile: dry
+environmental readings: uvi 0.3, humidity 63, temperature 16.7, pm25 0.6, uviMaxToday 3.5
+phase: morning
+step: Comfort-focused hydration category
+purpose: Comfort-focused hydration context.
+rule: The barrier guardrail is active because of this dry-feeling comfort context or your reported reactivity, so the conservative comfort and barrier-support variant is used.
+plain reason: Kept extra gentle and comforting for your skin today.","You follow with extra-gentle hydration to support comfort when your skin feels dry. It suits today’s 16.7°C temperature and 63% humidity.","",""
+"CUE026","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 79, temperature 30, pm25 7.8, uviMaxToday 8.65
+ingredient: Allantoin
+step: Overnight comfort category
+step rule: Every evening routine ends with an overnight comfort step.
+functional class: Soothing
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Allantoin and its related complexes are safe for use as cosmetic ingredients. Allantoin was reported in use at concentrations up to about 2%. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Allantoin; Madecassoside; Squalane; Ceramide NP
+selected rank: 1 of 4
+runner up: Madecassoside
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the acne context; a lighter texture (soothing) for a routine that leans lighter
+what it is plain: A soothing ingredient used in products made for easily irritated skin.
+why today plain: Its lighter texture suits today's lighter routine.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Allantoin and its related complexes are safe for use as cosmetic ingredients. Allantoin was reported in use at concentrations up to about 2%. Paraphrased factual summary; no verbatim CIR text is stored.","You have this step because every evening routine finishes with overnight comfort. Allantoin is a soothing ingredient used in products made for easily irritated skin. Allantoin’s lighter texture matches today’s lighter routine for your combination skin and breakout concern in 79% humidity and 30 °C heat.","",""
+"CUE027","ingredient","research context: Dullness/radiance appearance
+skin profile: combination
+environmental readings: uvi 9.7, humidity 59, temperature 33, pm25 8.2, uviMaxToday 9.1
+ingredient: Zinc Oxide
+step: Daytime photoprotection category
+step rule: The UV index of 9.7 is at or above the high-UV threshold of 8, so a daytime photoprotection step is required.
+functional class: Mineral UV filter
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Zinc Salts (2024) the CIR Expert Panel concluded that the assessed zinc salts, including Zinc Oxide, are safe in the present practices of use and concentration when formulated to be non-irritating. Zinc Oxide is also a physical (mineral) UV filter. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Titanium Dioxide; Zinc Oxide
+selected rank: 2 of 2
+runner up: Titanium Dioxide
+deciding factor versus runner up: its EWG reference score
+fit to user: its database record does not list the radiance context
+what it is plain: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.
+why today plain: UV is very high today (10), so sunscreen is essential.
+user concern: dullness
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 2 on a 1 to 10 scale (1 = lowest), Good data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Zinc Salts (2024) the CIR Expert Panel concluded that the assessed zinc salts, including Zinc Oxide, are safe in the present practices of use and concentration when formulated to be non-irritating. Zinc Oxide is also a physical (mineral) UV filter. Paraphrased factual summary; no verbatim CIR text is stored.","You need this sun-protection step because UV is very high today (10). Zinc Oxide is a mineral UV filter that sits on the skin and reflects and absorbs UV light. Zinc Oxide fits this step because UV is very high today (10), making sunscreen essential.","",""
+"CUE028","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 94, temperature 25.6, pm25 12.8, uviMaxToday 9.05
+ingredient: Allantoin
+step: Overnight comfort category
+step rule: Every evening routine ends with an overnight comfort step.
+functional class: Soothing
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Allantoin and its related complexes are safe for use as cosmetic ingredients. Allantoin was reported in use at concentrations up to about 2%. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Allantoin; Madecassoside; Squalane; Ceramide NP
+selected rank: 1 of 4
+runner up: Madecassoside
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the acne context; a lighter texture (soothing) for a routine that leans lighter
+what it is plain: A soothing ingredient used in products made for easily irritated skin.
+why today plain: Its lighter texture suits today's lighter routine.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Allantoin and its related complexes are safe for use as cosmetic ingredients. Allantoin was reported in use at concentrations up to about 2%. Paraphrased factual summary; no verbatim CIR text is stored.","You end your evening routine with an overnight comfort step. Allantoin is a soothing ingredient commonly used in products made for easily irritated skin. Allantoin has a lighter texture that suits today’s lighter routine.","",""
+"CUE029","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 64, temperature 28.2, pm25 12.8, uviMaxToday 5.05
+ingredient: Niacinamide
+step: Lightweight moisturising category
+step rule: The texture vote leans lighter (lighter: acne concern), so the lightweight hydration and moisturising variants are used.
+functional class: Barrier / brightening
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Niacinamide (and Niacin) are safe as used in cosmetics. Clinical testing reported no significant skin irritation, sensitisation, or photosensitisation at the concentrations tested. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Niacinamide; Glycerin; Squalane; Dimethicone
+selected rank: 1 of 4
+runner up: Glycerin
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record lists the acne context; a lighter texture (water-soluble barrier ingredient) for a routine that leans lighter
+what it is plain: A form of vitamin B3 used in moisturisers and serums.
+why today plain: It is one of the ingredients DermaSynth's records link to breakouts. Its lighter texture suits today's lighter routine.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Good data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Niacinamide (and Niacin) are safe as used in cosmetics. Clinical testing reported no significant skin irritation, sensitisation, or photosensitisation at the concentrations tested. Paraphrased factual summary; no verbatim CIR text is stored.","You have this evening step to provide lightweight moisture while keeping your breakout concern in mind. Niacinamide is a form of vitamin B3 commonly used in moisturisers and serums. Niacinamide is linked to breakouts in the supplied records, and its lighter texture suits your combination skin and today’s lighter routine.","",""
+"CUE030","ingredient","research context: Uneven-tone context
+skin profile: combination
+environmental readings: uvi 7.9, humidity 83, temperature 26, pm25 41.1, uviMaxToday 4.35
+ingredient: Niacinamide
+step: Lightweight moisturising category
+step rule: The texture vote leans lighter (lighter: humidity 83% (humid air)), so the lightweight hydration and moisturising variants are used.
+functional class: Barrier / brightening
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Niacinamide (and Niacin) are safe as used in cosmetics. Clinical testing reported no significant skin irritation, sensitisation, or photosensitisation at the concentrations tested. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Glycerin; Niacinamide; Squalane; Dimethicone
+selected rank: 2 of 4
+runner up: Glycerin
+deciding factor versus runner up: how closely its evidence matched this step
+fit to user: its database record lists the pigment context; a lighter texture (water-soluble barrier ingredient) for a routine that leans lighter
+what it is plain: A form of vitamin B3 used in moisturisers and serums.
+why today plain: Often used for uneven tone. Its lighter texture suits today's lighter routine.
+user concern: uneven tone
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Good data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Niacinamide (and Niacin) are safe as used in cosmetics. Clinical testing reported no significant skin irritation, sensitisation, or photosensitisation at the concentrations tested. Paraphrased factual summary; no verbatim CIR text is stored.","You keep this moisturising step light because today’s humidity is 83%. Niacinamide is a form of vitamin B3 used in moisturisers and serums. Niacinamide is often used for uneven tone, and its lighter texture matches today’s lighter routine in 83% humidity.","",""
+"CUE031","step","research context: Oil/shine context
+skin profile: combination
+environmental readings: uvi 0, humidity 88, temperature 27.2, pm25 58.4, uviMaxToday 8.55
+phase: evening
+step: Overnight comfort category
+purpose: Overnight comfort context.
+rule: Every evening routine ends with an overnight comfort step.
+plain reason: A plain moisturiser or balm to finish your evening.","You finish your evening routine with a plain moisturising or comforting step.","",""
+"CUE032","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 7.7, humidity 79, temperature 30, pm25 9.2, uviMaxToday 9
+ingredient: Dimethicone
+step: Lightweight moisturising category
+step rule: The texture vote leans lighter (lighter: acne concern, humidity 79% (humid air) and 30 °C (hot)), so the lightweight hydration and moisturising variants are used.
+functional class: Emollient / occlusive
+verified safety evidence: Paraphrased CIR conclusion: in the amended Safety Assessment covering Dimethicone and related methicone/dimethicone ingredients, the CIR Expert Panel concluded these ingredients are safe in the present practices of use and concentration. These are large polymers not expected to penetrate skin. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Glycerin; Squalane; Dimethicone
+selected rank: 3 of 3
+runner up: Glycerin
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the acne context; a medium texture (silicone emollient, film-forming) for a routine that leans lighter
+what it is plain: An emollient that also forms a light film on the skin to slow water loss.
+why today plain: Kept light today because of your breakouts concern, humid air (79% humidity) and the heat (30 °C).
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 5 on a 1 to 10 scale (1 = lowest), Fair data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the amended Safety Assessment covering Dimethicone and related methicone/dimethicone ingredients, the CIR Expert Panel concluded these ingredients are safe in the present practices of use and concentration. These are large polymers not expected to penetrate skin. Paraphrased factual summary; no verbatim CIR text is stored.","This moisturising step stays light because of your breakouts concern, humid air (79% humidity) and the heat (30 °C). Dimethicone is an emollient that also forms a light film on the skin to slow water loss. Dimethicone fits a lighter routine with its medium texture. Today's routine stays light because of your breakouts concern, 79% humidity and 30 °C heat.","",""
+"CUE033","ingredient","research context: Breakout-prone appearance
+skin profile: sensitive
+environmental readings: uvi 0, humidity 85, temperature 26.3, pm25 8.9, uviMaxToday 9.1
+ingredient: Allantoin
+step: Overnight comfort category
+step rule: Every evening routine ends with an overnight comfort step.
+functional class: Soothing
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Allantoin and its related complexes are safe for use as cosmetic ingredients. Allantoin was reported in use at concentrations up to about 2%. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Allantoin; Madecassoside; Squalane; Ceramide NP
+selected rank: 1 of 4
+runner up: Madecassoside
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the acne context; a lighter texture (soothing) for a routine that leans lighter; a soothing or protective functional class for reactive skin
+what it is plain: A soothing ingredient used in products made for easily irritated skin.
+why today plain: Its lighter texture suits today's lighter routine. It is a gentle choice for skin that reacts easily.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Allantoin and its related complexes are safe for use as cosmetic ingredients. Allantoin was reported in use at concentrations up to about 2%. Paraphrased factual summary; no verbatim CIR text is stored.","This step is included because every evening routine ends with overnight comfort. Allantoin is a soothing ingredient used in products made for easily irritated skin. Its lighter texture suits today's lighter routine, and it is a gentle choice for skin that reacts easily.","",""
+"CUE034","step","research context: Visible-pore appearance
+skin profile: combination
+environmental readings: uvi 7.5, humidity 81, temperature 30.9, pm25 5.8, uviMaxToday 8.95
+phase: evening
+step: Texture-renewal category
+purpose: Evening texture-context category.
+rule: The visible-pore appearance context includes an evening texture-renewal step; it is kept out of the morning because hydroxy acids raise sun sensitivity.
+plain reason: Evenings only, because exfoliants make skin more sensitive to the sun.","You keep this texture-renewal step for the evening because exfoliants make your skin more sensitive to the sun.","",""
+"CUE035","ingredient","research context: Dullness/radiance appearance
+skin profile: combination
+environmental readings: uvi 7.1, humidity 68, temperature 32, pm25 8.8, uviMaxToday 9.1
+ingredient: Gluconolactone
+step: Texture-renewal category
+step rule: The dullness/radiance appearance context includes an evening texture-renewal step; it is kept out of the morning because hydroxy acids raise sun sensitivity.
+functional class: PHA exfoliant
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Glycolactones the CIR Expert Panel addressed Gluconolactone (which hydrolyses to gluconic acid); CIR concluded gluconic acid and its salts are safe in the present practices of use and concentration. A reviewer should confirm the exact gluconolactone wording in the final report. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Gluconolactone; Glycolic Acid; Salicylic Acid; Mandelic Acid
+selected rank: 1 of 4
+runner up: Glycolic Acid
+deciding factor versus runner up: its EWG reference score
+fit to user: its database record does not list the radiance context
+what it is plain: A PHA: a gentle type of chemical exfoliant that loosens dead cells on the skin's surface.
+why today plain: Evenings only, because exfoliants make skin more sensitive to the sun.
+user concern: dullness
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Glycolactones the CIR Expert Panel addressed Gluconolactone (which hydrolyses to gluconic acid); CIR concluded gluconic acid and its salts are safe in the present practices of use and concentration. A reviewer should confirm the exact gluconolactone wording in the final report. Paraphrased factual summary; no verbatim CIR text is stored.","This step stays in your evening routine because exfoliants make your skin more sensitive to the sun. Gluconolactone is a PHA, a gentle type of chemical exfoliant. Gluconolactone belongs in your evening routine because exfoliants make your skin more sensitive to the sun.","",""
+"CUE036","ingredient","research context: Uneven-tone context
+skin profile: combination
+environmental readings: uvi 0.1, humidity 87, temperature 12.9, pm25 3.7, uviMaxToday 2.5
+ingredient: Niacinamide
+step: Supportive hydration category
+step rule: The texture vote is balanced (richer: 13 °C (cold); lighter: humidity 87% (humid air)), so the supportive hydration and moisturising variants are used.
+functional class: Barrier / brightening
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Niacinamide (and Niacin) are safe as used in cosmetics. Clinical testing reported no significant skin irritation, sensitisation, or photosensitisation at the concentrations tested. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Niacinamide; Beta-Glucan; Glycerin; Ectoin
+selected rank: 1 of 4
+runner up: Beta-Glucan
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record lists the pigment context; a lighter texture (water-soluble barrier ingredient) for a balanced routine
+what it is plain: A form of vitamin B3 used in moisturisers and serums.
+why today plain: Often used for uneven tone.
+user concern: uneven tone
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Good data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Niacinamide (and Niacin) are safe as used in cosmetics. Clinical testing reported no significant skin irritation, sensitisation, or photosensitisation at the concentrations tested. Paraphrased factual summary; no verbatim CIR text is stored.","You have this morning hydration step because today’s cool, humid conditions call for a balanced texture. Niacinamide is a form of vitamin B3 used in moisturisers and serums. Niacinamide is often used for uneven tone, your concern. Its lighter, water-soluble texture fits a balanced routine in 12.9 °C weather and 87% humidity.","",""
+"CUE037","ingredient","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 74, temperature 27.7, pm25 10.3, uviMaxToday 9.15
+ingredient: Allantoin
+step: Overnight comfort category
+step rule: Every evening routine ends with an overnight comfort step.
+functional class: Soothing
+verified safety evidence: Paraphrased CIR conclusion: the CIR Expert Panel concluded that Allantoin and its related complexes are safe for use as cosmetic ingredients. Allantoin was reported in use at concentrations up to about 2%. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Madecassoside; Allantoin; Squalane; Ceramide NP
+selected rank: 2 of 4
+runner up: Madecassoside
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record does not list the acne context; a lighter texture (soothing) for a routine that leans lighter
+what it is plain: A soothing ingredient used in products made for easily irritated skin.
+why today plain: Its lighter texture suits today's lighter routine.
+user concern: breakouts
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: the CIR Expert Panel concluded that Allantoin and its related complexes are safe for use as cosmetic ingredients. Allantoin was reported in use at concentrations up to about 2%. Paraphrased factual summary; no verbatim CIR text is stored.","You have this step to finish your evening routine with comfort. Allantoin is a soothing ingredient used in products made for easily irritated skin. Allantoin’s lighter texture fits today’s lighter routine for your combination skin and breakout concern.","",""
+"CUE038","step","research context: Redness-prone appearance
+skin profile: combination
+environmental readings: uvi 1.6, humidity 88, temperature 25.6, pm25 9, uviMaxToday 9
+phase: morning
+step: Supportive hydration category
+purpose: Balanced hydration context.
+rule: The texture vote is balanced (richer: redness concern; lighter: humidity 88% (humid air)), so the supportive hydration and moisturising variants are used.
+plain reason: A balanced texture suits today's conditions.","You get balanced hydration today, balancing your redness concern with the humid air at 88%.","",""
+"CUE039","step","research context: Breakout-prone appearance
+skin profile: combination
+environmental readings: uvi 0, humidity 60, temperature 28.2, pm25 12.8, uviMaxToday 5.05
+phase: evening
+step: Overnight comfort category
+purpose: Overnight comfort context.
+rule: Every evening routine ends with an overnight comfort step.
+plain reason: The last step of your evening routine.","You finish your evening routine with a comforting final step.","",""
+"CUE040","ingredient","research context: Barrier comfort
+skin profile: combination
+environmental readings: uvi 7.7, humidity 83, temperature 27.8, pm25 9.2, uviMaxToday 9
+ingredient: Ceramide NP
+step: Barrier-support moisturising category
+step rule: The barrier guardrail is active because of this barrier comfort context or your reported reactivity, so the conservative comfort and barrier-support variant is used.
+functional class: Barrier lipid
+verified safety evidence: Paraphrased CIR conclusion: in the Safety Assessment of Ceramides (final 2015; supplement 2020) the CIR Expert Panel concluded the assessed ceramides, including Ceramide NP, are safe in the present practices of use and concentration, provided they are not derived from bovine central-nervous-system tissue. Paraphrased factual summary; no verbatim CIR text is stored.
+safety source: Cosmetic Ingredient Review (CIR)
+evidence grade: verified CIR conclusion
+retrieved candidates in rank order: Squalane; Dimethicone; Ceramide NP; Ceramide EOP
+selected rank: 3 of 4
+runner up: Squalane
+deciding factor versus runner up: how well it fits this user's profile, finish preference, concern and weather
+fit to user: its database record lists the barrier context; a richer texture (barrier lipid) for a routine that leans lighter
+what it is plain: A barrier lipid: one of the fats naturally found in the skin's outer layer.
+why today plain: Often used for a sensitive skin barrier.
+user concern: a sensitive skin barrier
+chosen by: the language model, from the retrieved approved pool
+ewg reference: EWG Skin Deep hazard score 1 on a 1 to 10 scale (1 = lowest), Limited data, checked 2026-09-23
+source (Cosmetic Ingredient Review (CIR)): Paraphrased CIR conclusion: in the Safety Assessment of Ceramides (final 2015; supplement 2020) the CIR Expert Panel concluded the assessed ceramides, including Ceramide NP, are safe in the present practices of use and concentration, provided they are not derived from bovine central-nervous-system tissue. Paraphrased factual summary; no verbatim CIR text is stored.","This step gives you gentle, comforting moisture while barrier comfort is the focus today. Ceramide NP is a barrier lipid, one of the fats naturally found in your skin's outer layer. It is often used for a sensitive skin barrier.","",""

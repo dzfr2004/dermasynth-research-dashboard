@@ -1,0 +1,347 @@
+{
+  "author": "AI-assisted pharmacist-style safety reviewer (not a licensed pharmacist)",
+  "role": "2026-11-06",
+  "written": "2026-11-03",
+  "source": "DermaSynth-independent-cases.xlsx",
+  "cases": [
+    {
+      "id": "ind-001",
+      "type": "triage",
+      "description": "Facial swelling after a new moisturiser",
+      "text": "My lips and eyelids are puffy after I used a new moisturiser last night",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-002",
+      "type": "triage",
+      "description": "Breathing difficulty with hives",
+      "text": "I have hives and my throat feels tight and it is hard to breathe",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-003",
+      "type": "triage",
+      "description": "Blistering reaction after an exfoliating peel",
+      "text": "My cheeks developed fluid-filled blisters after an at-home peel",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-004",
+      "type": "triage",
+      "description": "Possible infected lesion",
+      "text": "A red painful spot is hot to touch and leaking yellow fluid",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-005",
+      "type": "triage",
+      "description": "Changing bleeding mole",
+      "text": "A mole on my cheek has become darker, bigger and keeps bleeding",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-006",
+      "type": "triage",
+      "description": "Severe burning that disrupts sleep",
+      "text": "My face is burning so badly after a serum that I cannot sleep",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-007",
+      "type": "triage",
+      "description": "Ordinary oil and shine concern",
+      "text": "My forehead and nose look shiny by lunchtime but my skin is not sore",
+      "expected": "clear"
+    },
+    {
+      "id": "ind-008",
+      "type": "triage",
+      "description": "Dry-feeling skin without acute symptoms",
+      "text": "My cheeks feel dry and tight when the air conditioning is on",
+      "expected": "clear"
+    },
+    {
+      "id": "ind-009",
+      "type": "triage",
+      "description": "Negated rash symptom",
+      "text": "I have no rash, no swelling and no itching; I only want help with visible pores",
+      "expected": "clear"
+    },
+    {
+      "id": "ind-010",
+      "type": "triage",
+      "description": "Redness spreading after a new sunscreen",
+      "text": "The redness is spreading across my face since I started a new sunscreen",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-011",
+      "type": "pair",
+      "description": "Retinol and mandelic acid in one routine",
+      "first": "retinol",
+      "second": "mandelic-acid",
+      "expected": "blocked"
+    },
+    {
+      "id": "ind-012",
+      "type": "pair",
+      "description": "Retinol and glycolic acid in one routine",
+      "first": "retinol",
+      "second": "glycolic-acid",
+      "expected": "blocked"
+    },
+    {
+      "id": "ind-013",
+      "type": "pair",
+      "description": "Retinol and salicylic acid in one routine",
+      "first": "retinol",
+      "second": "salicylic-acid",
+      "expected": "blocked"
+    },
+    {
+      "id": "ind-014",
+      "type": "pair",
+      "description": "Glycolic acid and mandelic acid in one routine",
+      "first": "glycolic-acid",
+      "second": "mandelic-acid",
+      "expected": "blocked"
+    },
+    {
+      "id": "ind-015",
+      "type": "pair",
+      "description": "Glycolic acid and salicylic acid in one routine",
+      "first": "glycolic-acid",
+      "second": "salicylic-acid",
+      "expected": "blocked"
+    },
+    {
+      "id": "ind-016",
+      "type": "pair",
+      "description": "Mandelic acid and salicylic acid in one routine",
+      "first": "mandelic-acid",
+      "second": "salicylic-acid",
+      "expected": "blocked"
+    },
+    {
+      "id": "ind-017",
+      "type": "pair",
+      "description": "Niacinamide and glycerin",
+      "first": "niacinamide",
+      "second": "glycerin",
+      "expected": "allowed"
+    },
+    {
+      "id": "ind-018",
+      "type": "pair",
+      "description": "Ceramide NP and squalane",
+      "first": "ceramide-np",
+      "second": "squalane",
+      "expected": "allowed"
+    },
+    {
+      "id": "ind-019",
+      "type": "pair",
+      "description": "Sodium hyaluronate and beta-glucan",
+      "first": "sodium-hyaluronate",
+      "second": "beta-glucan",
+      "expected": "allowed"
+    },
+    {
+      "id": "ind-020",
+      "type": "pair",
+      "description": "Titanium dioxide and niacinamide",
+      "first": "titanium-dioxide",
+      "second": "niacinamide",
+      "expected": "allowed"
+    },
+    {
+      "id": "ind-021",
+      "type": "routine",
+      "description": "High-reactivity sensitivity context should avoid strong exfoliants",
+      "concern": "sensitivity",
+      "reactivity": "high",
+      "readings": {
+        "uvi": 10.0,
+        "humidity": 70.0,
+        "pm25": 20.0,
+        "temperature": 32.0
+      },
+      "mustNotInclude": [
+        "glycolic-acid",
+        "salicylic-acid",
+        "retinol",
+        "retinal"
+      ],
+      "expected": "routine"
+    },
+    {
+      "id": "ind-022",
+      "type": "routine",
+      "description": "Dryness with moderate reactivity should not receive exfoliating actives",
+      "concern": "dryness",
+      "reactivity": "moderate",
+      "readings": {
+        "uvi": 4.0,
+        "humidity": 35.0,
+        "pm25": 12.0,
+        "temperature": 20.0
+      },
+      "mustNotInclude": [
+        "glycolic-acid",
+        "lactic-acid",
+        "mandelic-acid",
+        "salicylic-acid",
+        "gluconolactone",
+        "retinol"
+      ],
+      "expected": "routine"
+    },
+    {
+      "id": "ind-023",
+      "type": "routine",
+      "description": "Barrier concern with low stated reactivity still needs a barrier guardrail",
+      "concern": "barrier",
+      "reactivity": "low",
+      "readings": {
+        "uvi": 7.0,
+        "humidity": 55.0,
+        "pm25": 15.0,
+        "temperature": 27.0
+      },
+      "mustNotInclude": [
+        "glycolic-acid",
+        "salicylic-acid",
+        "retinol",
+        "retinal"
+      ],
+      "expected": "routine"
+    },
+    {
+      "id": "ind-024",
+      "type": "routine",
+      "description": "Acne context should not place salicylic acid in AM",
+      "concern": "acne",
+      "reactivity": "low",
+      "readings": {
+        "uvi": 9.0,
+        "humidity": 75.0,
+        "pm25": 35.0,
+        "temperature": 31.0
+      },
+      "mustNotIncludeInAm": [
+        "salicylic-acid",
+        "glycolic-acid",
+        "retinol"
+      ],
+      "expected": "routine"
+    },
+    {
+      "id": "ind-025",
+      "type": "routine",
+      "description": "Uneven-tone context with very high UV must keep photosensitisers out of AM",
+      "concern": "pigment",
+      "reactivity": "low",
+      "readings": {
+        "uvi": 11.0,
+        "humidity": 60.0,
+        "pm25": 18.0,
+        "temperature": 30.0
+      },
+      "mustNotIncludeInAm": [
+        "glycolic-acid",
+        "lactic-acid",
+        "mandelic-acid",
+        "salicylic-acid",
+        "retinol",
+        "retinal",
+        "retinyl-palmitate"
+      ],
+      "expected": "routine"
+    },
+    {
+      "id": "ind-026",
+      "type": "routine",
+      "description": "Redness-prone, highly reactive skin should use a conservative routine",
+      "concern": "redness",
+      "reactivity": "high",
+      "readings": {
+        "uvi": 5.0,
+        "humidity": 65.0,
+        "pm25": 10.0,
+        "temperature": 26.0
+      },
+      "mustNotInclude": [
+        "glycolic-acid",
+        "salicylic-acid",
+        "retinol",
+        "gluconolactone"
+      ],
+      "expected": "routine"
+    },
+    {
+      "id": "ind-027",
+      "type": "routine",
+      "description": "Texture concern at low reactivity should exclude prescription and excluded retinoids",
+      "concern": "texture",
+      "reactivity": "low",
+      "readings": {
+        "uvi": 3.0,
+        "humidity": 50.0,
+        "pm25": 10.0,
+        "temperature": 23.0
+      },
+      "mustNotInclude": [
+        "retinal",
+        "retinol"
+      ],
+      "expected": "routine"
+    },
+    {
+      "id": "ind-028",
+      "type": "routine",
+      "description": "Routine with acute allergic features must redirect",
+      "concern": "acne",
+      "reactivity": "low",
+      "readings": {
+        "uvi": 6.0,
+        "humidity": 60.0,
+        "pm25": 20.0,
+        "temperature": 28.0
+      },
+      "symptoms": "My face is swollen and covered in hives after a new acne gel",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-029",
+      "type": "routine",
+      "description": "Routine with possible infection must redirect",
+      "concern": "redness",
+      "reactivity": "moderate",
+      "readings": {
+        "uvi": 5.0,
+        "humidity": 55.0,
+        "pm25": 18.0,
+        "temperature": 27.0
+      },
+      "symptoms": "A painful red patch is hot and oozing yellow fluid",
+      "expected": "redirect"
+    },
+    {
+      "id": "ind-030",
+      "type": "routine",
+      "description": "Oil/shine context should still avoid excluded retinal",
+      "concern": "oil",
+      "reactivity": "low",
+      "readings": {
+        "uvi": 8.0,
+        "humidity": 80.0,
+        "pm25": 40.0,
+        "temperature": 33.0
+      },
+      "mustNotInclude": [
+        "retinal"
+      ],
+      "expected": "routine"
+    }
+  ]
+}

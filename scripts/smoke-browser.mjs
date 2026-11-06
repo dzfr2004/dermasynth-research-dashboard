@@ -143,7 +143,7 @@ for (const width of [375, 1280]) {
   await check(`${label}-landing`, `${label}: a consumer lands on the routine page`, async () => {
     expect((await page.locator("#page-title").innerText()).trim() === "Your routine", "Landing page is not the routine page.");
   });
-  const views = width < 500 ? ["simulator", "monitor", "knowledge"] : ["simulator", "monitor", "dashboard", "knowledge"];
+  const views = width < 500 ? ["simulator", "monitor", "shelf", "knowledge"] : ["simulator", "monitor", "shelf", "dashboard", "knowledge"];
   for (const view of views) {
     await goTo(page, view);
     if (width < 500) await check(`${label}-${view}-reached`, `${label}: the ${view} page is reachable from the bottom navigation`, async () => {
@@ -160,9 +160,9 @@ for (const width of [375, 1280]) {
     });
   }
   if (width < 500) {
-    await check("phone-nav", "phone: the bottom navigation is Today / Weather / Ingredients", async () => {
+    await check("phone-nav", "phone: the bottom navigation is Today / Weather / Shelf / Ingredients", async () => {
       const labels = await page.locator(".mobile-nav-item span").allInnerTexts();
-      expect(labels.join("/") === "Today/Weather/Ingredients", `Nav is ${labels.join("/")}`);
+      expect(labels.join("/") === "Today/Weather/Shelf/Ingredients", `Nav is ${labels.join("/")}`);
     });
     await goTo(page, "monitor");
     await check("phone-weather", "phone: the Weather page is plain (no research terms) and shows today's readings", async () => {
@@ -195,6 +195,18 @@ for (const width of [375, 1280]) {
     expect(steps >= 4 && reasons === steps, `${steps} steps, ${reasons} with a reason.`);
     expect(await page.locator(".today-card").count() === 1, "Today's conditions card missing.");
     await page.waitForTimeout(1400); // let the entrance animation and background updates settle
+  });
+  await check(`${label}-checklist`, `${label}: ticking a step marks it done and keeps focus on it`, async () => {
+    const tick = page.locator('[data-action="step-done"]').first();
+    const key = await tick.getAttribute("data-key");
+    await tick.click();
+    await page.waitForTimeout(300);
+    const after = page.locator(`[data-action="step-done"][data-key="${key}"]`);
+    expect(await after.getAttribute("aria-pressed") === "true", "Step was not marked done.");
+    expect(await page.evaluate((k) => document.activeElement?.dataset?.key === k, key), "Focus left the tick button.");
+    await after.click();
+    await page.waitForTimeout(300);
+    expect(await page.locator(`[data-action="step-done"][data-key="${key}"]`).getAttribute("aria-pressed") === "false", "Step could not be unticked.");
   });
   await check(`${label}-why`, `${label}: "Why?" opens, closes and keeps focus`, async () => {
     const button = page.locator('[data-action="toggle-why"]').first();

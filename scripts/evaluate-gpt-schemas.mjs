@@ -4,6 +4,7 @@ import { strictSchemaProblems, schemaShape, validateAgainstSchema } from "../lib
 import { llmTriageSecondOpinion } from "../lib/triage-llm.mjs";
 import { evaluateCue, evaluateCueBatch } from "../lib/cue.mjs";
 import { composeIngredientRationales, composeRoutineContext, synthesizeIngredientSelection, synthesizeRoutine } from "../lib/synthesis.mjs";
+import { scanProductLabel } from "../lib/label-scan.mjs";
 
 /**
  * C2: GPT output schema contract test (offline, against a local mock of the
@@ -37,6 +38,7 @@ const builders = {
   }),
   cue_verdicts: (inp) => ({ verdicts: (inp.statements || []).map((s) => ({ index: s.index, supported: true, reason: "Stated in the context." })) }),
   cue_batch_verdicts: (inp) => ({ items: (inp.items || []).map((it) => ({ id: it.id, verdicts: it.statements.map((s) => ({ index: s.index, supported: true, reason: "Stated in the context." })) })) }),
+  label_transcription: () => ({ legible: true, product_name: "Mock Gentle Cleanser", brand: "Mock", product_type: "cleanser", ingredients_text: "Aqua, Glycerin, Panthenol" }),
   ingredient_rationales: (inp) => ({ rationales: (inp.candidates || []).map((c) => ({ id: c.id, text: `${c.ingredient} is listed with a published safety conclusion from its source.` })) }),
 };
 function malformed(valid, schema, kind) {
@@ -87,6 +89,7 @@ const calls = {
   },
   cue_verdicts: async () => (await evaluateCue({ config, text: "Glycerin attracts water. It is used in the morning.", facts: { note: "Glycerin attracts water. It is used in the morning." } })).method === "llm_judge",
   cue_batch_verdicts: async () => (await evaluateCueBatch({ config, items: [{ id: "a", text: "Glycerin attracts water.", facts: { note: "Glycerin attracts water." } }] })).get("a").method === "llm_judge",
+  label_transcription: async () => { const r = await scanProductLabel({ config, image: "data:image/png;base64,iVBORw0KGgo=" }); return r.legible === true && r.ingredientsText.includes("Glycerin") && r.type === "cleanser"; },
   ingredient_rationales: async () => (await composeIngredientRationales({ config, concern: "dryness", environment, candidates: [{ id: "glycerin", name: "Glycerin", category: "Comfort hydration", note: { text: "Glycerin is listed with a published safety conclusion from its source.", source: "CIR" } }] })).length === 1,
 };
 const run = async (name, m) => { mode = m; try { return { used: await calls[name](), threw: null }; } catch (error) { return { used: false, threw: error?.code || error?.message || "error" }; } };

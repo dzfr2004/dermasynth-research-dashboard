@@ -20,3 +20,7 @@ data/study/
 /_archive/
 ~$*
 data/logs/
+
+# Local working material (decks, PDFs, screenshots), not part of the code
+Claude outputs/
+*.bak*

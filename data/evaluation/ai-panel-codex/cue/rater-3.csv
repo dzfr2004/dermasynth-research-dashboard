@@ -1,0 +1,41 @@
+item_id,supported,notes
+CUE001,yes,Each claim is explicitly represented in the facts.
+CUE002,no,"Gentleness is a conclusion, not a directly stated property in the supplied facts."
+CUE003,yes,Exact category and purpose match.
+CUE004,yes,"Exact profile, concern, temperature, and humidity match."
+CUE005,yes,The UV and ingredient facts directly support all sentences.
+CUE006,yes,Exact overnight-comfort rule.
+CUE007,yes,Exact phase and profile match.
+CUE008,yes,All stated ingredient and context facts appear in the evidence.
+CUE009,yes,Exact evening/sun-sensitivity rule.
+CUE010,yes,"Exact dry-feeling, barrier, and readings facts."
+CUE011,no,'Gentle choice' is not a direct fact; safety/soothing is not identical to gentleness.
+CUE012,yes,"The supplied facts directly state the concern, weather, function, and texture."
+CUE013,yes,"The facts cover overnight comfort, soothing class, and texture."
+CUE014,yes,Exact plain reason.
+CUE015,yes,All stated facts are present.
+CUE016,no,'Often used for dryness' is not the same as a supplied barrier-lipid and concern mapping.
+CUE017,no,"The text adds 'often used for a sensitive skin barrier,' which is not in the supplied evidence."
+CUE018,yes,The step rule explicitly supports this wording.
+CUE019,yes,Exact function and texture/weather facts.
+CUE020,yes,"Exact function, weather, texture, and record limitation."
+CUE021,yes,All stated facts are explicit.
+CUE022,yes,All stated facts are explicit.
+CUE023,yes,Functional class and record link support the wording.
+CUE024,yes,Weather vote and barrier-lipid facts support the wording.
+CUE025,yes,Exact context and readings.
+CUE026,yes,Exact ingredient/context facts.
+CUE027,no,"'Making sunscreen essential' is an inference from the threshold rule, not its literal wording."
+CUE028,yes,"Exact category, soothing, and texture facts."
+CUE029,yes,Exact record link and texture facts.
+CUE030,no,'Often used for uneven tone' is not an explicit supplied fact.
+CUE031,yes,Exact category purpose.
+CUE032,yes,"All readings, concern, function, and texture statements are supplied."
+CUE033,yes,Exact category and soothing/texture facts.
+CUE034,yes,Exact sun-sensitivity rule.
+CUE035,yes,The PHA and gentle-exfoliant facts are supplied.
+CUE036,yes,"Concern, class, texture, and weather are explicit."
+CUE037,yes,Exact category and texture facts.
+CUE038,yes,Exact balanced-hydration and environmental facts.
+CUE039,yes,Exact category purpose.
+CUE040,no,'Often used for a sensitive skin barrier' is not explicitly supplied.

@@ -112,10 +112,11 @@ await test("gpt-04", "When the explanation rewrite fails, drafts that already pa
   seen.length = 0;
   const steps = [{ key: "am:low-irritation-cleansing", phase: "am", title: "Low-irritation cleansing", purpose: "A gentle start.", rule: "The morning routine starts with low-irritation cleansing." }];
   const entries = [{ key: "am:comfort-hydration", name: "Glycerin", phase: "am", stepTitle: "Comfort hydration", stepRule: "Humidity is low.", facts: { functional_class: "Humectant" } }];
-  // the second routine_context call (the rewrite) fails
+  // The first round writes steps and ingredients as two parallel calls; the
+  // third routine_context call (the rewrite) fails.
   let calls = 0;
   const original = behaviour;
-  behaviour = new Proxy(original, { get: (target, key) => (key === "routine_context" ? (calls++ >= 1 ? { fail: true } : {}) : target[key]) });
+  behaviour = new Proxy(original, { get: (target, key) => (key === "routine_context" ? (calls++ >= 2 ? { fail: true } : {}) : target[key]) });
   const result = await composeRoutineContext({ config, concernLabel: "Dryness", profile: "dry", environment: { readings: { humidity: 40 } }, steps, entries });
   expect(result.steps["am:low-irritation-cleansing"], "The step draft that passed was lost.");
   expect(result.withheld.some((w) => w.key === "am:comfort-hydration"), "The rejected ingredient should be withheld.");

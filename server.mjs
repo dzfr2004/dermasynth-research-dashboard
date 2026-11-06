@@ -38,7 +38,9 @@ import {
   ROUTINE_CATEGORY_CATALOG,
   createCategoryRoutine,
   firstSafetyPass,
+  MAX_CONCERNS,
   normaliseConcern,
+  normaliseConcerns,
   secondSafetyPass,
   templateRoutine,
   triageRoutineRequest,
@@ -52,6 +54,8 @@ import { prefetchSlotSearches, retrieveSlotCandidates } from "./lib/candidate-re
 import { clearSearchCache, searchCacheStats } from "./lib/search-cache.mjs";
 import { buildIngredientEvidenceCorpus } from "./lib/ingredient-evidence-corpus.mjs";
 import { postSelectionSafetyPass } from "./lib/post-selection-safety.mjs";
+import { SHELF_LIMIT, checkShelf, cleanShelfProduct } from "./lib/shelf.mjs";
+import { MAX_IMAGE_CHARS, scanProductLabel, validLabelImage } from "./lib/label-scan.mjs";
 import { effectiveReactivity } from "./lib/personalisation.mjs";
 import { buildTwoLevelExplanation, slotReasonText } from "./lib/peg.mjs";
 import { appendContextLog, appendFeedback, appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
@@ -144,6 +148,11 @@ const publicFiles = new Map([
   ["/study.js", { path: "study.js", contentType: "text/javascript; charset=utf-8" }],
   ["/study.css", { path: "study.css", contentType: "text/css; charset=utf-8" }],
   ["/study-guide.js", { path: "study-guide.js", contentType: "text/javascript; charset=utf-8" }],
+  ["/sky.js", { path: "sky.js", contentType: "text/javascript; charset=utf-8" }],
+  ["/assets/fonts/fraunces-latin-opsz.woff2", { path: "assets/fonts/fraunces-latin-opsz.woff2", contentType: "font/woff2" }],
+  ["/assets/fonts/lato-400.woff2", { path: "assets/fonts/lato-400.woff2", contentType: "font/woff2" }],
+  ["/assets/fonts/lato-700.woff2", { path: "assets/fonts/lato-700.woff2", contentType: "font/woff2" }],
+  ["/assets/fonts/lato-900.woff2", { path: "assets/fonts/lato-900.woff2", contentType: "font/woff2" }],
 ]);
 
 class HttpError extends Error {
@@ -188,13 +197,13 @@ function sendMethodNotAllowed(response, requestId) {
   response.end(JSON.stringify({ error: "Method not allowed", requestId }));
 }
 
-async function readJson(request) {
+async function readJson(request, maxBytes = MAX_BODY_BYTES) {
   const chunks = [];
   let size = 0;
 
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > MAX_BODY_BYTES) {
+    if (size > maxBytes) {
       throw new HttpError(413, "Request body is too large.");
     }
     chunks.push(chunk);
@@ -237,6 +246,21 @@ function requiredConcern(value, fallback = "acne") {
   const concern = normaliseConcern(selected);
   if (!concern) throw new HttpError(400, "Invalid concern.");
   return concern;
+}
+
+/**
+ * The concerns a user picked, main concern first. `concerns` (an array of up
+ * to MAX_CONCERNS ids) takes priority; the single `concern` field still works.
+ */
+function requiredConcerns(input) {
+  if (input?.concerns === undefined || input?.concerns === null) return [requiredConcern(input?.concern)];
+  const raw = input.concerns;
+  if (!Array.isArray(raw) || !raw.length || raw.length > MAX_CONCERNS || raw.some((item) => typeof item !== "string")) {
+    throw new HttpError(400, `Choose between 1 and ${MAX_CONCERNS} concerns.`);
+  }
+  const concerns = normaliseConcerns(raw);
+  if (concerns.length !== raw.length) throw new HttpError(400, "Invalid concern.");
+  return concerns;
 }
 
 function optionalText(value, name, maximum = 500) {
@@ -453,6 +477,23 @@ function enforceWeekRateLimit(request) {
   }
   if (weekRequests.size >= LOCATION_SEARCH_CLIENTS_MAX) weekRequests.delete(weekRequests.keys().next().value);
   weekRequests.set(client, { windowStartedAt: Date.now(), count: 1, inFlight: 0 });
+}
+
+// Label scans call a vision model, so they get their own, tighter limit.
+const scanRequests = new Map();
+const SCAN_WINDOW_MS = 60_000;
+const SCAN_MAX_PER_WINDOW = 6;
+function enforceScanRateLimit(request) {
+  pruneWindow(scanRequests, SCAN_WINDOW_MS);
+  const client = clientKey(request);
+  const existing = scanRequests.get(client);
+  if (existing) {
+    if (existing.count >= SCAN_MAX_PER_WINDOW) throw new HttpError(429, "Too many label scans. Please wait a minute and try again.", { "retry-after": "60" });
+    existing.count += 1;
+    return;
+  }
+  if (scanRequests.size >= LOCATION_SEARCH_CLIENTS_MAX) scanRequests.delete(scanRequests.keys().next().value);
+  scanRequests.set(client, { windowStartedAt: Date.now(), count: 1, inFlight: 0 });
 }
 
 function enforceLocationSearchRateLimit(request) {
@@ -747,6 +788,7 @@ function buildRunReport({
   startedAt,
   profile,
   concern,
+  concerns = [],
   finishPreference,
   reactivityLevel,
   symptomsProvided,
@@ -779,6 +821,7 @@ function buildRunReport({
     input: {
       profile,
       concern,
+      ...(concerns.length > 1 ? { concerns } : {}),
       ...(finishPreference === undefined ? {} : { finishPreference }),
       ...(reactivityLevel === undefined ? {} : { reactivityLevel }),
       symptomsProvided: Boolean(symptomsProvided),
@@ -841,8 +884,9 @@ const FACTOR_WORDS = {
   user_fit: "how well it fits this user's profile, finish preference, concern and weather",
 };
 
-function routineContextPayload({ concern, profile, environment, routine, entries, explanation = null }) {
-  const concernLabel = CONCERN_CATALOG.find((item) => item.id === concern)?.label || concern;
+function routineContextPayload({ concern, concerns = [], profile, environment, routine, entries, explanation = null }) {
+  const labelFor = (id) => CONCERN_CATALOG.find((item) => item.id === id)?.label || id;
+  const concernLabel = [...new Set([concern, ...concerns])].filter(Boolean).map(labelFor).join(" + ");
   const steps = [
     ...(routine?.am || []).map((step) => ({ ...step, phase: "am" })),
     ...(routine?.pm || []).map((step) => ({ ...step, phase: "pm" })),
@@ -907,7 +951,7 @@ function selectionUnavailable(status, notice) {
  * pool, today's ingredient is kept, so the plan only changes when the weather
  * or the step changes. Returns { "am:category": { id, name, sameAsToday } } per day.
  */
-async function weekIngredients({ days, todaySteps = [], todayIngredients, profile, finishPreference, concern, reactivityLevel }) {
+async function weekIngredients({ days, todaySteps = [], todayIngredients, profile, finishPreference, concern, concerns = [], reactivityLevel }) {
   if (!config.ingredientSelectionEnabled || !config.ingredientDb?.enabled) return null;
   const repo = knowledgeRepo();
   const policy = getRuntimePolicy();
@@ -923,9 +967,9 @@ async function weekIngredients({ days, todaySteps = [], todayIngredients, profil
     const environment = { readings: day.readings };
     const categoryIds = [...(routine.am || []), ...(routine.pm || [])].map((step) => String(step?.id || "").toLowerCase()).filter(Boolean);
     try {
-      const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds, concern, environment, policy });
-      const selection = selectApprovedIngredientCandidates({ enabled: true, repository: repo, routine, profile, finishPreference, concern, environment, reactivityLevel, slotRetrieval, selectionMap });
-      const post = postSelectionSafetyPass({ entries: selection.entries, concern, reactivityLevel, environment });
+      const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds, concern, concerns, environment, policy });
+      const selection = selectApprovedIngredientCandidates({ enabled: true, repository: repo, routine, profile, finishPreference, concern, concerns, environment, reactivityLevel, slotRetrieval, selectionMap });
+      const post = postSelectionSafetyPass({ entries: selection.entries, concern, concerns, reactivityLevel, environment });
       // A routine names at most a few ingredients (the policy's per-run
       // limit), so a step that is in today's routine without a named
       // ingredient stays unnamed on other days too. Otherwise a day with
@@ -951,22 +995,46 @@ async function weekIngredients({ days, todaySteps = [], todayIngredients, profil
  * likely set is the union of the rule-built routine with and without the extra
  * hydration step. Returns how many searches were started.
  */
-function prefetchIngredientSearches({ concern, environment, evidence, profile, finishPreference, reactivityLevel, exposureContext, genericRoutine }) {
+function prefetchIngredientSearches({ concern, concerns = [], environment, evidence, profile, finishPreference, reactivityLevel, exposureContext, genericRoutine }) {
   if (!config.ingredientSelectionEnabled || !config.ingredientDb?.enabled) return 0;
   try {
     const ids = new Set();
     const add = (routine) => [...(routine?.am || []), ...(routine?.pm || [])].forEach((step) => { const id = String(step?.id || "").toLowerCase(); if (id) ids.add(id); });
     add(genericRoutine);
     for (const includeHydration of [true, false]) {
-      add(createCategoryRoutine({ concern, environment, evidence, includeHydration, profile, finishPreference, reactivityLevel, exposureContext }));
+      add(createCategoryRoutine({ concern, concerns, environment, evidence, includeHydration, profile, finishPreference, reactivityLevel, exposureContext }));
     }
-    return prefetchSlotSearches({ config, categoryIds: [...ids], concern, environment, policy: getRuntimePolicy() });
+    return prefetchSlotSearches({ config, categoryIds: [...ids], concern, concerns, environment, policy: getRuntimePolicy() });
   } catch {
     return 0;
   }
 }
 
-async function selectNamedIngredients({ routine, profile, finishPreference, concern, environment, reactivityLevel, allowLlmSelection, stages }) {
+// Latency (Nov 2026): the GPT ingredient pick used to start only after the GPT
+// category pick had finished. It now starts at the same time, on the largest
+// routine the category pick can produce (with the optional hydration step).
+// Picks for a step the final routine does not keep are dropped, and every
+// pick is still re-validated against its own slot pool and the post-selection
+// safety pass, so this changes timing only, never what may be shown.
+function startSpeculativeIngredientPicks({ concern, concerns = [], environment, evidence, profile, finishPreference, reactivityLevel, exposureContext }) {
+  if (!config.ingredientSelectionEnabled || !config.ingredientDb?.enabled || !config.liveServicesEnabled || !config.openai?.apiKey) return null;
+  return (async () => {
+    const superset = createCategoryRoutine({ concern, concerns, environment, evidence, includeHydration: true, profile, finishPreference, reactivityLevel, exposureContext });
+    const repo = knowledgeRepo();
+    const corpus = buildIngredientEvidenceCorpus({ ingredients: repo.listIngredients(), sources: repo.listSources() });
+    const categoryIds = [...(superset?.am || []), ...(superset?.pm || [])].map((step) => String(step?.id || "").toLowerCase()).filter(Boolean);
+    const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds, concern, concerns, environment, policy: getRuntimePolicy() });
+    const pre = selectApprovedIngredientCandidates({ enabled: true, repository: repo, routine: superset, profile, finishPreference, concern, concerns, environment, reactivityLevel, slotRetrieval });
+    if (pre.status !== "available" || !pre.pool.some((slot) => slot.candidates.length)) return null;
+    const vote = superset?.generation?.textureVote;
+    const userContext = { skin_profile: profile || null, finish_preference: finishPreference || "no-preference", reactivity: superset?.generation?.reactivityLevel || reactivityLevel || "low", routine_texture: vote ? vote.direction : "balanced", texture_reasons: vote ? vote.votes.map((v) => v.reason) : [] };
+    const started = Date.now();
+    const result = await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: pre.pool, userContext });
+    return { ...result, latencyMs: Date.now() - started };
+  })().catch((error) => ({ error }));
+}
+
+async function selectNamedIngredients({ routine, profile, finishPreference, concern, concerns = [], environment, reactivityLevel, allowLlmSelection, stages, speculativePicks = null }) {
   const repo = knowledgeRepo();
   const selectionStarted = Date.now();
   const policy = getRuntimePolicy();
@@ -977,13 +1045,13 @@ async function selectNamedIngredients({ routine, profile, finishPreference, conc
   } catch {
     corpus = [];
   }
-  const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds, concern, environment, policy });
+  const slotRetrieval = await retrieveSlotCandidates({ config, corpus, categoryIds, concern, concerns, environment, policy });
   stages.push(stage("ingredient_retrieval", corpus.length ? "completed" : "unavailable", selectionStarted, {
     corpusDocuments: corpus.length,
     modes: [...new Set([...slotRetrieval.values()].map((item) => item.mode))],
   }));
 
-  const base = { enabled: true, repository: repo, routine, profile, finishPreference, concern, environment, reactivityLevel, slotRetrieval };
+  const base = { enabled: true, repository: repo, routine, profile, finishPreference, concern, concerns, environment, reactivityLevel, slotRetrieval };
   const pre = selectApprovedIngredientCandidates(base);
   const llm = { requested: false, status: "not_requested", raw: [], rejected: [] };
   let selectionMap = null;
@@ -994,7 +1062,27 @@ async function selectNamedIngredients({ routine, profile, finishPreference, conc
     try {
       const vote = routine?.generation?.textureVote;
       const userContext = { skin_profile: profile || null, finish_preference: finishPreference || "no-preference", reactivity: routine?.generation?.reactivityLevel || reactivityLevel || "low", routine_texture: vote ? vote.direction : "balanced", texture_reasons: vote ? vote.votes.map((v) => v.reason) : [] };
-      const result = await synthesizeIngredientSelection({ config, concern, environment, pool: pre.pool, userContext });
+      const early = speculativePicks ? await speculativePicks : null;
+      if (early?.error) throw early.error;
+      const result = early || await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: pre.pool, userContext });
+      if (early) {
+        // Keep only picks for steps this routine has.
+        const keep = new Set(pre.pool.map((slot) => slot.categoryId));
+        result.map = Object.fromEntries(Object.entries(result.map || {}).filter(([category]) => keep.has(category)));
+        llm.startedEarly = true;
+        // The early call covers one extra step, and the model occasionally
+        // skips a step in a longer list. Ask again for any step it skipped.
+        const skipped = pre.pool.filter((slot) => slot.candidates.length && !result.map[slot.categoryId]);
+        if (skipped.length) {
+          try {
+            const extra = await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: skipped, userContext });
+            result.map = { ...result.map, ...(extra.map || {}) };
+            result.raw = [...(result.raw || []), ...(extra.raw || [])];
+            result.rejected = [...(result.rejected || []), ...(extra.rejected || [])];
+            llm.followUpFor = skipped.map((slot) => slot.categoryId);
+          } catch { /* the skipped step keeps the top-scored candidate */ }
+        }
+      }
       selectionMap = result.map;
       llm.status = "completed";
       llm.raw = result.raw;
@@ -1016,7 +1104,7 @@ async function selectNamedIngredients({ routine, profile, finishPreference, conc
   }));
 
   const postStarted = Date.now();
-  const postSafety = postSelectionSafetyPass({ entries: selection.entries, concern, reactivityLevel, environment });
+  const postSafety = postSelectionSafetyPass({ entries: selection.entries, concern, concerns, reactivityLevel, environment });
   selection.entries = postSafety.entries;
   selection.removedBySafety = postSafety.removed;
   if (!selection.entries.length && postSafety.removed.length) selection.status = "removed_by_post_selection_safety";
@@ -1032,6 +1120,7 @@ async function routineResult({
   startedAt,
   profile,
   concern,
+  concerns = [concern],
   finishPreference,
   reactivityLevel,
   exposureContext,
@@ -1049,6 +1138,7 @@ async function routineResult({
   researchEvidence = null,
   explainability = null,
   allowLlmSelection = false,
+  speculativePicks = null,
 }) {
   const ingredientResearch = ingredientResearchForConcern(concern, {
     exposeCandidates: status !== "medical_redirect",
@@ -1073,7 +1163,7 @@ async function routineResult({
     ingredientCandidates = selectApprovedIngredientCandidates({ enabled: false });
   } else {
     try {
-      ({ selection: ingredientCandidates, postSafety, llm } = await selectNamedIngredients({ routine, profile, finishPreference, concern, environment, reactivityLevel, allowLlmSelection, stages }));
+      ({ selection: ingredientCandidates, postSafety, llm } = await selectNamedIngredients({ routine, profile, finishPreference, concern, concerns, environment, reactivityLevel, allowLlmSelection, stages, speculativePicks }));
     } catch {
       ingredientCandidates = selectionUnavailable("knowledge_base_unavailable", "The approved knowledge base could not be read, so no named ingredient is shown.");
     }
@@ -1096,13 +1186,14 @@ async function routineResult({
   }
   const contextAvailable = Boolean(routine && status !== "medical_redirect" && config.liveServicesEnabled && config.openai?.apiKey);
   if (routine && status !== "medical_redirect") {
-    rememberRoutineContext(requestId, routineContextPayload({ concern, profile, environment, routine, entries: ingredientCandidates.entries || [], explanation }));
+    rememberRoutineContext(requestId, routineContextPayload({ concern, concerns, profile, environment, routine, entries: ingredientCandidates.entries || [], explanation }));
   }
   const runReport = buildRunReport({
     requestId,
     startedAt,
     profile,
     concern,
+    concerns,
     finishPreference,
     reactivityLevel,
     symptomsProvided,
@@ -1128,6 +1219,7 @@ async function routineResult({
       runId: requestId,
       startedAt,
       concern,
+      concerns,
       profile,
       reactivityLevel,
       environment,
@@ -1148,6 +1240,7 @@ async function routineResult({
     outputMode: INGREDIENT_OUTPUT_MODE,
     profile,
     concern,
+    concerns,
     profileModifiers: {
       ...(finishPreference === undefined ? {} : { finishPreference }),
       ...(reactivityLevel === undefined ? {} : { reactivityLevel }),
@@ -1317,7 +1410,8 @@ function degradedStatus(result, { gptActive, budget }) {
 async function handleRoutineRun(input, requestId) {
   const startedAt = new Date();
   const profile = requiredChoice(input.profile, ALLOWED_PROFILES, "profile", "combination");
-  const concern = requiredConcern(input.concern);
+  const concerns = requiredConcerns(input);
+  const concern = concerns[0];
   const finishPreference = optionalChoice(input.finishPreference, ALLOWED_FINISH_PREFERENCES, "finish preference");
   const statedReactivityLevel = optionalChoice(input.reactivityLevel, ALLOWED_REACTIVITY_LEVELS, "reactivity level");
   // B1: a sensitive skin profile raises low or missing reactivity to moderate,
@@ -1361,6 +1455,7 @@ async function handleRoutineRun(input, requestId) {
       startedAt,
       profile,
       concern,
+      concerns,
       finishPreference,
       reactivityLevel,
       symptomsProvided: Boolean(symptoms),
@@ -1394,6 +1489,7 @@ async function handleRoutineRun(input, requestId) {
       synthesisStatus: "not_requested",
       profile,
       concern,
+      concerns,
       routine: null,
       environment,
       conditionOptions: Object.fromEntries(Object.entries(REPORTED_CONDITION_OPTIONS).map(([key, options]) => [key, Object.entries(options).map(([id, option]) => ({ id, label: option.label }))])),
@@ -1406,7 +1502,7 @@ async function handleRoutineRun(input, requestId) {
   }));
 
   const firstSafetyStarted = Date.now();
-  const firstPass = firstSafetyPass({ concern, environment, reactivityLevel });
+  const firstPass = firstSafetyPass({ concern, concerns, environment, reactivityLevel });
   stages.push(stage("first_safety", firstPass.status, firstSafetyStarted, { ruleIds: (firstPass.rules || []).map((rule) => rule.id) }));
 
   const retrievalStarted = Date.now();
@@ -1431,6 +1527,7 @@ async function handleRoutineRun(input, requestId) {
   }));
 
   const genericRoutine = templateRoutine(concern, {
+    concerns,
     environment,
     evidence: [],
     profile,
@@ -1442,6 +1539,7 @@ async function handleRoutineRun(input, requestId) {
   });
   const genericSecondPass = secondSafetyPass(genericRoutine, {
     concern,
+    concerns,
     environment,
     reactivityLevel,
     allowedEvidenceIds: [],
@@ -1456,6 +1554,7 @@ async function handleRoutineRun(input, requestId) {
       startedAt,
       profile,
       concern,
+      concerns,
       finishPreference,
       reactivityLevel,
       symptomsProvided: Boolean(symptoms),
@@ -1475,7 +1574,9 @@ async function handleRoutineRun(input, requestId) {
 
   // Start the ingredient searches for the categories this routine can end up
   // with while GPT picks the categories (they are picked up from the cache).
-  const prefetchedCategories = prefetchIngredientSearches({ concern, environment, evidence: retrieval.eligibleEvidence, profile, finishPreference, reactivityLevel: statedReactivityLevel, exposureContext, genericRoutine });
+  const prefetchedCategories = prefetchIngredientSearches({ concern, concerns, environment, evidence: retrieval.eligibleEvidence, profile, finishPreference, reactivityLevel: statedReactivityLevel, exposureContext, genericRoutine });
+
+  const speculativePicks = startSpeculativeIngredientPicks({ concern, concerns, environment, evidence: retrieval.eligibleEvidence, profile, finishPreference, reactivityLevel: statedReactivityLevel, exposureContext });
 
   let routine;
   const synthesisStarted = Date.now();
@@ -1484,6 +1585,7 @@ async function handleRoutineRun(input, requestId) {
       config,
       profile,
       concern,
+      concerns,
       environment,
       evidence: retrieval.eligibleEvidence,
       finishPreference,
@@ -1507,6 +1609,7 @@ async function handleRoutineRun(input, requestId) {
       startedAt,
       profile,
       concern,
+      concerns,
       finishPreference,
       reactivityLevel,
       symptomsProvided: Boolean(symptoms),
@@ -1527,14 +1630,24 @@ async function handleRoutineRun(input, requestId) {
   const secondSafetyStarted = Date.now();
   const secondPass = secondSafetyPass(routine, {
     concern,
+    concerns,
     environment,
     reactivityLevel,
     allowedEvidenceIds: retrieval.eligibleEvidence,
   });
   stages.push(stage("second_safety", secondPass.status, secondSafetyStarted, { ruleIds: (secondPass.rules || []).map((rule) => rule.id) }));
-  const safety = combineSafety(firstPass, secondPass);
+  let safety = combineSafety(firstPass, secondPass);
+  let recoveryNotice = null;
 
-  if (secondPass.status !== "cleared") {
+  // If only the GPT-written routine text tripped the second pass (for example
+  // it named an ingredient), keep the live path and use the deterministic,
+  // allowlisted routine text instead of dropping to a category-only preview.
+  if (secondPass.status !== "cleared" && genericSecondPass.status === "cleared") {
+    routine = genericRoutine;
+    safety = genericSafety;
+    recoveryNotice = "GPT routine text did not pass the second safety screen, so the rule-based routine text is shown; ingredient selection continued normally.";
+    stages.push(stage("second_safety_recovered", "cleared", Date.now(), { ruleIds: (genericSecondPass.rules || []).map((rule) => rule.id) }));
+  } else if (secondPass.status !== "cleared") {
     const blockedSafety = {
       ...genericSafety,
       status: "review_required",
@@ -1546,6 +1659,7 @@ async function handleRoutineRun(input, requestId) {
       startedAt,
       profile,
       concern,
+      concerns,
       finishPreference,
       reactivityLevel,
       symptomsProvided: Boolean(symptoms),
@@ -1572,6 +1686,7 @@ async function handleRoutineRun(input, requestId) {
     startedAt,
     profile,
     concern,
+    concerns,
     finishPreference,
     reactivityLevel,
     exposureContext,
@@ -1582,11 +1697,12 @@ async function handleRoutineRun(input, requestId) {
     routine,
     environment,
     allowLlmSelection: true,
+    speculativePicks,
     retrieval,
     safety,
     stages,
     synthesisStatus: "completed",
-    notices: ["Live category selection completed with sufficient evidence and two deterministic safety passes; named ingredients passed the post-selection safety pass."],
+    notices: [...(recoveryNotice ? [recoveryNotice] : []), "Live category selection completed with sufficient evidence and two deterministic safety passes; named ingredients passed the post-selection safety pass."],
     researchEvidence,
     explainability,
   });
@@ -1933,6 +2049,42 @@ async function routeApi(request, response, url, requestId) {
     return sendJson(response, 200, { name, requestId }, requestId);
   }
 
+  if (request.method === "POST" && url.pathname === "/api/shelf/check") {
+    enforceLocationSearchRateLimit(request);
+    const input = await readJson(request, 256 * 1024);
+    const raw = Array.isArray(input?.products) ? input.products : [];
+    if (raw.length > SHELF_LIMIT) throw new HttpError(400, `A shelf holds up to ${SHELF_LIMIT} products.`);
+    const products = raw.map(cleanShelfProduct).filter(Boolean);
+    const routine = input?.routine && typeof input.routine === "object" ? input.routine : {};
+    const entries = (Array.isArray(routine.entries) ? routine.entries : []).slice(0, 12).map((e) => ({
+      ingredientId: String(e?.ingredientId || "").slice(0, 60), displayName: String(e?.displayName || "").slice(0, 80),
+      phase: e?.phase === "pm" ? "pm" : "am", categoryId: String(e?.categoryId || "").slice(0, 60),
+    })).filter((e) => /^[a-z0-9-]+$/.test(e.ingredientId));
+    const result = checkShelf({
+      products,
+      repository: knowledgeRepo(),
+      routine: { entries, steps: cleanSteps(routine.steps), concern: String(routine.concern || "").slice(0, 30), reactivityLevel: String(routine.reactivityLevel || "").slice(0, 12) },
+    });
+    return sendJson(response, 200, { ...result, requestId }, requestId);
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/shelf/scan") {
+    enforceScanRateLimit(request);
+    const input = await readJson(request, MAX_IMAGE_CHARS + 4096);
+    if (!validLabelImage(input?.image)) throw new HttpError(400, "Send a JPEG, PNG or WebP photo under 2 MB.");
+    try {
+      const scan = await scanProductLabel({ config, image: input.image });
+      return sendJson(response, 200, { ...scan, requestId }, requestId);
+    } catch (error) {
+      const code = error?.code || "error";
+      const message = code === "not_enabled"
+        ? "Label scanning needs the live AI service, which is off. Type or paste the ingredient list instead."
+        : code === "model_refusal" ? "The label couldn't be read. Type or paste the ingredient list instead."
+          : `The label couldn't be read right now. ${describeOpenAiError(error)}`;
+      return sendJson(response, 200, { legible: false, error: message, code, requestId }, requestId);
+    }
+  }
+
   if (request.method === "POST" && url.pathname === "/api/check-product") {
     enforceLocationSearchRateLimit(request);
     const input = await readJson(request);
@@ -1973,13 +2125,14 @@ async function routeApi(request, response, url, requestId) {
   if (request.method === "POST" && url.pathname === "/api/outlook") {
     const input = await readJson(request);
     const profile = requiredChoice(input.profile, ALLOWED_PROFILES, "profile", "combination");
-    const concern = requiredConcern(input.concern);
+    const concerns = requiredConcerns(input);
+    const concern = concerns[0];
     const finishPreference = optionalChoice(input.finishPreference, ALLOWED_FINISH_PREFERENCES, "finish preference");
     const reactivityLevel = optionalChoice(input.reactivityLevel, ALLOWED_REACTIVITY_LEVELS, "reactivity level");
     const exposureContext = optionalChoice(input.exposureContext, ALLOWED_EXPOSURE_CONTEXTS, "exposure context") || "mixed";
     const todaySteps = (Array.isArray(input.todaySteps) ? input.todaySteps : []).slice(0, 16).map((s) => String(s)).filter((s) => /^(am|pm):[a-z-]{3,40}$/.test(s));
     try {
-      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, finishPreference, reactivityLevel, exposureContext, todaySteps });
+      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, concerns, finishPreference, reactivityLevel, exposureContext, todaySteps });
       return sendJson(response, 200, { ...outlook, requestId }, requestId, { "cache-control": "private, max-age=300" });
     } catch {
       return sendJson(response, 200, { available: false, reason: "forecast_unavailable", requestId }, requestId);
@@ -1991,7 +2144,8 @@ async function routeApi(request, response, url, requestId) {
     enforceWeekRateLimit(request);
     const input = await readJson(request);
     const profile = requiredChoice(input.profile, ALLOWED_PROFILES, "profile", "combination");
-    const concern = requiredConcern(input.concern);
+    const concerns = requiredConcerns(input);
+    const concern = concerns[0];
     const finishPreference = optionalChoice(input.finishPreference, ALLOWED_FINISH_PREFERENCES, "finish preference");
     const reactivityLevel = optionalChoice(input.reactivityLevel, ALLOWED_REACTIVITY_LEVELS, "reactivity level");
     const exposureContext = optionalChoice(input.exposureContext, ALLOWED_EXPOSURE_CONTEXTS, "exposure context") || "mixed";
@@ -2001,9 +2155,9 @@ async function routeApi(request, response, url, requestId) {
       .map(([key, id]) => [String(key), String(id || "").toLowerCase()])
       .filter(([key, id]) => /^(am|pm):[a-z-]{3,40}$/.test(key) && /^[a-z0-9-]{2,80}$/.test(id)));
     try {
-      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, finishPreference, reactivityLevel, exposureContext, todaySteps, week: true });
+      const outlook = await buildOutlook({ config, location: routineLocation(input), profile, concern, concerns, finishPreference, reactivityLevel, exposureContext, todaySteps, week: true });
       if (!outlook.available || !outlook.week) return sendJson(response, 200, { available: false, reason: outlook.reason || "forecast_unavailable", requestId }, requestId);
-      const picks = await weekIngredients({ days: outlook.week.days, todaySteps, todayIngredients, profile, finishPreference, concern, reactivityLevel }).catch(() => null);
+      const picks = await weekIngredients({ days: outlook.week.days, todaySteps, todayIngredients, profile, finishPreference, concern, concerns, reactivityLevel }).catch(() => null);
       const days = outlook.week.days.map((day, index) => ({ ...day, ingredients: picks?.[index] || {} }));
       return sendJson(response, 200, { available: true, source: outlook.source, week: { ...outlook.week, days }, requestId }, requestId, { "cache-control": "private, max-age=300" });
     } catch {
