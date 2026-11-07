@@ -42,6 +42,11 @@ try {
   process.exit(0);
 }
 
+async function openMore(page) {
+  const more = page.locator(".more-actions");
+  if (await more.count() && !(await more.evaluate((el) => el.open))) { await more.locator("summary").click(); await page.waitForTimeout(250); }
+}
+
 async function reservePort() {
   const server = createServer();
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -245,7 +250,7 @@ for (const width of [375, 1280]) {
     const leak = text.match(CONFIG_LEAK);
     expect(!leak, `Found "${leak?.[0]}".`);
   });
-  await check(`${label}-one-line`, `${label}: "Today in one line" summarises the day above the routine`, async () => {
+  await check(`${label}-one-line`, `${label}: the hero sums up the day's plan in one line above the routine`, async () => {
     const text = (await page.locator(".hero-text").innerText()).trim();
     expect(text.length > 15 && /sunscreen|UV/i.test(text), `Summary missing or unexpected: "${text}"`);
   });
@@ -275,6 +280,7 @@ for (const width of [375, 1280]) {
     expect(/1 of 3 ingredients/.test(await page.locator(".pc-note").innerText()), "Unrecognised ingredient not reported.");
   });
   await check(`${label}-product-example`, `${label}: "Check my product" is one tap from the summary and the example runs`, async () => {
+    await openMore(page);
     await page.locator('[data-action="pc-focus"]').click();
     await page.waitForTimeout(700);
     expect(await page.evaluate(() => document.activeElement?.id) === "pc-text", "The ingredient box was not focused.");
@@ -290,7 +296,7 @@ for (const width of [375, 1280]) {
     await page.waitForSelector(".checkin-card.is-done", { timeout: 5000 });
   });
   await check(`${label}-reminders`, `${label}: reminders download as a calendar file`, async () => {
-    const [download] = await Promise.all([page.waitForEvent("download"), page.locator('[data-action="reminders"]').click()]);
+    const [download] = await Promise.all([page.waitForEvent("download"), openMore(page).then(() => page.locator('[data-action="reminders"]').click())]);
     expect(download.suggestedFilename() === "dermasynth-reminders.ics", "Wrong file name.");
     const text = await readFile(await download.path(), "utf8");
     expect(text.startsWith("BEGIN:VCALENDAR") && text.includes("BEGIN:VEVENT"), "Not a calendar file.");

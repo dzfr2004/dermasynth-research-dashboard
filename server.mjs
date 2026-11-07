@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
+import { readdirSync } from "node:fs";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { resolve } from "node:path";
 import { networkInterfaces } from "node:os";
@@ -154,6 +155,10 @@ const publicFiles = new Map([
   ["/assets/fonts/lato-700.woff2", { path: "assets/fonts/lato-700.woff2", contentType: "font/woff2" }],
   ["/assets/fonts/lato-900.woff2", { path: "assets/fonts/lato-900.woff2", contentType: "font/woff2" }],
 ]);
+// The front end's modules (ui/*.js) are served as they are added.
+for (const name of readdirSync(resolve(root, "ui"))) {
+  if (name.endsWith(".js")) publicFiles.set(`/ui/${name}`, { path: `ui/${name}`, contentType: "text/javascript; charset=utf-8" });
+}
 
 class HttpError extends Error {
   constructor(status, message, headers = {}) {

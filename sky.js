@@ -4,7 +4,7 @@
 // so the GL context and its animation survive the app's innerHTML renders.
 
 const FRAG = `precision highp float;
-uniform vec2 uRes; uniform float uTime, uUV, uHaze, uHum, uNight, uShift, uLift;
+uniform vec2 uRes; uniform float uTime, uUV, uHaze, uHum, uNight, uShift, uLift, uClear; uniform vec3 uSkyTop, uSkyBot;
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
 float sdRoundCone(vec3 p,float r1,float r2,float h){vec2 q=vec2(length(p.xz),p.y);float b=(r1-r2)/h;float a=sqrt(1.-b*b);float k=dot(q,vec2(-b,a));if(k<0.)return length(q)-r1;if(k>a*h)return length(q-vec2(0.,h))-r2;return dot(q,vec2(a,b))-r1;}
@@ -16,6 +16,7 @@ vec3 sky(vec3 d){
   vec3 day=mix(vec3(.22,.42,.31),vec3(.05,.17,.11),t);
   vec3 nite=mix(vec3(.06,.12,.14),vec3(.01,.03,.05),t);
   vec3 col=mix(day,nite,uNight);
+  col=mix(col,mix(uSkyBot,uSkyTop,t),uClear);
   col=mix(col,vec3(.46,.44,.36),uHaze*.55*(1.-uNight*.5));
   float g=max(dot(d,sun),0.);
   col+=vec3(1.,.76,.38)*(pow(g,6.)*(.15+uUV*.9)+pow(g,60.)*(.3+uUV*1.6))*(1.-uNight)*(1.-uHaze*.45);
@@ -35,17 +36,19 @@ void main(){
   float fog=noise(su*2.5+vec2(uTime*.08,0.))*.6+noise(su*6.-vec2(uTime*.05,0.))*.4;
   bg=mix(bg,vec3(.62,.58,.46),uHaze*fog*.35);
   bg+=vec3(.95,.88,.7)*dust*uHaze*.7;
-  vec3 col=bg; float t=0.; bool hit=false;
+  vec3 col=bg; float t=0.; bool hit=false; float edge=1.; float glass=1.;
   for(int i=0;i<56;i++){vec3 p=ro+rd*t;float d=map(p);if(d<.0015){hit=true;break;}t+=d*.95;if(t>7.)break;}
   if(hit){
     vec3 p=ro+rd*t; vec2 e=vec2(.0015,0.);
+    edge=smoothstep(0.,.18,max(dot(-rd,normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)))),0.));
     vec3 n=normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)));
     float fr=.04+.96*pow(1.-max(dot(-rd,n),0.),4.);
     vec3 refr=sky(refract(rd,n,.75));
     vec3 refl=sky(reflect(rd,n));
-    vec3 tint=mix(vec3(.78,1.,.9),vec3(.7,.86,1.),uNight);
+    vec3 tint=mix(mix(vec3(.78,1.,.9),vec3(.7,.86,1.),uNight),vec3(1.,.99,.96),uClear);
     vec3 body=refr*tint*1.05+vec3(.02,.05,.04);
     col=mix(body,refl*1.5+vec3(.05),fr);
+    glass=clamp(.34+fr*1.25,0.,1.);
     vec3 sun=normalize(vec3(.55,.6,.6)); vec3 moon=normalize(vec3(-.5,.55,.65));
     vec3 r=reflect(rd,n);
     col+=vec3(1.,.82,.5)*pow(max(dot(r,sun),0.),70.)*(.6+uUV*2.4)*(1.-uNight);
@@ -66,7 +69,17 @@ void main(){
   float v=1.-smoothstep(.25,1.25,length(uv*vec2(.85,1.)));
   col*=mix(.72,1.,v);
   col+=(hash(gl_FragCoord.xy+fract(uTime))-.5)*.025;
-  gl_FragColor=vec4(pow(max(col,0.),vec3(.95)),1.);
+  col=pow(max(col,0.),vec3(.95));
+  if(uClear>.5){
+    // Transparent mode: only the droplet and the haze specks are drawn; the page sky shows through.
+    // Glass: see-through in the middle, solid at the rim; highlights stay bright.
+    float a=hit?glass*mix(.6,1.,edge):clamp(dust*uHaze*.8,0.,.7);
+    vec3 c=hit?col:vec3(.98,.92,.78);
+    float spec=hit?clamp(max(max(col.r,col.g),col.b)-.85,0.,1.):0.;
+    gl_FragColor=vec4(c*a+vec3(spec),min(1.,a+spec));
+  } else {
+    gl_FragColor=vec4(col,1.);
+  }
 }`;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -95,6 +108,7 @@ let start = 0;
 let target = { uv: 0.4, haze: 0, hum: 0.5, night: 0 };
 let now = null;
 let failed = false;
+let options = {};
 
 function reducedMotion() {
   try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; }
@@ -104,7 +118,7 @@ function init() {
   canvas = document.createElement("canvas");
   canvas.className = "sky-canvas";
   canvas.setAttribute("aria-hidden", "true");
-  const ctx = canvas.getContext("webgl", { antialias: false, alpha: false, powerPreference: "low-power" });
+  const ctx = canvas.getContext("webgl", { antialias: false, alpha: true, premultipliedAlpha: true, powerPreference: "low-power" });
   if (!ctx) { failed = true; return; }
   const shader = (type, src) => { const s = ctx.createShader(type); ctx.shaderSource(s, src); ctx.compileShader(s); return ctx.getShaderParameter(s, ctx.COMPILE_STATUS) ? s : null; };
   const vs = shader(ctx.VERTEX_SHADER, "attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}");
@@ -120,7 +134,7 @@ function init() {
   const loc = ctx.getAttribLocation(prog, "a");
   ctx.enableVertexAttribArray(loc);
   ctx.vertexAttribPointer(loc, 2, ctx.FLOAT, false, 0, 0);
-  uniforms = Object.fromEntries(["uRes", "uTime", "uUV", "uHaze", "uHum", "uNight", "uShift", "uLift"].map((n) => [n, ctx.getUniformLocation(prog, n)]));
+  uniforms = Object.fromEntries(["uRes", "uTime", "uUV", "uHaze", "uHum", "uNight", "uShift", "uLift", "uClear", "uSkyTop", "uSkyBot"].map((n) => [n, ctx.getUniformLocation(prog, n)]));
   canvas.addEventListener("webglcontextlost", (e) => { e.preventDefault(); failed = true; cancelAnimationFrame(raf); canvas.remove(); });
   gl = ctx;
   start = performance.now();
@@ -153,16 +167,22 @@ function frame(t) {
   gl.uniform1f(uniforms.uHum, now.hum);
   gl.uniform1f(uniforms.uNight, now.night);
   // On a wide header the droplet sits to the right of the headline.
-  gl.uniform1f(uniforms.uShift, w / h > 1.6 ? Math.min(1.6, (w / h - 1.2) * 0.9) : 0);
+  gl.uniform1f(uniforms.uShift, options.clear ? 0 : w / h > 1.6 ? Math.min(1.6, (w / h - 1.2) * 0.9) : 0);
   // On a tall phone header the droplet floats above the headline.
-  gl.uniform1f(uniforms.uLift, w / h < 1.3 ? 0.62 : 0);
+  gl.uniform1f(uniforms.uLift, options.clear ? 0 : w / h < 1.3 ? 0.62 : 0);
+  gl.uniform1f(uniforms.uClear, options.clear ? 1 : 0);
+  gl.uniform3fv(uniforms.uSkyTop, options.top || [0.2, 0.4, 0.3]);
+  gl.uniform3fv(uniforms.uSkyBot, options.bottom || [0.1, 0.2, 0.15]);
+  gl.clearColor(0, 0, 0, 0);
+  gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
   if (!still || Object.keys(target).some((k) => Math.abs(target[k] - now[k]) > 0.002)) raf = requestAnimationFrame(frame);
 }
 
 /** Puts the living sky into `slot` and points it at these readings. Returns false when WebGL is unavailable. */
-export function attachSky(slot, readings) {
+export function attachSky(slot, readings, opts = {}) {
   if (!slot || failed) return false;
+  options = opts;
   if (!canvas) init();
   if (!gl) return false;
   target = skyTargets(readings);
@@ -171,4 +191,10 @@ export function attachSky(slot, readings) {
   slot.classList.add("has-sky");
   if (!raf) raf = requestAnimationFrame(frame);
   return true;
+}
+
+/** Hex colour to the shader's 0..1 RGB. */
+export function hexToRgb01(hex) {
+  const m = String(hex || "").replace("#", "").match(/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  return m ? [parseInt(m[1], 16) / 255, parseInt(m[2], 16) / 255, parseInt(m[3], 16) / 255] : null;
 }

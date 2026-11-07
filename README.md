@@ -216,6 +216,35 @@ Technical failures are shown to consumers in plain words; configuration details 
 
 `npm run test:browser` (part of `npm test`) opens the app in headless Chromium at phone and desktop widths and checks for JavaScript errors, sideways scrolling, serious accessibility violations (axe-core, WCAG 2.1 AA), the safety question, the Why? buttons, the check-up redirect and Expert view. First time only: `npm install` then `npx playwright install chromium`. Without them the test reports that it was skipped.
 
+## Interface design (November 2026, after the user study)
+
+The consumer interface was redesigned after all three study rounds, so no SUS score applies to it.
+
+- Layout: on the Today page the routine comes first, with one main action (Save as my usual routine), Share, and a More menu for reminders and the product check. The "Skin reacting badly?" line stays visible because 6 of 10 Round 1 participants needed a hint to find it.
+- Living Sky: the page background is the day's sky. `skyPalette()` in `ui/hero.js` picks dawn, day, dusk or night from the local hour, then warms the day sky with UV and dulls it with haze. The droplet in `sky.js` is drawn as glass on a transparent canvas over that sky.
+- The routine sits on a paper sheet over the sky: cream by day, deep green with an amber accent at night, when the evening steps come first.
+- Styles: everything is in one file, `styles.css`, read top to bottom (base layout, consumer pages, then the Living Sky design layer). Hover effects apply only to mouse users, animations stay under 300 ms, and reduced motion keeps fades without movement.
+- Checks: `npm run test:browser` (68 checks, including an axe accessibility scan) passes at day and at night, and text on the sky was measured from rendered pixels at 7 am, 1 pm, 6 pm and 9 pm.
+
+## Front-end code layout
+
+`index.html` loads `styles.css` and `app.js`. `app.js` is a short entry point (page-wide event handlers and start-up); each feature is an ES module in `ui/`:
+
+| File | What it holds |
+|---|---|
+| `ui/state.js` | the shared `state` object, routes, default location, localStorage helpers |
+| `ui/shell.js` | page frame, navigation, `render()`, view transitions, toasts, routing |
+| `ui/hero.js` | Living Sky hero and the sky palette |
+| `ui/today.js`, `ui/result.js`, `ui/result-actions.js`, `ui/daily.js` | the Today page, the routine result, its actions, the checklist and streak |
+| `ui/routine.js` | routine requests and normalisation |
+| `ui/environment.js`, `ui/location.js` | weather readings and choosing a location |
+| `ui/weather.js`, `ui/week.js` | Weather page and the weekly planner |
+| `ui/shelf.js`, `ui/story.js`, `ui/atlas.js` | My shelf, the share image, the Ingredients page |
+| `ui/expert.js` | Expert view panels, run report and the defence walkthrough |
+| `ui/data.js`, `ui/util.js` | static data tables and small helpers |
+
+The server serves every `.js` file in `ui/` automatically. `npm run check` syntax-checks each module, and `npm run test:browser` covers the pages end to end.
+
 ## Reliability and deployment
 
 - **Reduced answers are visible (F1):** a routine that fell back on rules (GPT failed, the user chose the standard routine, weather was reported by the user) still returns HTTP 200 with a safe routine, but carries `degraded` in the body, an `x-dermasynth-degraded` header, a line in the selection log, and a running count in `/api/health` (`safeguards.runOutcomes`). `npm run report:selection-log` reports the share and reasons.
