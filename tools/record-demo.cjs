@@ -3,8 +3,8 @@ const fs = require('fs');
 const PORT = process.env.PORT || 4173; const OUT = 'frames'; fs.rmSync(OUT,{recursive:true,force:true}); fs.mkdirSync(OUT);
 (async () => {
   const b = await chromium.launch();
-  const ctx = await b.newContext({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: 4/3, timezoneId: 'Asia/Kuala_Lumpur' });
-  const p = await ctx.newPage();
+  const ctx = await b.newContext({ acceptDownloads: true, viewport: { width: 1440, height: 810 }, deviceScaleFactor: 4/3, timezoneId: 'Asia/Kuala_Lumpur' });
+  const p = await ctx.newPage(); p.on('dialog',d=>d.dismiss().catch(()=>{}));
   await p.goto('http://localhost:'+PORT); await p.waitForTimeout(1500);
   // fake cursor
   const cursorJs = () => {
@@ -36,49 +36,77 @@ const PORT = process.env.PORT || 4173; const OUT = 'frames'; fs.rmSync(OUT,{recu
   // keep frames flowing during holds
   const hold = async ms => { const t=Date.now(); while(Date.now()-t<ms){ await p.evaluate(()=>{document.body.style.outline=document.body.style.outline?'':'0px solid transparent'}); await p.waitForTimeout(100);} };
 
-  await hold(1800);
-  // 1. profile
-  await click(p.locator('[data-action=profile]').filter({hasText:'Combination'}));
-  await hold(500);
-  await scrollTo(p.locator('[data-action=simulate]'),1300);
-  await hold(400);
-  await click(p.locator('[data-action=simulate]'));
-  await hold(1200); await cdp.send('Page.stopScreencast');
-  await p.locator('#consumer-routine-title').waitFor({state:'visible',timeout:180000}); await p.waitForTimeout(1500);
-  await cdp.send('Page.startScreencast',{format:'jpeg',quality:92,maxWidth:1920,maxHeight:1080,everyNthFrame:1});
-  await hold(1000);
-  await scrollTo(0,1000);
-  await hold(1600);
-  // 2. routine + why
+
+  const A = (a,t) => { const l=p.locator(`[data-action="${a}"]`); return (t? l.filter({hasText:t}) : l).first(); };
+  const vis = async l => (await l.count()) && await l.isVisible().catch(()=>false);
+  const tryClick = async (l,o) => { try { if (await vis(l)) { await click(l,o); return true; } } catch(e){ console.log('skip', e.message.split('\n')[0]); } return false; };
+  const nav = async t => { await scrollTo(0,700); await tryClick(A('navigate',t)); await hold(1200); };
+  const pick = async (sel,val) => { const l=p.locator(sel); if (!(await vis(l))) return; await l.scrollIntoViewIfNeeded(); const bb=await l.boundingBox(); await moveTo(bb.x+bb.width/2,bb.y+bb.height/2,500); await p.evaluate(([a,b])=>window.__ripple(a,b),[bb.x+bb.width/2,bb.y+bb.height/2]); await l.selectOption(val); await hold(700); };
+  const waitRun = async () => { await cdp.send('Page.stopScreencast'); await p.locator('#consumer-routine-title, .clinical-redirect').first().waitFor({state:'visible',timeout:180000}).catch(()=>{}); await p.waitForTimeout(1500); await cdp.send('Page.startScreencast',{format:'jpeg',quality:92,maxWidth:1920,maxHeight:1080,everyNthFrame:1}); };
+
+  await hold(2000);
+  // 1. Today: location search
+  const lq=A('location-query');
+  if (await vis(lq)) { await click(lq,{pause:150}); await lq.fill(''); await p.keyboard.type('Kuala Lumpur',{delay:50}); await tryClick(A('location-search')); await hold(1800);
+    await tryClick(A('select-location')); await hold(1500); }
+  // 2. Profile, concerns and preferences
+  await scrollTo(A('profile','Combination'),900);
+  await tryClick(A('profile','Combination')); await hold(500);
+  await tryClick(A('concern-choice','Breakouts')); await hold(400);
+  await tryClick(A('concern-choice','Uneven tone')); await hold(600);
+  const more=p.locator('summary').filter({hasText:'More about your skin'});
+  if (await vis(more)) { await scrollTo(more,800); await click(more); await hold(600); }
+  await pick('#finish-preference','matte'); await pick('#reactivity-level','moderate'); await pick('#exposure-context','mixed');
+  // 3. Build routine
+  await scrollTo(A('simulate'),900); await hold(300); await click(A('simulate')); await hold(1200);
+  await waitRun(); await hold(800); await scrollTo(0,900); await hold(1500);
+  // 4. Routine: tick, why, share story, save, reminders
   await scrollTo(p.locator('#consumer-routine-title'),1100); await hold(1500);
-  const why = p.locator('[data-action=toggle-why]').filter({hasText:'Sun protection'});
-  await click(why); await hold(2600);
-  await scrollTo(p.locator('[data-action=toggle-why]').filter({hasText:'Niacinamide'}),1200); await hold(1600);
-  await click(p.locator('[data-action=toggle-why]').filter({hasText:'Niacinamide'})); await hold(2400);
-  // 3. product check
-  await scrollTo(p.locator('#pc-title'),1300); await hold(800);
-  await click(p.locator('[data-action=pc-example]')); await hold(900);
-  await click(p.locator('[data-action=pc-run]')); await hold(800);
-  await scrollTo(p.locator('#pc-title'),600); await p.mouse.wheel(0,0);
-  const pcres = p.locator('#pc-result, .pc-result').first();
-  if (await pcres.count()) await scrollTo(pcres,900);
-  await hold(3000);
-  // 4. weather page: readings, UV curve and the seven-day planner when a live forecast exists
-  await click(p.locator('[data-action=navigate]').filter({hasText:'Weather'}).first()); await hold(2600);
-  for (const sel of ['text=This week']) { const l=p.locator(sel).first(); if (await l.count() && await l.isVisible().catch(()=>false)) { await scrollTo(l,1300); await hold(3000); } }
-  await scrollTo(0,900);
-  await click(p.locator('[data-action=navigate]').filter({hasText:'Today'}).first()); await hold(800);
-  // 5. symptom referral
+  await tryClick(A('step-done')); await hold(900);
+  await tryClick(A('toggle-why','Sun protection')); await hold(2600);
+  const why2=A('toggle-why','moisturiser'); if (await vis(why2)) { await scrollTo(why2,900); await tryClick(why2); await hold(2400); }
+  const story=A('story-open'); if (await vis(story)) { await scrollTo(story,900); await click(story); await hold(3200); await tryClick(p.locator('.story-close')); await hold(800); }
+  await tryClick(A('save-my-routine')); await hold(1600);
+  await tryClick(A('reminders')); await hold(1600);
+  // 5. Product check
+  const pce=A('pc-example'); if (await vis(pce)) { await scrollTo(pce,1000); await click(pce); await hold(900); await tryClick(A('pc-run')); await hold(1200);
+    const r=p.locator('#pc-result, .pc-result').first(); if (await vis(r)) await scrollTo(r,900); await hold(3000); }
+  // 6. Weather page: readings, UV curve, seven-day planner
+  await nav('Weather'); await hold(1800);
+  const wk=p.locator('text=This week').first(); if (await vis(wk)) { await scrollTo(wk,1300); await hold(3000);
+    for (const v of await p.locator('[data-action=result-view]').all()) { await tryClick(v); await hold(1500); } }
+  await scrollTo(99999,1600); await hold(1500);
+  // 7. My shelf: add a product
+  await nav('My shelf');
+  if (await tryClick(A('shelf-add'))) { await hold(700);
+    const nm=p.locator('#shelf-name'); if (await vis(nm)) { await click(nm,{pause:100}); await p.keyboard.type('Daily Niacinamide Serum',{delay:40}); }
+    await tryClick(A('shelf-type','Serum')); await hold(400);
+    const tx=p.locator('#shelf-text'); if (await vis(tx)) { await click(tx,{pause:100}); await p.keyboard.type('Aqua, Niacinamide, Glycerin, Zinc PCA, Panthenol',{delay:25}); }
+    await tryClick(A('shelf-save')); await hold(2200); }
+  // 8. Ingredients atlas
+  await nav('Ingredients');
+  const kq=A('knowledge-query'); if (await vis(kq)) { await click(kq,{pause:100}); await p.keyboard.type('niacinamide',{delay:60}); await tryClick(A('knowledge-search')); await hold(2500); }
+  await tryClick(A('knowledge-concern','Breakouts')); await hold(2000);
+  await scrollTo(400,900); await hold(1500);
+  // 9. Expert view: evidence records and the defence walkthrough
+  await scrollTo(0,700); await tryClick(A('toggle-expert')); await hold(2000);
+  await tryClick(A('relationship-filter','Breakouts')); await hold(1500);
+  await tryClick(A('relationship-select','Azelaic')); await hold(2500);
+  if (await tryClick(A('presentation-start'))) { await hold(1500);
+    for (let i=0;i<10;i++){ if (await tryClick(A('presentation-next'))) { await hold(2200); continue; } if (await tryClick(A('presentation-skip'))) { await hold(1500); continue; } break; }
+    await tryClick(A('presentation-close')); await hold(800); }
+  await scrollTo(0,700); await tryClick(A('toggle-expert')); await hold(1000);
+  // 10. Symptom referral
+  await nav('Today');
   const sym=p.locator('#symptoms');
-  if (!(await sym.isVisible())) { const sm=p.locator('summary').filter({hasText:'More about your skin'}); await scrollTo(sm,1000); await click(sm); }
+  if (!(await vis(sym))) { const sm=p.locator('summary').filter({hasText:'More about your skin'}); await scrollTo(sm,1000); await click(sm); }
   await scrollTo(sym,1000); await click(sym,{pause:200});
-  await p.keyboard.type('My lips are swelling and it is hard to breathe', {delay:45});
-  await hold(600);
-  await scrollTo(p.locator('[data-action=simulate]'),700);
-  await click(p.locator('[data-action=simulate]')); await hold(1500);
-  await scrollTo(0,1000); await hold(800);
-  const red=p.locator('text=We won').first(); if (await red.count()) await scrollTo(red,900);
+  await p.keyboard.type('My lips are swelling and it is hard to breathe',{delay:45}); await hold(600);
+  await scrollTo(A('simulate'),700); await click(A('simulate')); await hold(1200);
+  await waitRun();
+  const red=p.locator('.clinical-redirect').first(); if (await vis(red)) await scrollTo(red,900);
   await hold(3500);
+  await tryClick(A('redirect-edit','Change')); await hold(2000);
   await cdp.send('Page.stopScreencast');
   fs.writeFileSync('times.json', JSON.stringify(frames));
   await b.close();
