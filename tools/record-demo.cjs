@@ -6,6 +6,8 @@ const PORT = process.env.PORT || 4173; const OUT = 'frames'; fs.rmSync(OUT,{recu
   const ctx = await b.newContext({ acceptDownloads: true, viewport: { width: 1440, height: 810 }, deviceScaleFactor: 4/3, timezoneId: 'Asia/Kuala_Lumpur' });
   const p = await ctx.newPage(); p.on('dialog',d=>d.dismiss().catch(()=>{}));
   await p.goto('http://localhost:'+PORT); await p.waitForTimeout(1500);
+  await p.evaluate(()=>{try{sessionStorage.setItem('study.invite.dismissed','1')}catch(e){}}); await p.reload(); await p.waitForTimeout(1500);
+  { const nn=p.getByRole('button',{name:'Not now'}).first(); if (await nn.isVisible().catch(()=>false)) await nn.click(); }
   // fake cursor
   const cursorJs = () => {
     const c=document.createElement('div'); c.id='fc';
@@ -76,6 +78,12 @@ const PORT = process.env.PORT || 4173; const OUT = 'frames'; fs.rmSync(OUT,{recu
   const wk=p.locator('text=This week').first(); if (await vis(wk)) { await scrollTo(wk,1300); await hold(3000);
     for (const v of await p.locator('[data-action=result-view]').all()) { await tryClick(v); await hold(1500); } }
   await scrollTo(99999,1600); await hold(1500);
+  if (!(await vis(wk))) { // planner lives on the routine card as a Today / This week switch
+    await nav('Today'); const sw=p.locator('[data-action=result-view][data-view=week]').first();
+    try { await sw.waitFor({state:'visible',timeout:30000}); await scrollTo(sw,1100); await click(sw); await hold(1500);
+      const top=await sw.evaluate(e=>e.getBoundingClientRect().top+scrollY-110); for (const dy of [420,840,1260]) { await scrollTo(top+dy,1200); await hold(1500); }
+      await scrollTo(sw,900); await tryClick(p.locator('[data-action=result-view][data-view=today]').first()); await hold(800);
+    } catch(e){ console.log('skip week planner', e.message.split('\n')[0]); } }
   // 7. My shelf: add a product
   await nav('My shelf');
   if (await tryClick(A('shelf-add'))) { await hold(700);
