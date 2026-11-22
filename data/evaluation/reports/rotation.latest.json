@@ -2,15 +2,15 @@
   "summary": {
     "combos": 480,
     "runsPerCombo": 10,
-    "picks": 18440,
-    "rotatedPicks": 14857,
-    "differsFromTop": 7010,
+    "picks": 19820,
+    "rotatedPicks": 15928,
+    "differsFromTop": 7513,
     "removedBySafety": 0,
     "band": 0.05,
     "tau": 0.025,
     "recentWindow": 3,
     "recentPenalty": 0.2,
-    "seconds": 26.8
+    "seconds": 25.7
   },
   "rows": [
     {
@@ -79,11 +79,11 @@
     {
       "slot": "pm:overnight-comfort",
       "nearTied": true,
-      "before": "madecassoside 56.4%, ceramide-np 20.0%, squalane 15.0%, allantoin 8.6%",
-      "after": "madecassoside 41.2%, allantoin 26.9%, ceramide-np 16.7%, squalane 15.2%",
+      "before": "madecassoside 57.7%, ceramide-np 16.5%, squalane 14.0%, allantoin 11.9%",
+      "after": "madecassoside 43.1%, allantoin 29.5%, ceramide-np 14.1%, squalane 13.3%",
       "distinctBefore": 4,
       "distinctAfter": 4,
-      "maxShareAfter": 0.412
+      "maxShareAfter": 0.431
     },
     {
       "slot": "pm:supportive-moisturising",

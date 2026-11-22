@@ -1,12 +1,12 @@
 {
   "schemaVersion": "1.0",
-  "policyVersion": "2026-07-17.1",
+  "policyVersion": "2026-11-22.1",
   "environment": {
     "highUvThreshold": 8,
     "highPm25Threshold": 55
   },
   "ingredientSelection": {
-    "maxCandidatesPerRun": 4,
+    "maxCandidatesPerRun": 6,
     "eligibleCategories": [
       "comfort-hydration",
       "light-hydration",

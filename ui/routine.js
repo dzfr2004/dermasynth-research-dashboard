@@ -52,6 +52,26 @@ export function concernOption(id = state.concern) {
 
 export const MAX_CONCERNS = 3;
 
+// What the current routine was built from, so the form can tell when the
+// user has changed something and the routine is out of date.
+export function inputSignature() {
+  return JSON.stringify([
+    state.profile,
+    selectedConcerns(),
+    state.finishPreference || "",
+    state.reactivityLevel || "",
+    state.exposureContext || "",
+    state.selectedLocation?.name || "",
+    String(state.symptoms || "").trim(),
+  ]);
+}
+
+export function inputsChangedSinceBuild() {
+  // Changing a detail clears the old routine (resetPreviewForInputChange),
+  // so this is "a routine was built before, with different details".
+  return Boolean(state.builtSignature && state.builtSignature !== inputSignature());
+}
+
 export function selectedConcerns() {
   const list = Array.isArray(state.concerns) && state.concerns.length ? state.concerns : [state.concern || "acne"];
   return [...new Set(list)].slice(0, MAX_CONCERNS);
@@ -207,6 +227,7 @@ export async function generateRoutine({ reportedConditions = null, standardRouti
   const symptoms = (state.symptoms || state.pendingSymptoms || "").trim().slice(0, 280);
   const locationVersion = state.locationVersion;
   const requestVersion = ++state.routineRequestVersion;
+  const builtFrom = inputSignature();
   state.runStatus = "running";
   state.runStartedAt = Date.now();
   state.runSlow = false;
@@ -289,6 +310,7 @@ export async function generateRoutine({ reportedConditions = null, standardRouti
     state.checkinDraft = null;
     state.editingProducts = false;
     state.formCollapsed = ["cleared", "review_required"].includes(payload.status);
+    state.builtSignature = builtFrom;
     state.resultView = "today";
     renderAnimated({ entering: true });
     requestAnimationFrame(scrollToResult);

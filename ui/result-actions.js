@@ -1,7 +1,7 @@
 // Things to do with a result: check a product, calendar reminders, saving 'my usual routine', folding
 // the form and remembering the last routine.
 
-import { previousDayRoutine } from "./daily.js";
+import { previousDayRoutine, routineIngredientMap } from "./daily.js";
 import { locationLabel } from "./environment.js";
 import { isLocationUpdating } from "./location.js";
 import { currentStepKeys, productNameFor } from "./result.js";
@@ -229,6 +229,9 @@ export function saveMyRoutine() {
   state.myRoutine = {
     steps,
     products,
+    // The ingredient shown for each step, so later routines can say which
+    // ones changed and why.
+    ingredients: routineIngredientMap(state.routineMeta),
     savedAt: new Date().toISOString(),
     profile: state.profile,
     concern: state.concern,
@@ -261,7 +264,7 @@ export function productInput(key, label) {
 // 2. After a routine, the form folds into a one-line summary.
 export function collapsedFormPanel() {
   const profileWord = state.profile[0].toUpperCase() + state.profile.slice(1);
-  return `<section class="panel form-panel is-collapsed" id="routine-preview"><div class="collapsed-form"><div><p class="collapsed-form-label">About your skin</p><p class="collapsed-form-value">${escapeHtml(profileWord)} skin · ${escapeHtml(concernSummary())} · ${escapeHtml(locationLabel())}</p></div><div class="collapsed-form-actions"><button type="button" class="ghost-button" data-action="edit-form">${icon("sliders", 14)} Edit my skin details</button><button type="button" class="text-button" data-action="simulate" ${state.runStatus === "running" || isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 13)} Rebuild</button></div></div></section>`;
+  return `<section class="panel form-panel is-collapsed" id="routine-preview"><div class="collapsed-form"><div><p class="collapsed-form-label">About your skin</p><p class="collapsed-form-value">${escapeHtml(profileWord)} skin · ${escapeHtml(concernSummary())} · ${escapeHtml(locationLabel())}</p></div><div class="collapsed-form-actions"><button type="button" class="ghost-button" data-action="edit-form">${icon("sliders", 14)} Edit my skin details</button><button type="button" class="primary-button is-compact" data-action="simulate" ${state.runStatus === "running" || isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 13)} Rebuild</button></div></div></section>`;
 }
 
 export function scrollToResult() {

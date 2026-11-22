@@ -3,7 +3,7 @@ import { createRepository } from "../lib/ingredient-repository.mjs";
 import { buildIngredientEvidenceCorpus } from "../lib/ingredient-evidence-corpus.mjs";
 import { retrieveSlotCandidates } from "../lib/candidate-retrieval.mjs";
 import { selectApprovedIngredientCandidates } from "../lib/ingredient-selection.mjs";
-import { postSelectionSafetyPass } from "../lib/post-selection-safety.mjs";
+import { postSelectionSafetyPass, vetAlternatives } from "../lib/post-selection-safety.mjs";
 import { templateRoutine, CONCERN_CATALOG } from "../lib/safety.mjs";
 import { getRuntimePolicy } from "../lib/policy-store.mjs";
 import { effectiveReactivity } from "../lib/personalisation.mjs";
@@ -24,7 +24,10 @@ import { ROTATION, createRecentPicks } from "../lib/rotation.mjs";
  *       draw can be replayed from the run report);
  *   R4  without a seed the output is identical to the plain top-score pick;
  *   R5  slots with a near-tied pool no longer show one ingredient every time
- *       (no near-tied slot has a single ingredient above 80% of picks).
+ *       (no near-tied slot has a single ingredient above 80% of picks);
+ *   R6  every "equally good" alternative shown beside a pick is within the
+ *       band, in the slot's pool, not shown in another step, and passes the
+ *       post-selection safety pass when swapped in for the pick.
  *
  * Output: data/evaluation/reports/rotation.latest.md (and .json). `--quick`
  * runs a smaller grid and writes no report.
@@ -58,7 +61,12 @@ async function prepare({ readings, concern, profile, reactivity: stated, finish 
   const run = (extra = {}) => {
     const selection = selectApprovedIngredientCandidates({ ...base, ...extra });
     const post = postSelectionSafetyPass({ entries: selection.entries, concern, reactivityLevel: reactivity, environment });
-    return { selection, post };
+    post.entries = vetAlternatives({ entries: post.entries, concern, reactivityLevel: reactivity, environment });
+    const altCheck = (entries) => entries.flatMap((entry, i) => (entry.alternatives || []).flatMap((alt) => {
+      const swapped = entries.map((e, j) => (j === i ? { ...e, ingredientId: alt.ingredientId, displayName: alt.displayName, incompatibilities: alt.incompatibilities } : e));
+      return postSelectionSafetyPass({ entries: swapped, concern, reactivityLevel: reactivity, environment }).removed.length ? [`${entry.categoryId}:${alt.ingredientId}`] : [];
+    }));
+    return { selection, post, unsafeAlternatives: altCheck(post.entries) };
   };
   return { run };
 }
@@ -74,6 +82,7 @@ let picks = 0;
 let rotatedPicks = 0;
 let differsFromTop = 0;
 let removed = 0;
+let alternativesShown = 0;
 
 const started = Date.now();
 for (const env of ENVIRONMENTS) for (const concern of CONCERNS) for (const profile of PROFILES) for (const finish of FINISH) for (const reactivity of REACTIVITY) {
@@ -92,7 +101,8 @@ for (const env of ENVIRONMENTS) for (const concern of CONCERNS) for (const profi
   for (let i = 0; i < RUNS; i += 1) {
     const seed = `eval-${label}-${i}`;
     const snapshot = recent.snapshot();
-    const { selection, post } = run({ rotationSeed: seed, recentPicks: recent });
+    const { selection, post, unsafeAlternatives } = run({ rotationSeed: seed, recentPicks: recent });
+    if (unsafeAlternatives.length) fail("R6", `${label} unsafe alternative ${unsafeAlternatives.join(",")}`);
     // R3: replay with the same seed and the same memory.
     const replay = run({ rotationSeed: seed, recentPicks: snapshot });
     const ids = (r) => r.post.entries.map((e) => `${e.phase}:${e.categoryId}=${e.ingredientId}`).join(",");
@@ -115,6 +125,12 @@ for (const env of ENVIRONMENTS) for (const concern of CONCERNS) for (const profi
       if (!member) { fail("R2", `${label} ${key} pick ${entry.ingredientId} is not in its pool`); continue; }
       if (slot.candidates[0].score - member.score > ROTATION.band + 1e-9) fail("R1", `${label} ${key} pick ${entry.ingredientId} is ${(slot.candidates[0].score - member.score).toFixed(3)} below the top`);
       if (entry.selectedBy === "rotation_within_score_band") rotatedPicks += 1;
+      alternativesShown += (entry.alternatives || []).length;
+      for (const alt of entry.alternatives || []) {
+        const altMember = slot.candidates.find((c) => c.ingredientId === alt.ingredientId);
+        if (!altMember || slot.candidates[0].score - altMember.score > ROTATION.band + 1e-9) fail("R6", `${label} ${key} alternative ${alt.ingredientId} is outside the band or pool`);
+        if (post.entries.some((e) => e.ingredientId === alt.ingredientId)) fail("R6", `${label} ${key} alternative ${alt.ingredientId} is already shown`);
+      }
       if (entry.ingredientId !== slot.candidates[0].ingredientId) differsFromTop += 1;
     }
     recent.record(post.entries);
@@ -142,7 +158,7 @@ const rows = [...new Set([...before.keys(), ...after.keys()])].sort().map((slot)
 });
 
 const summary = { combos, runsPerCombo: RUNS, picks, rotatedPicks, differsFromTop, removedBySafety: removed, band: ROTATION.band, tau: ROTATION.tau, recentWindow: ROTATION.recentWindow, recentPenalty: ROTATION.recentPenalty, seconds: Number(((Date.now() - started) / 1000).toFixed(1)) };
-console.log(`Rotation evaluation: ${combos} input combinations × ${RUNS} runs, ${picks} picks, ${pct(differsFromTop, picks)} differ from the top score, ${removed} safety removals.`);
+console.log(`Rotation evaluation: ${combos} input combinations × ${RUNS} runs, ${picks} picks, ${pct(differsFromTop, picks)} differ from the top score, ${removed} safety removals, ${alternativesShown} alternatives shown.`);
 for (const row of rows) console.log(`  ${row.slot.padEnd(36)} ${row.distinctBefore} → ${row.distinctAfter} distinct   ${row.after}`);
 
 if (!QUICK) {
@@ -165,6 +181,7 @@ if (!QUICK) {
     `| R3 same seed + same memory replays the same output | ${failures.some((f) => f.startsWith("R3")) ? "FAIL" : "pass"} |`,
     `| R4 no seed gives the plain top-score pick | ${failures.some((f) => f.startsWith("R4")) ? "FAIL" : "pass"} |`,
     `| R5 no near-tied slot shows one ingredient in more than 80% of picks | ${failures.some((f) => f.startsWith("R5")) ? "FAIL" : "pass"} |`,
+    `| R6 every "equally good" alternative is in the band and pool, not shown elsewhere, and passes safety when swapped in (${alternativesShown} shown) | ${failures.some((f) => f.startsWith("R6")) ? "FAIL" : "pass"} |`,
     "",
     `${picks} picks; ${pct(rotatedPicks, picks)} came from a band with more than one member; ${pct(differsFromTop, picks)} differ from the top-scored candidate.`,
     "",

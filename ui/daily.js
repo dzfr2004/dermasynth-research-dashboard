@@ -66,7 +66,11 @@ export function computeChangeInfo(base, payload) {
   const swapped = {};
   for (const k of keys) {
     const was = base.ingredients?.[k];
-    if (before.has(k) && was && today[k] && was !== today[k]) swapped[k] = { from: was, to: today[k] };
+    if (before.has(k) && was && today[k] && was !== today[k]) {
+      const entry = (payload.ingredientCandidates?.entries || []).find((e) => `${e.phase}:${e.categoryId}` === k);
+      const equal = (entry?.alternatives || []).some((alt) => alt.displayName === was);
+      swapped[k] = { from: was, to: today[k], why: equal ? "equal" : "conditions" };
+    }
   }
   return { date: base.date, at: base.at, added, swapped };
 }
@@ -80,7 +84,11 @@ export function stepLabel(key) {
 export function changeSwapsBlock() {
   const swaps = Object.entries(state.changeInfo?.swapped || {});
   if (!swaps.length) return "";
-  return `<p class="compare-title">Ingredient swaps</p><ul class="tomorrow-changes">${swaps.map(([key, s]) => `<li class="is-changed">${escapeHtml(stepLabel(key))}: <b>${escapeHtml(s.to)}</b> instead of ${escapeHtml(s.from)}.</li>`).join("")}</ul>`;
+  const reason = (s) =>
+    s.why === "equal"
+      ? ` Both are equally good for this step, so DermaSynth takes turns between them.`
+      : ` It fits today's skin details and conditions better.`;
+  return `<p class="compare-title">Ingredient swaps</p><ul class="tomorrow-changes">${swaps.map(([key, s]) => `<li class="is-changed">${escapeHtml(stepLabel(key))}: <b>${escapeHtml(s.to)}</b> instead of ${escapeHtml(s.from)}.${escapeHtml(reason(s))}</li>`).join("")}</ul>`;
 }
 
 // Daily checklist: tick each step as you do it; a day counts towards the

@@ -291,6 +291,15 @@ document.addEventListener("click", (event) => {
     generateRoutine();
     return;
   }
+  if (action === "ingredient-guide") {
+    state.knowledgeQuery = target.dataset.name || "";
+    state.knowledgeSearchResult = null;
+    state.atlasShowAll = false;
+    navigateView("knowledge");
+    // Land on the ingredient's card, not the top of the guide.
+    setTimeout(() => document.querySelector(".atlas-ingredient")?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" }), 450);
+    return;
+  }
   if (action === "navigate") {
     navigateView(target.dataset.view);
     return;

@@ -345,6 +345,8 @@ try {
       await q.click("#study-guide >> text=Submit answer");
       await step(4);
       // 4 check the example product
+      // "Check a product I own" now sits in the result's "More" menu.
+      if (!(await q.locator('[data-action="pc-focus"]').first().isVisible())) await q.locator('details:has([data-action="pc-focus"]) > summary').first().click();
       await q.locator('[data-action="pc-focus"]').first().click();
       await q.locator('[data-action="pc-example"]').first().click();
       await q.locator('[data-action="pc-run"]').first().click();
