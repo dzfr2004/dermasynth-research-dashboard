@@ -1,7 +1,7 @@
 // The result screen: the routine card, steps with 'Why this?', the build progress, the ready and error
 // states and the safety seal.
 
-import { changeSwapsBlock, isStepDone, phaseHeading, streakChip } from "./daily.js";
+import { changeSwapsBlock, isStepDone, phaseHeading, routineIngredientMap, stepLabel, streakChip } from "./daily.js";
 import { locationLabel, planningUv } from "./environment.js";
 import { approvedIngredientCandidatePanel, safeEvidenceUrl } from "./expert.js";
 import { productCheckCard, productInput } from "./result-actions.js";
@@ -77,7 +77,28 @@ export function consumerStepItem(step, phase, entries, meta) {
   const tick = checklist
     ? `<button type="button" class="step-tick ${done ? "is-done" : ""} ${state.justTicked === key ? "is-popping" : ""}" data-action="step-done" data-key="${escapeHtml(key)}" aria-pressed="${done}" aria-label="${escapeHtml(`${done ? "Done" : "Mark done"}: ${plain.name}`)}"><span class="step-tick-dot">${done ? icon("check", 14, 2.6) : ""}</span></button>`
     : "";
-  return `<li class="consumer-step ${checklist ? "has-check" : ""} ${done ? "is-done" : ""} ${isNew || swap ? "is-changed" : ""}" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}" data-n="${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}${tags}</strong>${entry ? `<span class="consumer-ingredient">Look for: <b>${escapeHtml(entry.displayName)}</b>${swap ? ` <span class="swap-was">(was ${escapeHtml(swap.from)})</span>` : ""}</span>` : ""}${fromShelf?.product ? `<button type="button" class="my-product is-shelf" data-action="shelf-show" data-id="${escapeHtml(fromShelf.product.id)}">${icon("bottle", 13)}<span>From your shelf: <b>${escapeHtml(shelfDisplayName(fromShelf.product))}</b></span></button>` : ""}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""}">${escapeHtml(line)}</p>${timing ? `<p class="step-timing is-key">${icon("sun", 14)} <span>${escapeHtml(timing)}</span></p>` : ""}${productInput(key, plain.name)}</div>${tick}${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : `${icon("sparkles", 13)} Why this?`}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, line) : ""}</div>` : ""}</li>`;
+  return `<li class="consumer-step ${checklist ? "has-check" : ""} ${done ? "is-done" : ""} ${isNew || swap ? "is-changed" : ""}" style="view-transition-name: step-${escapeHtml(phase)}-${escapeHtml(step.id)}; --i: ${stepIndex}" data-n="${stepIndex}"><div class="consumer-step-main"><strong>${escapeHtml(plain.name)}${tags}</strong>${entry ? `<span class="consumer-ingredient">Look for: ${guideLink(entry)}${swap ? ` <span class="swap-was">(was ${escapeHtml(swap.from)})</span>` : ""}</span>${alternativesLine(entry)}` : ""}${fromShelf?.product ? `<button type="button" class="my-product is-shelf" data-action="shelf-show" data-id="${escapeHtml(fromShelf.product.id)}">${icon("bottle", 13)}<span>From your shelf: <b>${escapeHtml(shelfDisplayName(fromShelf.product))}</b></span></button>` : ""}${mine ? `<span class="my-product">Your product: <b>${escapeHtml(mine)}</b></span>` : ""}<p class="step-line ${gptStep ? "is-gpt" : ""} ${gptStep && state.gptJustArrived ? "is-arriving" : ""} ${!gptStep && state.routineContext?.status === "loading" ? "is-pending" : ""}" ${!gptStep && state.routineContext?.status === "loading" ? 'aria-busy="true"' : ""}>${escapeHtml(line)}</p>${!gptStep && state.routineContext?.status === "loading" ? `<span class="step-line-pending" aria-hidden="true"><i></i><i></i><i></i> Writing a note for you</span>` : ""}${timing ? `<p class="step-timing is-key">${icon("sun", 14)} <span>${escapeHtml(timing)}</span></p>` : ""}${productInput(key, plain.name)}</div>${tick}${entry ? `<button type="button" class="why-button" data-action="toggle-why" data-key="${escapeHtml(key)}" aria-expanded="${open}" aria-controls="${escapeHtml(panelId)}">${open ? "Hide" : `${icon("sparkles", 13)} Why this?`}<span class="sr-only"> ${escapeHtml(entry.displayName)} for ${escapeHtml(plain.name)}</span></button><div class="consumer-why ${state.whyJustOpened === key ? "is-opening" : ""}" id="${escapeHtml(panelId)}" ${open ? "" : "hidden"}>${open ? consumerWhy(entry, line) : ""}</div>` : ""}</li>`;
+}
+
+// "7 steps · 6 ingredients to look for" under the routine title.
+function routineCounts(routine, entries) {
+  const steps = (routine?.am?.length || 0) + (routine?.pm?.length || 0);
+  const named = new Set((entries || []).map((e) => e.ingredientId)).size;
+  if (!steps) return "";
+  return `<p class="routine-counts">${icon("layers", 13)} <span>${steps} step${steps === 1 ? "" : "s"}</span>${named ? ` · <span>${named} ingredient${named === 1 ? "" : "s"} to look for</span>` : ""}</p>`;
+}
+
+// Ingredient names open their page in the ingredient guide.
+function guideLink(item, cls = "") {
+  return `<button type="button" class="ingredient-link ${cls}" data-action="ingredient-guide" data-name="${escapeHtml(item.displayName)}" aria-label="${escapeHtml(`About ${item.displayName} in the ingredient guide`)}">${escapeHtml(item.displayName)}</button>`;
+}
+
+// Equally good options for this step (within the score band, safety-checked
+// on the server). Shown so people can use whichever they find first.
+function alternativesLine(entry) {
+  const alts = Array.isArray(entry.alternatives) ? entry.alternatives.slice(0, 2) : [];
+  if (!alts.length) return "";
+  return `<span class="consumer-alternatives">Equally good: ${alts.map((alt) => guideLink(alt, "is-alt")).join(" or ")}</span>`;
 }
 
 export function currentStepKeys(routine = state.generatedRoutine) {
@@ -124,16 +145,32 @@ export function skinProblemPrompt() {
   return `<section class="skin-problem-prompt" aria-label="Report a skin problem"><p>${icon("shield", 15)} <span>Skin reacting badly today, such as swelling, burning or a rash?</span></p><button type="button" class="text-button" data-action="redirect-edit">Tell us first</button></section>`;
 }
 
+// Ingredients that differ from the ones saved with "my usual routine", and
+// whether the saved one is among today's equally good options.
+function usualIngredientSwaps(meta, my) {
+  const usual = my?.ingredients || {};
+  const today = routineIngredientMap(meta);
+  const entries = meta?.ingredientCandidates?.entries || [];
+  return Object.entries(today)
+    .filter(([key, name]) => usual[key] && usual[key] !== name)
+    .map(([key, name]) => {
+      const entry = entries.find((e) => `${e.phase}:${e.categoryId}` === key);
+      return { key, from: usual[key], to: name, equal: (entry?.alternatives || []).some((alt) => alt.displayName === usual[key]) };
+    });
+}
+
 // 6 and 7. Compared with your usual routine / since your last routine.
 export function compareCard(meta) {
   const cmp = meta?.compare;
   const my = state.myRoutine;
   const blocks = [];
   if (cmp?.vsUsual && my?.steps?.length) {
+    const swaps = usualIngredientSwaps(meta, my);
+    const swapItems = swaps.map((s) => `<li class="is-changed">${escapeHtml(stepLabel(s.key))}: <b>${escapeHtml(s.to)}</b> instead of your usual ${escapeHtml(s.from)}.${escapeHtml(s.equal ? " Both are equally good for this step, so DermaSynth takes turns between them." : " It fits today's conditions better.")}</li>`).join("");
     blocks.push(
-      cmp.vsUsual.sameAsUsual
+      cmp.vsUsual.sameAsUsual && !swaps.length
         ? `<p class="compare-same">${icon("check", 14)} Same as your usual routine today.</p>`
-        : `<p class="compare-title">Today's changes to your usual routine</p><ul class="tomorrow-changes">${cmp.vsUsual.changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}</ul>`,
+        : `<p class="compare-title">Today's changes to your usual routine</p><ul class="tomorrow-changes">${cmp.vsUsual.sameAsUsual ? "" : cmp.vsUsual.changes.map((c) => `<li class="is-${escapeHtml(c.change)}">${escapeHtml(c.text)}</li>`).join("")}${swapItems}</ul>`,
     );
   }
   if (
@@ -298,7 +335,7 @@ export function consumerResult(routine, meta, running) {
   state.stepCounter = 0;
   const heroHtml = meta.status === "cleared" ? skinProblemPrompt() : "";
   const topSide = `${todayStrip(meta)}${compareCard(meta)}`;
-  const routineHtml = `<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3>${meta.status === "cleared" ? streakChip() : ""}<p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernSummary())}</p></div>${meta.status === "cleared" ? safetySeal() : ""}${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section class="phase is-am" aria-labelledby="am-title">${phaseHeading("am", "Morning", "sun", meta.status === "cleared")}<ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section class="phase is-pm" aria-labelledby="pm-title">${phaseHeading("pm", "Evening", "sparkles", meta.status === "cleared")}<ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>`;
+  const routineHtml = `<section class="consumer-card" style="view-transition-name: routine-card" aria-labelledby="consumer-routine-title"><div class="consumer-head"><h3 id="consumer-routine-title">Your routine for today</h3>${meta.status === "cleared" ? streakChip() : ""}<p>${escapeHtml(profileWord)} skin · ${escapeHtml(concernSummary())}</p>${routineCounts(routine, entries)}</div>${meta.status === "cleared" ? safetySeal() : ""}${degradedBanner(meta)}${reviewNote}${contextNote}<div class="consumer-phases"><section class="phase is-am" aria-labelledby="am-title">${phaseHeading("am", "Morning", "sun", meta.status === "cleared")}<ol class="consumer-steps">${routine.am.map((step) => consumerStepItem(step, "am", entries, meta)).join("")}</ol></section><section class="phase is-pm" aria-labelledby="pm-title">${phaseHeading("pm", "Evening", "sparkles", meta.status === "cleared")}<ol class="consumer-steps">${routine.pm.map((step) => consumerStepItem(step, "pm", entries, meta)).join("")}</ol></section></div>${removed.length ? `<p class="consumer-status">${icon("shield", 13)} The final safety check removed ${escapeHtml(removed.map((item) => item.displayName).join(", "))}. Use a plain product for that step.</p>` : ""}${meta.status === "cleared" ? myRoutineControls() : ""}</section>`;
   const bottomSide = `${shelfTodayCard(meta)}${tomorrowCard()}${productCheckCard(meta)}${checkinCard(meta)}`;
   const enter = state.animateEnter ? "is-entering" : "";
   const switcher = meta.status === "cleared" ? resultSwitch() : "";

@@ -54,7 +54,7 @@ import { getEwgReference } from "./lib/kb-reference.mjs";
 import { prefetchSlotSearches, retrieveSlotCandidates } from "./lib/candidate-retrieval.mjs";
 import { clearSearchCache, searchCacheStats } from "./lib/search-cache.mjs";
 import { buildIngredientEvidenceCorpus } from "./lib/ingredient-evidence-corpus.mjs";
-import { postSelectionSafetyPass } from "./lib/post-selection-safety.mjs";
+import { postSelectionSafetyPass, vetAlternatives } from "./lib/post-selection-safety.mjs";
 import { SHELF_LIMIT, checkShelf, cleanShelfProduct } from "./lib/shelf.mjs";
 import { MAX_IMAGE_CHARS, scanProductLabel, validLabelImage } from "./lib/label-scan.mjs";
 import { effectiveReactivity } from "./lib/personalisation.mjs";
@@ -1165,7 +1165,7 @@ async function selectNamedIngredients({ requestId = null, routine, profile, fini
 
   const postStarted = Date.now();
   const postSafety = postSelectionSafetyPass({ entries: selection.entries, concern, concerns, reactivityLevel, environment });
-  selection.entries = postSafety.entries;
+  selection.entries = vetAlternatives({ entries: postSafety.entries, concern, concerns, reactivityLevel, environment });
   selection.removedBySafety = postSafety.removed;
   // Remember only what was actually shown, after the final safety pass.
   if (rotationSeed) {
