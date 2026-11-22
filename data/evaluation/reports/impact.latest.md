@@ -1,6 +1,6 @@
 # Result-impact feature tests
 
-Generated 2026-11-22 by `npm run eval:impact`. Result: **12/12 passed**.
+Generated 2026-11-06 by `npm run eval:impact`. Result: **12/12 passed**.
 
 | ID | Test | Result |
 | --- | --- | --- |

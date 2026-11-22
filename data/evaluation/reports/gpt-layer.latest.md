@@ -1,6 +1,6 @@
 # GPT layer contract tests
 
-Generated 2026-11-22 by `npm run eval:gpt-layer` against a local mock of the Responses API. Result: **7/7 passed**.
+Generated 2026-11-06 by `npm run eval:gpt-layer` against a local mock of the Responses API. Result: **7/7 passed**.
 
 | ID | Test | Result |
 | --- | --- | --- |

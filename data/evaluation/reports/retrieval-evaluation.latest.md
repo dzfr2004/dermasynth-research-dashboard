@@ -2,7 +2,7 @@
 
 Fixture: `data/evaluation/fixtures/retrieval-evaluation.v1.json`
 
-Result: **30/30 Recall@5 passes**; MRR **0.9833**; provenance coverage **100.0%**; median local retrieval latency **1.265 ms**.
+Result: **30/30 Recall@5 passes**; MRR **0.9833**; provenance coverage **100.0%**; median local retrieval latency **0.601 ms**.
 
 ## Scope and limitations
 
