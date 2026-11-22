@@ -22,6 +22,16 @@ import { susAdjective, susScore } from "../lib/study.mjs";
  *     serious accessibility issues.
  */
 
+// TEST_DATABASE_URL runs the same checks against the Postgres store. The
+// study tables in that database are dropped first, so use a throwaway one.
+if (process.env.TEST_DATABASE_URL) {
+  const pg = (await import("pg")).default;
+  const client = new pg.Client({ connectionString: process.env.TEST_DATABASE_URL });
+  await client.connect();
+  await client.query("DROP TABLE IF EXISTS study_task_results, study_responses, study_case_sets, study_code_counter, study_consents CASCADE");
+  await client.end();
+}
+
 const root = fileURLToPath(new URL("..", import.meta.url));
 const require = createRequire(import.meta.url);
 const TOKEN = "study-test-token-0123456789";
@@ -51,7 +61,7 @@ async function startServer(extraEnv) {
   const port = await reservePort();
   const child = spawn(process.execPath, ["server.mjs"], {
     cwd: root,
-    env: { PATH: process.env.PATH || "", PORT: String(port), LIVE_SERVICES_ENABLED: "false", INGREDIENT_DB_ENABLED: "true", INGREDIENT_SELECTION_ENABLED: "true", SELECTION_LOG_ENABLED: "false", STUDY_ROUND: "1", FEEDBACK_LOG_PATH: "tmp/study-site-feedback.jsonl", OPENAI_API_KEY: "", OPENWEATHER_API_KEY: "", IQAIR_API_KEY: "", PINECONE_API_KEY: "", ...extraEnv },
+    env: { PATH: process.env.PATH || "", PORT: String(port), LIVE_SERVICES_ENABLED: "false", INGREDIENT_DB_ENABLED: "true", INGREDIENT_SELECTION_ENABLED: "true", SELECTION_LOG_ENABLED: "false", STUDY_ROUND: "1", FEEDBACK_LOG_PATH: "tmp/study-site-feedback.jsonl", OPENAI_API_KEY: "", OPENWEATHER_API_KEY: "", IQAIR_API_KEY: "", PINECONE_API_KEY: "", ...(process.env.TEST_DATABASE_URL ? { DATABASE_URL: process.env.TEST_DATABASE_URL } : {}), ...extraEnv },
     stdio: ["ignore", "pipe", "pipe"],
   });
   let out = "";
@@ -226,7 +236,7 @@ try {
     axeSource = await readFile(require.resolve("axe-core/axe.min.js"), "utf8");
   } catch { chromium = null; }
   let browser = null;
-  if (chromium) { try { browser = await chromium.launch(); } catch { browser = null; } }
+  if (chromium) { try { browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}); } catch { browser = null; } }
   if (!browser) {
     console.log("Phone browser checks skipped (Playwright or Chromium not installed).");
   } else {

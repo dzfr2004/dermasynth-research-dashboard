@@ -60,6 +60,7 @@ import { MAX_IMAGE_CHARS, scanProductLabel, validLabelImage } from "./lib/label-
 import { effectiveReactivity } from "./lib/personalisation.mjs";
 import { buildTwoLevelExplanation, slotReasonText } from "./lib/peg.mjs";
 import { createRecentPicks } from "./lib/rotation.mjs";
+import { pgQuery, postgresEnabled } from "./lib/db/postgres.mjs";
 import { clientAddress } from "./lib/client-address.mjs";
 import { appendContextLog, appendFeedback, appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
 import { getRuntimePolicy } from "./lib/policy-store.mjs";
@@ -93,6 +94,25 @@ function knowledgeRepo() {
 }
 // What each routine slot showed in the last few runs (score-band rotation).
 const recentPicks = createRecentPicks();
+// With Postgres the memory is shared by every server instance (Vercel runs
+// several): it is loaded before each selection and saved after it.
+async function loadRecentPicks() {
+  if (!postgresEnabled()) return;
+  try {
+    const { rows } = await pgQuery("SELECT slot_key, ids FROM rotation_recent");
+    recentPicks.replace(Object.fromEntries(rows.map((row) => [row.slot_key, row.ids])));
+  } catch { /* keep this instance's memory */ }
+}
+async function saveRecentPicks(entries) {
+  if (!postgresEnabled()) return;
+  try {
+    const keys = [...new Set(entries.map((entry) => `${entry.phase || "am"}:${entry.categoryId}`))];
+    await Promise.all(keys.map((key) => pgQuery(
+      "INSERT INTO rotation_recent (slot_key, ids, updated_at) VALUES ($1, $2, now()) ON CONFLICT (slot_key) DO UPDATE SET ids = excluded.ids, updated_at = now()",
+      [key, JSON.stringify(recentPicks.get(key))],
+    )));
+  } catch { /* non-fatal: rotation still works from this instance's memory */ }
+}
 function rotationSeedFor(requestId) {
   return config.ingredientRotationEnabled && requestId ? String(requestId) : null;
 }
@@ -147,6 +167,7 @@ const publicFiles = new Map([
   ["/app.js", { path: "app.js", contentType: "text/javascript; charset=utf-8" }],
   ["/styles.css", { path: "styles.css", contentType: "text/css; charset=utf-8" }],
   ["/assets/dermasynth-mark.svg", { path: "assets/dermasynth-mark.svg", contentType: "image/svg+xml" }],
+  ["/assets/og-image.png", { path: "assets/og-image.png", contentType: "image/png" }],
   ["/manifest.webmanifest", { path: "manifest.webmanifest", contentType: "application/manifest+json; charset=utf-8" }],
   ["/labelling", { path: "labelling.html", contentType: "text/html; charset=utf-8" }],
   ["/labelling.html", { path: "labelling.html", contentType: "text/html; charset=utf-8" }],
@@ -888,6 +909,30 @@ function rememberRoutineContext(runId, payload) {
   routineContextCache.set(runId, { createdAt: now, payload, result: null, pending: null });
 }
 
+// On a multi-instance host the explanation request can reach another
+// instance, so with Postgres the run's facts are also stored there (1 hour).
+async function persistRoutineContext(runId, payload) {
+  if (!postgresEnabled()) return;
+  try {
+    await pgQuery("INSERT INTO routine_context (run_id, payload) VALUES ($1, $2) ON CONFLICT (run_id) DO NOTHING", [runId, JSON.stringify(payload)]);
+    await pgQuery("DELETE FROM routine_context WHERE created_at < now() - interval '1 hour'");
+  } catch { /* the in-memory copy still serves this instance */ }
+}
+
+async function recallRoutineContext(runId) {
+  const cached = routineContextCache.get(runId);
+  if (cached || !postgresEnabled() || !runId) return cached || null;
+  try {
+    const { rows } = await pgQuery("SELECT payload, created_at FROM routine_context WHERE run_id = $1 AND created_at > now() - interval '1 hour'", [runId]);
+    if (!rows.length) return null;
+    const entry = { createdAt: new Date(rows[0].created_at).getTime(), payload: rows[0].payload, result: null, pending: null };
+    routineContextCache.set(runId, entry);
+    return entry;
+  } catch {
+    return null;
+  }
+}
+
 const FACTOR_WORDS = {
   environmental_driver: "how strongly today's reading triggered the step",
   retrieval_relevance: "how closely its evidence matched this step",
@@ -1048,6 +1093,7 @@ function startSpeculativeIngredientPicks({ requestId = null, concern, concerns =
 
 async function selectNamedIngredients({ requestId = null, routine, profile, finishPreference, concern, concerns = [], environment, reactivityLevel, allowLlmSelection, stages, speculativePicks = null }) {
   const rotationSeed = rotationSeedFor(requestId);
+  if (rotationSeed) await loadRecentPicks();
   const rotationRecent = rotationSeed ? recentPicks : null;
   const repo = knowledgeRepo();
   const selectionStarted = Date.now();
@@ -1122,7 +1168,10 @@ async function selectNamedIngredients({ requestId = null, routine, profile, fini
   selection.entries = postSafety.entries;
   selection.removedBySafety = postSafety.removed;
   // Remember only what was actually shown, after the final safety pass.
-  if (rotationSeed) recentPicks.record(selection.entries);
+  if (rotationSeed) {
+    recentPicks.record(selection.entries);
+    await saveRecentPicks(selection.entries);
+  }
   if (!selection.entries.length && postSafety.removed.length) selection.status = "removed_by_post_selection_safety";
   stages.push(stage("post_selection_safety", postSafety.status, postStarted, {
     ruleIds: postSafety.rules.map((item) => item.id),
@@ -1202,7 +1251,9 @@ async function routineResult({
   }
   const contextAvailable = Boolean(routine && status !== "medical_redirect" && config.liveServicesEnabled && config.openai?.apiKey);
   if (routine && status !== "medical_redirect") {
-    rememberRoutineContext(requestId, routineContextPayload({ concern, concerns, profile, environment, routine, entries: ingredientCandidates.entries || [], explanation }));
+    const contextPayload = routineContextPayload({ concern, concerns, profile, environment, routine, entries: ingredientCandidates.entries || [], explanation });
+    rememberRoutineContext(requestId, contextPayload);
+    await persistRoutineContext(requestId, contextPayload);
   }
   const runReport = buildRunReport({
     requestId,
@@ -1898,7 +1949,7 @@ async function routeApi(request, response, url, requestId) {
   if (request.method === "POST" && url.pathname === "/api/ai/routine-context") {
     const body = await readJson(request);
     const runId = optionalText(body?.runId, "run id", 80);
-    const cached = routineContextCache.get(runId);
+    const cached = await recallRoutineContext(runId);
     if (!cached) throw new HttpError(404, "This run is no longer available. Run the routine again.");
     if (!config.liveServicesEnabled || !config.openai?.apiKey) throw new HttpError(503, describeOpenAiError({ code: "not_enabled" }));
     try {
@@ -2213,14 +2264,19 @@ async function routeApi(request, response, url, requestId) {
   return sendJson(response, 404, { error: "API route not found", requestId }, requestId);
 }
 
-async function serveStatic(response, pathname, requestId) {
+async function serveStatic(response, pathname, requestId, host = "") {
   const file = publicFiles.get(pathname);
   if (!file) {
     return sendJson(response, 404, { error: "Not found", requestId }, requestId);
   }
 
   try {
-    const contents = await readFile(resolve(root, file.path));
+    let contents = await readFile(resolve(root, file.path));
+    // Link previews need an absolute image address.
+    if (file.path === "index.html" && /^[a-z0-9.-]+(:\d+)?$/i.test(host)) {
+      const scheme = /^(localhost|127\.|192\.168\.|10\.)/.test(host) ? "http" : "https";
+      contents = contents.toString("utf8").replaceAll('content="/assets/og-image.png"', `content="${scheme}://${host}/assets/og-image.png"`);
+    }
     response.writeHead(200, {
       ...securityHeaders(requestId),
       "content-type": file.contentType,
@@ -2231,7 +2287,7 @@ async function serveStatic(response, pathname, requestId) {
   }
 }
 
-const server = createServer(async (request, response) => {
+export async function handleRequest(request, response) {
   const requestId = randomUUID();
 
   try {
@@ -2240,7 +2296,7 @@ const server = createServer(async (request, response) => {
       await routeApi(request, response, url, requestId);
       return;
     }
-    await serveStatic(response, url.pathname, requestId);
+    await serveStatic(response, url.pathname, requestId, String(request.headers["x-forwarded-host"] || request.headers.host || ""));
   } catch (error) {
     if (response.writableEnded) return;
     if (error instanceof HttpError) {
@@ -2253,11 +2309,15 @@ const server = createServer(async (request, response) => {
     }
     sendJson(response, 500, { error: "Internal server error", requestId }, requestId);
   }
-});
+}
+export default handleRequest;
+
+// On Vercel the platform calls handleRequest (api/index.mjs); nothing listens.
+const server = process.env.VERCEL ? null : createServer(handleRequest);
 
 // HOST stays 127.0.0.1 for local use; a hosting platform sets HOST=0.0.0.0.
 const HOST = process.env.HOST || "127.0.0.1";
-server.listen(PORT, HOST, () => {
+server?.listen(PORT, HOST, () => {
   console.log(`DermaSynth server listening on http://${HOST}:${PORT} (${config.liveServicesEnabled ? "live services enabled" : "demo mode"})`);
   if (HOST === "0.0.0.0") {
     // Print the addresses a phone on the same Wi-Fi or hotspot can use.

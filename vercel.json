@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.mjs": {
+      "maxDuration": 300,
+      "memory": 1024,
+      "includeFiles": "{index.html,app.js,styles.css,sky.js,manifest.webmanifest,labelling.html,labelling.js,study.html,study.js,study.css,study-guide.js,server.mjs,ui/**,lib/**,assets/**,data/**}"
+    }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+}

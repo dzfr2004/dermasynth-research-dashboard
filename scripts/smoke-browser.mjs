@@ -85,7 +85,7 @@ const base = `http://127.0.0.1:${port}/`;
 
 let browser;
 try {
-  browser = await chromium.launch();
+  browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 } catch (error) {
   child.kill();
   const message = `Browser smoke test skipped: no Chromium build (run \`npx playwright install chromium\`). ${String(error?.message || "").split("\n")[0]}`;

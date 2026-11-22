@@ -1,6 +1,6 @@
 # GPT output schema contract (C2)
 
-Generated 2026-11-06 by `npm run eval:gpt-schemas` against a local mock of the Responses API. Result: **57/57 passed**.
+Generated 2026-11-22 by `npm run eval:gpt-schemas` against a local mock of the Responses API. Result: **57/57 passed**.
 
 | ID | Check | Result |
 | --- | --- | --- |

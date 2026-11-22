@@ -91,6 +91,27 @@ const cueRuns = runs.filter((run) => run.cue && run.cue.score !== null && run.cu
 const cueStatus = (s) => cueRuns.filter((run) => run.cue.status === s).length;
 const latencies = runs.map((run) => run.latencyMs).filter(Number.isFinite);
 
+// Score-band rotation (lib/rotation.mjs): how often the shown ingredient was
+// drawn among near-tied candidates, and how varied each step's picks were.
+const rotationSlots = slots.filter((slot) => slot.rotation);
+const pickShare = new Map();
+for (const slot of slots.filter((s) => s.selected)) {
+  const key = `${slot.phase}:${slot.categoryId}`;
+  const counts = pickShare.get(key) || new Map();
+  counts.set(slot.selected, (counts.get(slot.selected) || 0) + 1);
+  pickShare.set(key, counts);
+}
+const rotationSummary = {
+  slotsWithRotation: rotationSlots.length,
+  slotsWithTiedBand: rotationSlots.filter((slot) => (slot.rotation.members || []).length > 1).length,
+  differsFromTopScore: rotationSlots.filter((slot) => slot.selectedBy === "rotation_within_score_band" && slot.selected !== slot.surrogateTopPick).length,
+  avoidedRecent: rotationSlots.filter((slot) => (slot.rotation.recent || [])[0] && slot.selected !== slot.rotation.recent[0]).length,
+  perStep: Object.fromEntries([...pickShare].sort().map(([key, counts]) => {
+    const total = [...counts.values()].reduce((a, b) => a + b, 0);
+    return [key, { picks: total, distinct: counts.size, topShare: total ? Math.max(...counts.values()) / total : null, shares: Object.fromEntries([...counts].sort((a, b) => b[1] - a[1]).map(([id, n]) => [id, n / total])) }];
+  })),
+};
+
 const summary = {
   generatedAt: new Date().toISOString(),
   log: path,
@@ -111,6 +132,7 @@ const summary = {
     agreementKappa,
     meanPoolRankOfAcceptedPick: acceptedRanks.length ? acceptedRanks.reduce((a, b) => a + b, 0) / acceptedRanks.length : null,
   },
+  rotation: rotationSummary,
   poolSources: Object.fromEntries([...new Set(slots.map((slot) => slot.poolSource))].map((source) => [source, slots.filter((slot) => slot.poolSource === source).length])),
   retrievalModes: Object.fromEntries([...new Set(slots.map((slot) => slot.retrievalMode))].map((mode) => [mode, slots.filter((slot) => slot.retrievalMode === mode).length])),
   postSafetyRemovals: Object.fromEntries(removals),
@@ -178,6 +200,14 @@ const md = [
   `| Mean pool rank of accepted picks (1 = top score) | ${f3(summary.llm.meanPoolRankOfAcceptedPick)} |`,
   "",
   "The model is not shown the candidate score, the retrieval rank, the fit factor or the EWG reference, and options are listed alphabetically (or in a seeded random order when rotation is on), so agreement is an independent check of the score (runs logged from the C2 change onward; use --since to exclude older runs).",
+  "",
+  "## Ingredient variety (score-band rotation)",
+  "",
+  `Slots drawn by rotation: ${rotationSummary.slotsWithRotation} (${rotationSummary.slotsWithTiedBand} had more than one candidate within the band). Shown ingredient differed from the top score in ${rotationSummary.differsFromTopScore} slot(s); differed from the slot's previous pick in ${rotationSummary.avoidedRecent}.`,
+  "",
+  "| Step | Picks | Distinct ingredients | Most frequent share | Shares |",
+  "| --- | ---: | ---: | ---: | --- |",
+  ...Object.entries(rotationSummary.perStep).map(([key, v]) => `| ${key} | ${v.picks} | ${v.distinct} | ${pct(Math.round(v.topShare * v.picks), v.picks)} | ${Object.entries(v.shares).map(([id, x]) => `${id} ${(100 * x).toFixed(0)}%`).join(", ")} |`),
   "",
   "## Retrieval and safety",
   "",

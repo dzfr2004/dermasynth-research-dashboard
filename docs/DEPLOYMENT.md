@@ -18,6 +18,32 @@ Only the explanation cache would give a user a visible error, and only with more
 
 `GET /api/health` shows `safeguards.instance.id`. If repeated calls to the same URL show different ids, more than one instance is running. The server also prints a warning at start if `WEB_CONCURRENCY` or `INSTANCE_COUNT` is above 1.
 
+## Deploying on Vercel with Neon Postgres (current setup)
+
+Vercel runs the app as one serverless function (`api/index.mjs`, which calls the same `handleRequest` the local server uses). Every path is rewritten to it in `vercel.json`, so only the files listed in `publicFiles` in `server.mjs` are ever served.
+
+What changes on Vercel:
+
+| State | Where on Vercel |
+| --- | --- |
+| Knowledge base (SQLite) | Built by `npm run build` (`kb:rebuild` then the sign-off promotion), bundled, copied to `/tmp` on a cold start. Read-only at runtime; change it in the repo and redeploy. |
+| Study answers, feedback, selection and context logs | Postgres (`DATABASE_URL`) |
+| GPT explanation facts per run | Postgres for 1 hour, so `/api/ai/routine-context` works whichever instance answers |
+| Rotation memory (recently shown ingredients) | Postgres |
+| Rate limits, weather caches | Each instance's memory; `TRUST_PROXY_HOPS` is set to 1 automatically |
+
+Steps:
+
+1. On vercel.com, **Add New > Project**, import `dzfr2004/dermasynth-research-dashboard` and pick the production branch. Keep the settings from `vercel.json`. Do not change the framework, build command or output directory.
+2. **Storage > Create Database > Neon (Postgres)**, free plan, connect it to the project. This sets `DATABASE_URL` and `POSTGRES_URL`. Tables are created on first use.
+3. **Settings > Environment Variables**: everything from `.env.example` that you use locally. That means `LIVE_SERVICES_ENABLED`, `INGREDIENT_DB_ENABLED`, `INGREDIENT_SELECTION_ENABLED` and the OpenAI, OpenWeather, IQAir and Pinecone keys, plus `STUDY_ADMIN_TOKEN` if the study pages are used. Do not set `HOST` or `PORT`.
+4. Deploy, then open `/api/health` and check the providers show as configured.
+5. Optional uptime alert: add the repository variable `SITE_URL` (the Vercel address). `.github/workflows/uptime.yml` then checks `/api/health`, the home page and a routine every 2 hours, and GitHub emails you if a check fails.
+
+To analyse hosted data locally: `vercel env pull .env.production.local`, set `DATABASE_URL` from it, then `npm run db:export-logs` and the usual `npm run report:selection-log` / `report:feedback`.
+
+The researcher "install case set" button writes a file, which Vercel cannot do. Download the case set and run it locally instead.
+
 ## Deploying on Railway or Render
 
 1. **One instance, no autoscaling.** Set the instance count to 1 and turn autoscaling off.

@@ -1,6 +1,6 @@
 # Extended safety suite
 
-Generated 2026-11-06 by `npm run eval:safety-extended`. Result: **93/93 passed**. Complements Safety-50 (which keeps its original 50 cases for the interim comparison).
+Generated 2026-11-22 by `npm run eval:safety-extended`. Result: **93/93 passed**. Complements Safety-50 (which keeps its original 50 cases for the interim comparison).
 
 | Group | Passed | Total |
 | --- | ---: | ---: |
