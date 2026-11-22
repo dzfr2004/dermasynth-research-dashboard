@@ -60,6 +60,7 @@ import { MAX_IMAGE_CHARS, scanProductLabel, validLabelImage } from "./lib/label-
 import { effectiveReactivity } from "./lib/personalisation.mjs";
 import { buildTwoLevelExplanation, slotReasonText } from "./lib/peg.mjs";
 import { createRecentPicks } from "./lib/rotation.mjs";
+import { clientAddress } from "./lib/client-address.mjs";
 import { appendContextLog, appendFeedback, appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
 import { getRuntimePolicy } from "./lib/policy-store.mjs";
 import { getIngredientEvidenceNote } from "./lib/ingredient-evidence-notes.mjs";
@@ -464,7 +465,7 @@ function locationSearchQuery(url) {
 }
 
 function clientKey(request) {
-  return request.socket.remoteAddress || "unknown";
+  return clientAddress(request);
 }
 
 function pruneWindow(map, windowMs) {

@@ -28,7 +28,7 @@ Only the explanation cache would give a user a visible error, and only with more
 4. **Build and start:** `npm install` (builds `better-sqlite3` for the host's Linux), then `npm run kb:rebuild` once to create and check the database, then `npm start`.
 5. **After the first deploy:** open `/api/health` and check the keys are seen, the model is available and `instance.id` stays the same across refreshes.
 
-Before sharing the link for user testing, fix the forwarded-address issue (E3 in the problem list): behind the host's proxy every user shares one connection address, so the per-client rate limit would apply to all users together.
+Set `TRUST_PROXY_HOPS=1` on the host (E3, fixed in `lib/client-address.mjs`): behind the host's proxy every user shares one connection address, so without it the per-client rate limit would apply to all users together.
 
 ## If more than one instance is ever needed
 
