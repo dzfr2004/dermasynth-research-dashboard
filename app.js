@@ -362,7 +362,7 @@ document.addEventListener("click", (event) => {
     saveExpertView(state.expertView);
     render();
     if (state.activeView === "monitor" && !state.expertView) refreshWeatherOutlook();
-    showToast(state.expertView ? "Expert view on: scores, traces and the run report are shown." : "Expert view off.");
+    showToast(state.expertView ? "Showing the science: scores, traces and the run report." : "Science hidden.");
     return;
   }
   if (action === "toggle-why") {
