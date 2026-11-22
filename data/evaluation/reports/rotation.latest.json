@@ -1,0 +1,108 @@
+{
+  "summary": {
+    "combos": 480,
+    "runsPerCombo": 10,
+    "picks": 18440,
+    "rotatedPicks": 14857,
+    "differsFromTop": 7010,
+    "removedBySafety": 0,
+    "band": 0.05,
+    "tau": 0.025,
+    "recentWindow": 3,
+    "recentPenalty": 0.2,
+    "seconds": 26.8
+  },
+  "rows": [
+    {
+      "slot": "am:antioxidant-context",
+      "nearTied": true,
+      "before": "resveratrol 90.0%, tocopherol 10.0%",
+      "after": "resveratrol 37.8%, ascorbic-acid 32.0%, tocopherol 30.2%",
+      "distinctBefore": 2,
+      "distinctAfter": 3,
+      "maxShareAfter": 0.378
+    },
+    {
+      "slot": "am:comfort-hydration",
+      "nearTied": true,
+      "before": "beta-glucan 49.0%, sodium-hyaluronate 35.3%, glycerin 15.7%",
+      "after": "glycerin 39.2%, sodium-hyaluronate 32.2%, beta-glucan 28.6%",
+      "distinctBefore": 3,
+      "distinctAfter": 3,
+      "maxShareAfter": 0.392
+    },
+    {
+      "slot": "am:daytime-photoprotection",
+      "nearTied": true,
+      "before": "titanium-dioxide 100.0%",
+      "after": "titanium-dioxide 70.7%, zinc-oxide 29.3%",
+      "distinctBefore": 1,
+      "distinctAfter": 2,
+      "maxShareAfter": 0.707
+    },
+    {
+      "slot": "am:light-hydration",
+      "nearTied": true,
+      "before": "niacinamide 56.0%, beta-glucan 28.0%, sodium-hyaluronate 16.0%",
+      "after": "niacinamide 60.4%, beta-glucan 19.2%, sodium-hyaluronate 10.4%, glycerin 10.0%",
+      "distinctBefore": 3,
+      "distinctAfter": 4,
+      "maxShareAfter": 0.604
+    },
+    {
+      "slot": "am:supportive-hydration",
+      "nearTied": true,
+      "before": "beta-glucan 52.0%, niacinamide 48.0%",
+      "after": "beta-glucan 46.4%, niacinamide 43.2%, glycerin 10.4%",
+      "distinctBefore": 2,
+      "distinctAfter": 3,
+      "maxShareAfter": 0.464
+    },
+    {
+      "slot": "pm:barrier-support-moisturising",
+      "nearTied": true,
+      "before": "ceramide-eop 38.0%, squalane 35.1%, dimethicone 21.2%, ceramide-np 5.7%",
+      "after": "ceramide-eop 30.7%, ceramide-np 27.6%, dimethicone 21.2%, squalane 20.5%",
+      "distinctBefore": 4,
+      "distinctAfter": 4,
+      "maxShareAfter": 0.307
+    },
+    {
+      "slot": "pm:lightweight-moisturising",
+      "nearTied": true,
+      "before": "glycerin 58.6%, niacinamide 41.4%",
+      "after": "niacinamide 54.5%, glycerin 44.8%, squalane 0.7%",
+      "distinctBefore": 2,
+      "distinctAfter": 3,
+      "maxShareAfter": 0.545
+    },
+    {
+      "slot": "pm:overnight-comfort",
+      "nearTied": true,
+      "before": "madecassoside 56.4%, ceramide-np 20.0%, squalane 15.0%, allantoin 8.6%",
+      "after": "madecassoside 41.2%, allantoin 26.9%, ceramide-np 16.7%, squalane 15.2%",
+      "distinctBefore": 4,
+      "distinctAfter": 4,
+      "maxShareAfter": 0.412
+    },
+    {
+      "slot": "pm:supportive-moisturising",
+      "nearTied": true,
+      "before": "squalane 100.0%",
+      "after": "squalane 52.3%, linoleic-acid 29.6%, ceramide-ap 18.1%",
+      "distinctBefore": 1,
+      "distinctAfter": 3,
+      "maxShareAfter": 0.523
+    },
+    {
+      "slot": "pm:texture-renewal",
+      "nearTied": false,
+      "before": "gluconolactone 83.3%, salicylic-acid 16.7%",
+      "after": "gluconolactone 83.3%, salicylic-acid 16.7%",
+      "distinctBefore": 2,
+      "distinctAfter": 2,
+      "maxShareAfter": 0.833
+    }
+  ],
+  "failures": []
+}

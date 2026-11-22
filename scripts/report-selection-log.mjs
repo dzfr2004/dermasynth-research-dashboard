@@ -177,7 +177,7 @@ const md = [
   `| Agreement beyond chance (kappa) | ${f3(agreementKappa)} |`,
   `| Mean pool rank of accepted picks (1 = top score) | ${f3(summary.llm.meanPoolRankOfAcceptedPick)} |`,
   "",
-  "The model is not shown the candidate score, the retrieval rank, the fit factor or the EWG reference, and options are listed alphabetically, so agreement is an independent check of the score (runs logged from the C2 change onward; use --since to exclude older runs).",
+  "The model is not shown the candidate score, the retrieval rank, the fit factor or the EWG reference, and options are listed alphabetically (or in a seeded random order when rotation is on), so agreement is an independent check of the score (runs logged from the C2 change onward; use --since to exclude older runs).",
   "",
   "## Retrieval and safety",
   "",

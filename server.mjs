@@ -59,6 +59,7 @@ import { SHELF_LIMIT, checkShelf, cleanShelfProduct } from "./lib/shelf.mjs";
 import { MAX_IMAGE_CHARS, scanProductLabel, validLabelImage } from "./lib/label-scan.mjs";
 import { effectiveReactivity } from "./lib/personalisation.mjs";
 import { buildTwoLevelExplanation, slotReasonText } from "./lib/peg.mjs";
+import { createRecentPicks } from "./lib/rotation.mjs";
 import { appendContextLog, appendFeedback, appendSelectionLog, selectionLogRecord } from "./lib/selection-log.mjs";
 import { getRuntimePolicy } from "./lib/policy-store.mjs";
 import { getIngredientEvidenceNote } from "./lib/ingredient-evidence-notes.mjs";
@@ -88,6 +89,11 @@ function knowledgeRepo() {
     knowledgeRepoSingleton = createRepository({ db: repo.db, pineconeSync: pineconeSyncSingleton });
   }
   return knowledgeRepoSingleton;
+}
+// What each routine slot showed in the last few runs (score-band rotation).
+const recentPicks = createRecentPicks();
+function rotationSeedFor(requestId) {
+  return config.ingredientRotationEnabled && requestId ? String(requestId) : null;
 }
 function pineconeSync() {
   knowledgeRepo();
@@ -928,7 +934,7 @@ function routineContextPayload({ concern, concerns = [], profile, environment, r
         what_it_is_plain: entry.explanation?.consumer?.whatItIs || null,
         why_today_plain: entry.explanation?.consumer?.whyToday || null,
         user_concern: CONCERN_WORDS[concern] || concern,
-        chosen_by: entry.selectedBy === "llm_from_rag_pool" ? "the language model, from the retrieved approved pool" : "the highest transparent candidate score",
+        chosen_by: entry.selectedBy === "llm_from_rag_pool" ? "the language model, from the retrieved approved pool" : entry.selectedBy === "rotation_within_score_band" ? "a rotation among equally well-supported candidates, so routines do not always repeat the same ingredient" : "the highest transparent candidate score",
         ewg_reference: ewg?.status === "listed" ? `EWG Skin Deep hazard score ${ewg.hazardScore} on a 1 to 10 scale (1 = lowest), ${ewg.dataAvailability} data, checked ${ewg.checkedAt || "2026-09-23"}` : "not listed on EWG Skin Deep",
       },
       passages: grade.note ? [{ title: grade.note.source, text: grade.note.text }] : [],
@@ -1021,7 +1027,7 @@ function prefetchIngredientSearches({ concern, concerns = [], environment, evide
 // Picks for a step the final routine does not keep are dropped, and every
 // pick is still re-validated against its own slot pool and the post-selection
 // safety pass, so this changes timing only, never what may be shown.
-function startSpeculativeIngredientPicks({ concern, concerns = [], environment, evidence, profile, finishPreference, reactivityLevel, exposureContext }) {
+function startSpeculativeIngredientPicks({ requestId = null, concern, concerns = [], environment, evidence, profile, finishPreference, reactivityLevel, exposureContext }) {
   if (!config.ingredientSelectionEnabled || !config.ingredientDb?.enabled || !config.liveServicesEnabled || !config.openai?.apiKey) return null;
   return (async () => {
     const superset = createCategoryRoutine({ concern, concerns, environment, evidence, includeHydration: true, profile, finishPreference, reactivityLevel, exposureContext });
@@ -1034,12 +1040,14 @@ function startSpeculativeIngredientPicks({ concern, concerns = [], environment, 
     const vote = superset?.generation?.textureVote;
     const userContext = { skin_profile: profile || null, finish_preference: finishPreference || "no-preference", reactivity: superset?.generation?.reactivityLevel || reactivityLevel || "low", routine_texture: vote ? vote.direction : "balanced", texture_reasons: vote ? vote.votes.map((v) => v.reason) : [] };
     const started = Date.now();
-    const result = await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: pre.pool, userContext });
+    const result = await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: pre.pool, userContext, recentPicks: rotationSeedFor(requestId) ? recentPicks : null, rotationSeed: rotationSeedFor(requestId) });
     return { ...result, latencyMs: Date.now() - started };
   })().catch((error) => ({ error }));
 }
 
-async function selectNamedIngredients({ routine, profile, finishPreference, concern, concerns = [], environment, reactivityLevel, allowLlmSelection, stages, speculativePicks = null }) {
+async function selectNamedIngredients({ requestId = null, routine, profile, finishPreference, concern, concerns = [], environment, reactivityLevel, allowLlmSelection, stages, speculativePicks = null }) {
+  const rotationSeed = rotationSeedFor(requestId);
+  const rotationRecent = rotationSeed ? recentPicks : null;
   const repo = knowledgeRepo();
   const selectionStarted = Date.now();
   const policy = getRuntimePolicy();
@@ -1056,7 +1064,7 @@ async function selectNamedIngredients({ routine, profile, finishPreference, conc
     modes: [...new Set([...slotRetrieval.values()].map((item) => item.mode))],
   }));
 
-  const base = { enabled: true, repository: repo, routine, profile, finishPreference, concern, concerns, environment, reactivityLevel, slotRetrieval };
+  const base = { enabled: true, repository: repo, routine, profile, finishPreference, concern, concerns, environment, reactivityLevel, slotRetrieval, rotationSeed, recentPicks: rotationRecent };
   const pre = selectApprovedIngredientCandidates(base);
   const llm = { requested: false, status: "not_requested", raw: [], rejected: [] };
   let selectionMap = null;
@@ -1069,7 +1077,7 @@ async function selectNamedIngredients({ routine, profile, finishPreference, conc
       const userContext = { skin_profile: profile || null, finish_preference: finishPreference || "no-preference", reactivity: routine?.generation?.reactivityLevel || reactivityLevel || "low", routine_texture: vote ? vote.direction : "balanced", texture_reasons: vote ? vote.votes.map((v) => v.reason) : [] };
       const early = speculativePicks ? await speculativePicks : null;
       if (early?.error) throw early.error;
-      const result = early || await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: pre.pool, userContext });
+      const result = early || await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: pre.pool, userContext, recentPicks: rotationRecent, rotationSeed });
       if (early) {
         // Keep only picks for steps this routine has.
         const keep = new Set(pre.pool.map((slot) => slot.categoryId));
@@ -1080,7 +1088,7 @@ async function selectNamedIngredients({ routine, profile, finishPreference, conc
         const skipped = pre.pool.filter((slot) => slot.candidates.length && !result.map[slot.categoryId]);
         if (skipped.length) {
           try {
-            const extra = await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: skipped, userContext });
+            const extra = await synthesizeIngredientSelection({ config, concern, concerns, environment, pool: skipped, userContext, recentPicks: rotationRecent, rotationSeed });
             result.map = { ...result.map, ...(extra.map || {}) };
             result.raw = [...(result.raw || []), ...(extra.raw || [])];
             result.rejected = [...(result.rejected || []), ...(extra.rejected || [])];
@@ -1112,6 +1120,8 @@ async function selectNamedIngredients({ routine, profile, finishPreference, conc
   const postSafety = postSelectionSafetyPass({ entries: selection.entries, concern, concerns, reactivityLevel, environment });
   selection.entries = postSafety.entries;
   selection.removedBySafety = postSafety.removed;
+  // Remember only what was actually shown, after the final safety pass.
+  if (rotationSeed) recentPicks.record(selection.entries);
   if (!selection.entries.length && postSafety.removed.length) selection.status = "removed_by_post_selection_safety";
   stages.push(stage("post_selection_safety", postSafety.status, postStarted, {
     ruleIds: postSafety.rules.map((item) => item.id),
@@ -1168,7 +1178,7 @@ async function routineResult({
     ingredientCandidates = selectApprovedIngredientCandidates({ enabled: false });
   } else {
     try {
-      ({ selection: ingredientCandidates, postSafety, llm } = await selectNamedIngredients({ routine, profile, finishPreference, concern, concerns, environment, reactivityLevel, allowLlmSelection, stages, speculativePicks }));
+      ({ selection: ingredientCandidates, postSafety, llm } = await selectNamedIngredients({ requestId, routine, profile, finishPreference, concern, concerns, environment, reactivityLevel, allowLlmSelection, stages, speculativePicks }));
     } catch {
       ingredientCandidates = selectionUnavailable("knowledge_base_unavailable", "The approved knowledge base could not be read, so no named ingredient is shown.");
     }
@@ -1581,7 +1591,7 @@ async function handleRoutineRun(input, requestId) {
   // with while GPT picks the categories (they are picked up from the cache).
   const prefetchedCategories = prefetchIngredientSearches({ concern, concerns, environment, evidence: retrieval.eligibleEvidence, profile, finishPreference, reactivityLevel: statedReactivityLevel, exposureContext, genericRoutine });
 
-  const speculativePicks = startSpeculativeIngredientPicks({ concern, concerns, environment, evidence: retrieval.eligibleEvidence, profile, finishPreference, reactivityLevel: statedReactivityLevel, exposureContext });
+  const speculativePicks = startSpeculativeIngredientPicks({ requestId, concern, concerns, environment, evidence: retrieval.eligibleEvidence, profile, finishPreference, reactivityLevel: statedReactivityLevel, exposureContext });
 
   let routine;
   const synthesisStarted = Date.now();
