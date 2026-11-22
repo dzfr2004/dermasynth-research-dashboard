@@ -1,0 +1,333 @@
+{
+  "generatedAt": "2026-11-06T08:05:51.349Z",
+  "author": "AI-assisted pharmacist-style safety reviewer (not a licensed pharmacist)",
+  "sha256": "3736aa463cd9bb7830b5e48831d8ce1dae4bb3b4cc7113bc1ebd19083fbfe7db",
+  "total": 30,
+  "passed": 30,
+  "triage": {
+    "tp": 7,
+    "fn": 0,
+    "tn": 3,
+    "fp": 0
+  },
+  "results": [
+    {
+      "id": "ind-001",
+      "type": "triage",
+      "description": "Facial swelling after a new moisturiser",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-002",
+      "type": "triage",
+      "description": "Breathing difficulty with hives",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-003",
+      "type": "triage",
+      "description": "Blistering reaction after an exfoliating peel",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-004",
+      "type": "triage",
+      "description": "Possible infected lesion",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-005",
+      "type": "triage",
+      "description": "Changing bleeding mole",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-006",
+      "type": "triage",
+      "description": "Severe burning that disrupts sleep",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-007",
+      "type": "triage",
+      "description": "Ordinary oil and shine concern",
+      "expected": "clear",
+      "got": "clear",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-008",
+      "type": "triage",
+      "description": "Dry-feeling skin without acute symptoms",
+      "expected": "clear",
+      "got": "clear",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-009",
+      "type": "triage",
+      "description": "Negated rash symptom",
+      "expected": "clear",
+      "got": "clear",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-010",
+      "type": "triage",
+      "description": "Redness spreading after a new sunscreen",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-011",
+      "type": "pair",
+      "description": "Retinol and mandelic acid in one routine",
+      "expected": "blocked",
+      "got": "blocked",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-012",
+      "type": "pair",
+      "description": "Retinol and glycolic acid in one routine",
+      "expected": "blocked",
+      "got": "blocked",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-013",
+      "type": "pair",
+      "description": "Retinol and salicylic acid in one routine",
+      "expected": "blocked",
+      "got": "blocked",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-014",
+      "type": "pair",
+      "description": "Glycolic acid and mandelic acid in one routine",
+      "expected": "blocked",
+      "got": "blocked",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-015",
+      "type": "pair",
+      "description": "Glycolic acid and salicylic acid in one routine",
+      "expected": "blocked",
+      "got": "blocked",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-016",
+      "type": "pair",
+      "description": "Mandelic acid and salicylic acid in one routine",
+      "expected": "blocked",
+      "got": "blocked",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-017",
+      "type": "pair",
+      "description": "Niacinamide and glycerin",
+      "expected": "allowed",
+      "got": "allowed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-018",
+      "type": "pair",
+      "description": "Ceramide NP and squalane",
+      "expected": "allowed",
+      "got": "allowed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-019",
+      "type": "pair",
+      "description": "Sodium hyaluronate and beta-glucan",
+      "expected": "allowed",
+      "got": "allowed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-020",
+      "type": "pair",
+      "description": "Titanium dioxide and niacinamide",
+      "expected": "allowed",
+      "got": "allowed",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-021",
+      "type": "routine",
+      "description": "High-reactivity sensitivity context should avoid strong exfoliants",
+      "expected": "routine",
+      "got": "routine",
+      "passed": true,
+      "detail": "",
+      "ingredients": [
+        "am:glycerin",
+        "am:titanium-dioxide",
+        "pm:squalane",
+        "pm:madecassoside"
+      ]
+    },
+    {
+      "id": "ind-022",
+      "type": "routine",
+      "description": "Dryness with moderate reactivity should not receive exfoliating actives",
+      "expected": "routine",
+      "got": "routine",
+      "passed": true,
+      "detail": "",
+      "ingredients": [
+        "am:beta-glucan",
+        "am:titanium-dioxide",
+        "pm:ceramide-eop",
+        "pm:ceramide-np"
+      ]
+    },
+    {
+      "id": "ind-023",
+      "type": "routine",
+      "description": "Barrier concern with low stated reactivity still needs a barrier guardrail",
+      "expected": "routine",
+      "got": "routine",
+      "passed": true,
+      "detail": "",
+      "ingredients": [
+        "am:beta-glucan",
+        "am:titanium-dioxide",
+        "pm:dimethicone",
+        "pm:squalane"
+      ]
+    },
+    {
+      "id": "ind-024",
+      "type": "routine",
+      "description": "Acne context should not place salicylic acid in AM",
+      "expected": "routine",
+      "got": "routine",
+      "passed": true,
+      "detail": "",
+      "ingredients": [
+        "am:titanium-dioxide",
+        "pm:niacinamide",
+        "pm:salicylic-acid",
+        "pm:madecassoside"
+      ]
+    },
+    {
+      "id": "ind-025",
+      "type": "routine",
+      "description": "Uneven-tone context with very high UV must keep photosensitisers out of AM",
+      "expected": "routine",
+      "got": "routine",
+      "passed": true,
+      "detail": "",
+      "ingredients": [
+        "am:titanium-dioxide",
+        "pm:niacinamide",
+        "pm:gluconolactone",
+        "pm:madecassoside"
+      ]
+    },
+    {
+      "id": "ind-026",
+      "type": "routine",
+      "description": "Redness-prone, highly reactive skin should use a conservative routine",
+      "expected": "routine",
+      "got": "routine",
+      "passed": true,
+      "detail": "",
+      "ingredients": [
+        "am:sodium-hyaluronate",
+        "am:titanium-dioxide",
+        "pm:ceramide-np",
+        "pm:madecassoside"
+      ]
+    },
+    {
+      "id": "ind-027",
+      "type": "routine",
+      "description": "Texture concern at low reactivity should exclude prescription and excluded retinoids",
+      "expected": "routine",
+      "got": "routine",
+      "passed": true,
+      "detail": "",
+      "ingredients": [
+        "am:titanium-dioxide",
+        "pm:dimethicone",
+        "pm:gluconolactone",
+        "pm:squalane"
+      ]
+    },
+    {
+      "id": "ind-028",
+      "type": "routine",
+      "description": "Routine with acute allergic features must redirect",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-029",
+      "type": "routine",
+      "description": "Routine with possible infection must redirect",
+      "expected": "redirect",
+      "got": "redirect",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "id": "ind-030",
+      "type": "routine",
+      "description": "Oil/shine context should still avoid excluded retinal",
+      "expected": "routine",
+      "got": "routine",
+      "passed": true,
+      "detail": "",
+      "ingredients": [
+        "am:titanium-dioxide",
+        "pm:niacinamide",
+        "pm:gluconolactone",
+        "pm:madecassoside"
+      ]
+    }
+  ]
+}

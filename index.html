@@ -2,21 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
       content="DermaSynth - an explainable, environment-aware skincare research dashboard."
     />
     <title>DermaSynth | Research Dashboard</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DermaSynth" />
+    <meta property="og:title" content="DermaSynth" />
+    <meta property="og:description" content="Today's skincare routine, based on the weather where you are. An explainable, evidence-grounded research prototype." />
+    <meta property="og:image" content="/assets/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/assets/og-image.png" />
     <link rel="icon" type="image/svg+xml" href="./assets/dermasynth-mark.svg" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <meta name="theme-color" content="#0e3b32" />
+    <meta name="theme-color" content="#f6f1e6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d1611" media="(prefers-color-scheme: dark)" />
     <link rel="apple-touch-icon" href="./assets/dermasynth-mark.svg" />
+    <link rel="preload" href="./assets/fonts/fraunces-latin-opsz.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./assets/fonts/lato-400.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <noscript>This research prototype needs JavaScript enabled.</noscript>
     <div id="app"></div>
     <script type="module" src="./app.js"></script>
+    <script type="module" src="./study-guide.js"></script>
   </body>
 </html>

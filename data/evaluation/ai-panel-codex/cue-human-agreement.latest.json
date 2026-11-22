@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-11-06T08:16:25.209Z",
+  "raters": [
+    "rater-1",
+    "rater-2",
+    "rater-3"
+  ],
+  "items": 40,
+  "interRater": [
+    {
+      "raters": [
+        "rater-1",
+        "rater-2"
+      ],
+      "n": 40,
+      "observed": 0.95,
+      "expected": 0.8187500000000001,
+      "kappa": 0.7241379310344824
+    },
+    {
+      "raters": [
+        "rater-1",
+        "rater-3"
+      ],
+      "n": 40,
+      "observed": 0.9,
+      "expected": 0.77625,
+      "kappa": 0.5530726256983242
+    },
+    {
+      "raters": [
+        "rater-2",
+        "rater-3"
+      ],
+      "n": 40,
+      "observed": 0.95,
+      "expected": 0.7437499999999999,
+      "kappa": 0.8048780487804877
+    }
+  ],
+  "cueVsHumans": {
+    "n": 40,
+    "observed": 0.375,
+    "expected": 0.5,
+    "kappa": -0.25
+  },
+  "confusion": {
+    "cueSupported_humanSupported": 15,
+    "cueSupported_humanUnsupported": 5,
+    "cueUnsupported_humanSupported": 20,
+    "cueUnsupported_humanUnsupported": 0
+  },
+  "cueRecallOfUnsupported": 0,
+  "unsupportedShownRate": 0.125
+}

@@ -1,0 +1,166 @@
+{
+  "schemaVersion": "1.0",
+  "description": "Synthetic product labels rendered on 2026-11-06 with fictional names (Test Label NN). Ground truth is the printed ingredient list, known by construction. Two labels are deliberately blurred so the correct answer is 'not legible'.",
+  "labels": [
+    {
+      "id": "L01",
+      "file": "label-01.jpg",
+      "brand": "Test Label 01",
+      "product": "Clarifying Toner",
+      "type": "toner",
+      "ingredients": "Aqua, Glycolic Acid, Glycerin, Butylene Glycol, Panthenol, Allantoin, Phenoxyethanol",
+      "expectLegible": true,
+      "rotation": 0
+    },
+    {
+      "id": "L02",
+      "file": "label-02.jpg",
+      "brand": "Test Label 02",
+      "product": "Spot Gel",
+      "type": "other",
+      "ingredients": "Aqua, Benzoyl Peroxide, Carbomer, Glycerin, Sodium Hydroxide",
+      "expectLegible": true,
+      "rotation": 7
+    },
+    {
+      "id": "L03",
+      "file": "label-03.jpg",
+      "brand": "Test Label 03",
+      "product": "Night Serum",
+      "type": "serum",
+      "ingredients": "Squalane, Retinol, Tocopherol, Caprylic/Capric Triglyceride, Bisabolol",
+      "expectLegible": true,
+      "rotation": -3
+    },
+    {
+      "id": "L04",
+      "file": "label-04.jpg",
+      "brand": "Test Label 04",
+      "product": "Barrier Cream",
+      "type": "moisturiser",
+      "ingredients": "Aqua, Glycerin, Ceramide NP, Ceramide AP, Cholesterol, Squalane, Panthenol, Dimethicone, Phenoxyethanol",
+      "expectLegible": true,
+      "rotation": 7
+    },
+    {
+      "id": "L05",
+      "file": "label-05.jpg",
+      "brand": "Test Label 05",
+      "product": "Pore Serum",
+      "type": "serum",
+      "ingredients": "Aqua, Niacinamide, Zinc PCA, Sodium Hyaluronate, Glycerin, Pentylene Glycol",
+      "expectLegible": true,
+      "rotation": -6
+    },
+    {
+      "id": "L06",
+      "file": "label-06.jpg",
+      "brand": "Test Label 06",
+      "product": "BHA Liquid",
+      "type": "exfoliant",
+      "ingredients": "Aqua, Butylene Glycol, Salicylic Acid, Polysorbate 20, Sodium Hydroxide, Methylpropanediol",
+      "expectLegible": true,
+      "rotation": 7
+    },
+    {
+      "id": "L07",
+      "file": "label-07.jpg",
+      "brand": "Test Label 07",
+      "product": "Mineral Sunscreen SPF 50",
+      "type": "sunscreen",
+      "ingredients": "Aqua, Zinc Oxide, Caprylic/Capric Triglyceride, Glycerin, Tocopherol, Dimethicone",
+      "expectLegible": true,
+      "rotation": 4
+    },
+    {
+      "id": "L08",
+      "file": "label-08.jpg",
+      "brand": "Test Label 08",
+      "product": "Brightening Cream",
+      "type": "moisturiser",
+      "ingredients": "Aqua, Hydroquinone, Glycerin, Cetearyl Alcohol, Sodium Metabisulfite",
+      "expectLegible": true,
+      "rotation": 4
+    },
+    {
+      "id": "L09",
+      "file": "label-09.jpg",
+      "brand": "Test Label 09",
+      "product": "Peel Pads",
+      "type": "exfoliant",
+      "ingredients": "Aqua, Mandelic Acid, Lactic Acid, Glycerin, Aloe Barbadensis Leaf Juice, Allantoin",
+      "expectLegible": true,
+      "rotation": 0
+    },
+    {
+      "id": "L10",
+      "file": "label-10.jpg",
+      "brand": "Test Label 10",
+      "product": "Calming Gel",
+      "type": "moisturiser",
+      "ingredients": "Aqua, Centella Asiatica Extract, Madecassoside, Panthenol, Beta-Glucan, Glycerin",
+      "expectLegible": true,
+      "rotation": -3
+    },
+    {
+      "id": "L11",
+      "file": "label-11.jpg",
+      "brand": "Test Label 11",
+      "product": "Vitamin C Serum",
+      "type": "serum",
+      "ingredients": "Aqua, Ascorbic Acid, Tocopherol, Ferulic Acid, Propylene Glycol",
+      "expectLegible": true,
+      "rotation": -6
+    },
+    {
+      "id": "L12",
+      "file": "label-12.jpg",
+      "brand": "Test Label 12",
+      "product": "Tone Serum",
+      "type": "serum",
+      "ingredients": "Aqua, Tranexamic Acid, Niacinamide, Glycerin, Sodium Hyaluronate",
+      "expectLegible": true,
+      "rotation": 4
+    },
+    {
+      "id": "L13",
+      "file": "label-13.jpg",
+      "brand": "Test Label 13",
+      "product": "Foot Cream",
+      "type": "moisturiser",
+      "ingredients": "Aqua, Urea, Glycerin, Paraffinum Liquidum, Lactic Acid, Dimethicone",
+      "expectLegible": true,
+      "rotation": -3
+    },
+    {
+      "id": "L14",
+      "file": "label-14.jpg",
+      "brand": "Test Label 14",
+      "product": "Acne Cream",
+      "type": "other",
+      "ingredients": "Aqua, Tretinoin, Clindamycin Phosphate, Carbomer, Glycerin",
+      "expectLegible": true,
+      "rotation": -3
+    },
+    {
+      "id": "L15",
+      "file": "label-15.jpg",
+      "brand": "Test Label 15",
+      "product": "Blurred Label A",
+      "type": "serum",
+      "ingredients": "Aqua, Retinol, Glycolic Acid, Glycerin, Squalane",
+      "expectLegible": false,
+      "rotation": 0
+    },
+    {
+      "id": "L16",
+      "file": "label-16.jpg",
+      "brand": "Test Label 16",
+      "product": "Blurred Label B",
+      "type": "toner",
+      "ingredients": "Aqua, Salicylic Acid, Niacinamide, Glycerin",
+      "expectLegible": false,
+      "rotation": -3
+    }
+  ]
+}

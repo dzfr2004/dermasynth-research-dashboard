@@ -3,15 +3,168 @@
   "matrixVersion": "2026-07-27.1",
   "scope": "Approved ingredient-record compatibility configuration for the DermaSynth AM/PM selection layer.",
   "pairs": [
-    ["retinol", "benzoyl-peroxide"],
-    ["retinol", "glycolic-acid"],
-    ["retinol", "mandelic-acid"],
-    ["retinol", "salicylic-acid"],
-    ["benzoyl-peroxide", "glycolic-acid"],
-    ["benzoyl-peroxide", "mandelic-acid"],
-    ["benzoyl-peroxide", "salicylic-acid"],
-    ["glycolic-acid", "salicylic-acid"],
-    ["glycolic-acid", "mandelic-acid"],
-    ["mandelic-acid", "salicylic-acid"]
-  ]
+    [
+      "retinol",
+      "benzoyl-peroxide"
+    ],
+    [
+      "retinol",
+      "glycolic-acid"
+    ],
+    [
+      "retinol",
+      "mandelic-acid"
+    ],
+    [
+      "retinol",
+      "salicylic-acid"
+    ],
+    [
+      "benzoyl-peroxide",
+      "glycolic-acid"
+    ],
+    [
+      "benzoyl-peroxide",
+      "mandelic-acid"
+    ],
+    [
+      "benzoyl-peroxide",
+      "salicylic-acid"
+    ],
+    [
+      "glycolic-acid",
+      "salicylic-acid"
+    ],
+    [
+      "glycolic-acid",
+      "mandelic-acid"
+    ],
+    [
+      "mandelic-acid",
+      "salicylic-acid"
+    ]
+  ],
+  "evidence": [
+    {
+      "pair": [
+        "retinol",
+        "benzoyl-peroxide"
+      ],
+      "status": "extended",
+      "sourceIds": [
+        "bjd-1998-retinoid-bpo",
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Benzoyl peroxide oxidises tretinoin and adds irritation; applied to retinol, a related oxidisable retinoid."
+    },
+    {
+      "pair": [
+        "retinol",
+        "glycolic-acid"
+      ],
+      "status": "extended",
+      "sourceIds": [
+        "fda-retin-a-micro-label-2025",
+        "cir-aha-2017"
+      ],
+      "note": "Label warns against strongly drying products with tretinoin; AHAs are not named. Weaker extension."
+    },
+    {
+      "pair": [
+        "retinol",
+        "mandelic-acid"
+      ],
+      "status": "extended",
+      "sourceIds": [
+        "fda-retin-a-micro-label-2025",
+        "cir-aha-2017"
+      ],
+      "note": "As for glycolic acid; mandelic acid is an AHA. Weaker extension."
+    },
+    {
+      "pair": [
+        "retinol",
+        "salicylic-acid"
+      ],
+      "status": "extended",
+      "sourceIds": [
+        "fda-retin-a-micro-label-2025"
+      ],
+      "note": "Label warns that salicylic acid with tretinoin increases dryness, redness and peeling; applied to retinol."
+    },
+    {
+      "pair": [
+        "benzoyl-peroxide",
+        "glycolic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "fda-bha",
+        "cir-aha-2017"
+      ],
+      "note": "No source addresses this pair; avoids stacking two drying or exfoliating actives in one routine."
+    },
+    {
+      "pair": [
+        "benzoyl-peroxide",
+        "mandelic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "fda-bha",
+        "cir-aha-2017"
+      ],
+      "note": "No source addresses this pair; avoids stacking two drying or exfoliating actives in one routine."
+    },
+    {
+      "pair": [
+        "benzoyl-peroxide",
+        "salicylic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "fda-bha",
+        "cir-aha-2017"
+      ],
+      "note": "No source addresses this pair; avoids stacking two drying or exfoliating actives in one routine."
+    },
+    {
+      "pair": [
+        "glycolic-acid",
+        "salicylic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha"
+      ],
+      "note": "CIR limits acid strength per product but does not address layering; avoids stacking two exfoliating acids."
+    },
+    {
+      "pair": [
+        "glycolic-acid",
+        "mandelic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha"
+      ],
+      "note": "CIR limits acid strength per product but does not address layering; avoids stacking two exfoliating acids."
+    },
+    {
+      "pair": [
+        "mandelic-acid",
+        "salicylic-acid"
+      ],
+      "status": "design-choice",
+      "sourceIds": [
+        "cir-aha-2017",
+        "fda-bha"
+      ],
+      "note": "CIR limits acid strength per product but does not address layering; avoids stacking two exfoliating acids."
+    }
+  ],
+  "evidenceReviewedAt": "2026-11-06",
+  "evidenceSourcesFile": "safety-rule-sources.v1.json"
 }

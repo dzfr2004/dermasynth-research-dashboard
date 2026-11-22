@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0",
+  "reviewedAt": "2026-11-06",
+  "scope": "Published and regulatory sources behind each deterministic safety rule. Status meanings are below; no rule is looser than its source.",
+  "statusMeaning": {
+    "confirmed": "The source names this ingredient and this effect.",
+    "extended": "The source covers a close relative; the rule applies it to this ingredient.",
+    "design-choice": "No source requires this rule; it is deliberately stricter than the sources.",
+    "pending": "Not yet confirmed for Malaysia."
+  },
+  "sources": {
+    "bjd-1998-retinoid-bpo": {
+      "citation": "Chemical stability of adapalene and tretinoin when combined with benzoyl peroxide in presence and in absence of visible light and ultraviolet radiation. Br J Dermatol. 1998;139 Suppl 52:8-11.",
+      "doi": "10.1046/j.1365-2133.1998.1390s2008.x",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/9990414/",
+      "type": "peer-reviewed study",
+      "finding": "With benzoyl peroxide and light, tretinoin lost over 50% in about 2 hours and 95% in 24 hours."
+    },
+    "fda-retin-a-micro-label-2025": {
+      "citation": "U.S. FDA. RETIN-A MICRO (tretinoin) gel prescribing information, sections 5.1 and 5.3. 2025.",
+      "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2025/020475s029lbl.pdf",
+      "type": "regulatory label",
+      "finding": "Concomitant OTC benzoyl peroxide, sulfur, resorcinol or salicylic acid may increase dryness, erythema and peeling; minimise UV exposure."
+    },
+    "fda-aha": {
+      "citation": "U.S. FDA. Alpha Hydroxy Acids (content current as of 22 Nov 2022), with Guidance for Industry: Labeling for Topically Applied Cosmetic Products Containing Alpha Hydroxy Acids (2005).",
+      "url": "https://www.fda.gov/cosmetics/cosmetic-ingredients/alpha-hydroxy-acids",
+      "type": "regulator",
+      "finding": "AHAs raised UV-induced reddening by 18% after four weeks; FDA recommends a sunburn alert. Names glycolic, lactic and citric acid."
+    },
+    "fda-bha": {
+      "citation": "U.S. FDA. Beta Hydroxy Acids (content current as of 25 Feb 2022).",
+      "url": "https://www.fda.gov/cosmetics/cosmetic-ingredients/beta-hydroxy-acids",
+      "type": "regulator",
+      "finding": "Citing CIR: salicylic acid safe when formulated to avoid irritation and increased sun sensitivity; advises sun protection."
+    },
+    "cir-aha-2017": {
+      "citation": "Fiume MM. Alpha Hydroxy Acids. Int J Toxicol. 2017;36(5 suppl 2):15S-21S (CIR re-review of the 1998 assessment).",
+      "doi": "10.1177/1091581817716656",
+      "url": "https://journals.sagepub.com/doi/10.1177/1091581817716656",
+      "type": "expert panel safety assessment",
+      "finding": "Consumer AHA products safe up to 10% at pH 3.5 or above, when formulated to avoid sun sensitivity or directed with daily sun protection."
+    },
+    "ntp-tr568": {
+      "citation": "National Toxicology Program. Photocarcinogenesis study of retinoic acid and retinyl palmitate in SKH-1 mice (TR-568). 2012.",
+      "url": "https://ntp.niehs.nih.gov/go/tr568abs",
+      "type": "government toxicology study",
+      "finding": "Retinyl palmitate and retinoic acid increased squamous cell neoplasms under simulated solar light."
+    },
+    "npra-annex-ii-2025": {
+      "citation": "NPRA / ASEAN Cosmetic Directive. Annex II: list of substances which must not form part of the composition of cosmetic products. Release 2 July 2025.",
+      "url": "https://npra.gov.my/images/Guidelines_Central/Guidelines_on_Cosmetic/Annex_II_release_-_2_July_2025.pdf",
+      "type": "regulator (Malaysia)",
+      "finding": "Entry 375 tretinoin (retinoic acid); entry 39 antibiotics; entry 300 glucocorticoids."
+    },
+    "npra-2018-statement": {
+      "citation": "Director General of Health Malaysia. Press statement: cosmetic products found to contain scheduled poison. NPRA, 9 October 2018.",
+      "url": "https://www.npra.gov.my/index.php/component/content/article/215-press-release/press-release-2018/1756-press-statement-director-general-of-health-cosmetic-products-found-to-contain-scheduled-poison",
+      "type": "regulator (Malaysia)",
+      "finding": "Hydroquinone and tretinoin are pharmaceuticals that need DCA registration and should be used only under healthcare supervision."
+    },
+    "aicis-eva00186": {
+      "citation": "AICIS. Evaluation statement EVA00186: retinal (CAS 116-31-4). 26 June 2026.",
+      "url": "https://www.industrialchemicals.gov.au/sites/default/files/2026-06/EVA00186%20-%20Evaluation%20statement%20-%2026%20June%202026.pdf",
+      "type": "regulator (Australia)",
+      "finding": "Repr. 1B, H360D; no longer eligible as an exempted or reported introduction for consumer use."
+    },
+    "npra-appendix7": {
+      "citation": "NPRA. Appendix 7: Special conditions for registration for a particular product or group of products, entry 4 (isotretinoin/tretinoin). Posted 29 August 2018.",
+      "url": "https://npra.gov.my/index.php/en/component/content/article/194-guidelines-central/guidelines-others/1572-appendix-7-special-conditions-for-registration-for-a-particular-product-or-group-of-products",
+      "type": "regulator (Malaysia)",
+      "finding": "Isotretinoin and tretinoin may be supplied only to DCA-approved dermatologists or government hospitals with a skin specialist; labels must warn that they are highly teratogenic."
+    },
+    "doctoroncall-differin": {
+      "citation": "DoctorOnCall (licensed online pharmacy, Malaysia). Differin (adapalene) 0.1% gel product page: prescription-only medicine; registration holder Galderma Malaysia Sdn Bhd. Accessed 6 November 2026.",
+      "url": "https://www.doctoroncall.com.my/pharmacy/differin-adapalene-0-1-gel-v-30g/",
+      "type": "secondary (pharmacy listing)",
+      "finding": "Adapalene 0.1% gel (Differin) is sold in Malaysia as a prescription-only medicine."
+    },
+    "npra-otc-forum-2017": {
+      "citation": "NPRA. Presentation to the International Over-the-Counter Medicines Regulators Forum, 2017 (hosted by TGA).",
+      "url": "https://www.tga.gov.au/sites/default/files/international-over-counter-otc-medicines-regulators-forum-2017-malaysia.pdf",
+      "type": "regulator (Malaysia)",
+      "finding": "MAL suffix A = prescription (scheduled poison / controlled medicine); X = non-prescription (OTC)."
+    },
+    "differin-mal": {
+      "citation": "Differin 0.1% Gel (30 g), Malaysian registration number MAL20010011ARZ, product listing on newpages.com.my. Accessed 6 November 2026.",
+      "url": "https://m.newpages.com.my/bm/company/741535/product/437327/3961846/Differin-0-1--Gel-30g.html",
+      "type": "secondary (registered product listing)",
+      "finding": "Adapalene 0.1% gel is registered in Malaysia under MAL20010011ARZ; the A after the digits marks a prescription (scheduled poison) product."
+    },
+    "aklief-mal": {
+      "citation": "Aklief Cream 50 mcg/g (trifarotene), Laboratoires Galderma, Malaysian registration number MAL24076001AZ, product listing on newpages.asia. Accessed 6 November 2026.",
+      "url": "https://newpages.asia/my/en/product/5273127/aklief-cream-50mcgg",
+      "type": "secondary (registered product listing)",
+      "finding": "Trifarotene cream is registered in Malaysia under MAL24076001AZ; the A after the digits marks a prescription product."
+    }
+  }
+}

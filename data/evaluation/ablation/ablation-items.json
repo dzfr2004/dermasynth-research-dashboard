@@ -1,0 +1,326 @@
+{
+  "generatedAt": "2026-11-05T10:45:54.354Z",
+  "until": "2026-10-01",
+  "items": [
+    {
+      "item_id": "AB001",
+      "skin": "oily skin, visible pores, low reactivity",
+      "weather": "UV 7.7, humidity 79%, 30 °C, PM2.5 9.2 µg/m³",
+      "step": "Morning: Light hydrating layer",
+      "option_a": "Sodium Hyaluronate: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.",
+      "option_b": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin."
+    },
+    {
+      "item_id": "AB002",
+      "skin": "sensitive skin, redness, moderate reactivity",
+      "weather": "UV 1.4, humidity 53%, 23.8 °C, PM2.5 25.2 µg/m³",
+      "step": "Evening: Barrier-support moisturiser",
+      "option_a": "Ceramide NP: A barrier lipid: one of the fats naturally found in the skin's outer layer.",
+      "option_b": "Dimethicone: An emollient that also forms a light film on the skin to slow water loss."
+    },
+    {
+      "item_id": "AB003",
+      "skin": "oily skin, visible pores, low reactivity",
+      "weather": "UV 0, humidity 80%, 28.1 °C, PM2.5 8.1 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB004",
+      "skin": "combination skin, breakouts, low reactivity",
+      "weather": "UV 11.3, humidity 55%, 35 °C, PM2.5 12.1 µg/m³",
+      "step": "Morning: Light hydrating layer",
+      "option_a": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.",
+      "option_b": "Niacinamide: A form of vitamin B3 used in moisturisers and serums."
+    },
+    {
+      "item_id": "AB005",
+      "skin": "sensitive skin, sensitivity, moderate reactivity",
+      "weather": "UV 0, humidity 77%, 30 °C, PM2.5 7.8 µg/m³",
+      "step": "Evening: Overnight comfort step",
+      "option_a": "Madecassoside: A soothing ingredient used in products made for easily irritated skin.",
+      "option_b": "Allantoin: A soothing ingredient used in products made for easily irritated skin."
+    },
+    {
+      "item_id": "AB006",
+      "skin": "sensitive skin, sensitivity, moderate reactivity",
+      "weather": "UV 0, humidity 77%, 30 °C, PM2.5 7.8 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB007",
+      "skin": "sensitive skin, redness, moderate reactivity",
+      "weather": "UV 1.4, humidity 53%, 23.8 °C, PM2.5 25.2 µg/m³",
+      "step": "Evening: Overnight comfort step",
+      "option_a": "Ceramide NP: A barrier lipid: one of the fats naturally found in the skin's outer layer.",
+      "option_b": "Squalane: An emollient: an ingredient that softens and smooths the skin's surface."
+    },
+    {
+      "item_id": "AB008",
+      "skin": "combination skin, uneven tone, low reactivity",
+      "weather": "UV 7.9, humidity 83%, 26 °C, PM2.5 41.1 µg/m³",
+      "step": "Evening: Lightweight moisturiser",
+      "option_a": "Niacinamide: A form of vitamin B3 used in moisturisers and serums.",
+      "option_b": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin."
+    },
+    {
+      "item_id": "AB009",
+      "skin": "oily skin, visible pores, low reactivity",
+      "weather": "UV 7.7, humidity 79%, 30 °C, PM2.5 9.2 µg/m³",
+      "step": "Evening: Lightweight moisturiser",
+      "option_a": "Dimethicone: An emollient that also forms a light film on the skin to slow water loss.",
+      "option_b": "Squalane: An emollient: an ingredient that softens and smooths the skin's surface."
+    },
+    {
+      "item_id": "AB010",
+      "skin": "dry skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 74%, 27.7 °C, PM2.5 10.3 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB011",
+      "skin": "combination skin, uneven tone, low reactivity",
+      "weather": "UV 7.9, humidity 83%, 26 °C, PM2.5 41.1 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB012",
+      "skin": "sensitive skin, redness, moderate reactivity",
+      "weather": "UV 8, humidity 71%, 30.5 °C, PM2.5 15.1 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB013",
+      "skin": "sensitive skin, sensitivity, moderate reactivity",
+      "weather": "UV 0, humidity 77%, 30 °C, PM2.5 7.8 µg/m³",
+      "step": "Morning: Comfort hydrating layer",
+      "option_a": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.",
+      "option_b": "Beta-Glucan: A humectant (an ingredient that attracts and holds water) that is also used in soothing products."
+    },
+    {
+      "item_id": "AB014",
+      "skin": "combination skin, sensitivity, low reactivity",
+      "weather": "UV 0, humidity 88%, 25.4 °C, PM2.5 5.6 µg/m³",
+      "step": "Morning: Comfort hydrating layer",
+      "option_a": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.",
+      "option_b": "Beta-Glucan: A humectant (an ingredient that attracts and holds water) that is also used in soothing products."
+    },
+    {
+      "item_id": "AB015",
+      "skin": "oily skin, visible pores, low reactivity",
+      "weather": "UV 0, humidity 80%, 28.1 °C, PM2.5 8.1 µg/m³",
+      "step": "Evening: Lightweight moisturiser",
+      "option_a": "Niacinamide: A form of vitamin B3 used in moisturisers and serums.",
+      "option_b": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin."
+    },
+    {
+      "item_id": "AB016",
+      "skin": "oily skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 89%, 25.6 °C, PM2.5 9.4 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB017",
+      "skin": "dry skin, dryness, low reactivity",
+      "weather": "UV 0.1, humidity 87%, 12.9 °C, PM2.5 3.7 µg/m³",
+      "step": "Morning: Comfort hydrating layer",
+      "option_a": "Beta-Glucan: A humectant (an ingredient that attracts and holds water) that is also used in soothing products.",
+      "option_b": "Sodium Hyaluronate: A humectant: an ingredient that attracts water and holds it in the top layer of the skin."
+    },
+    {
+      "item_id": "AB018",
+      "skin": "combination skin, a sensitive skin barrier, low reactivity",
+      "weather": "UV 12.1, humidity 55%, 34.9 °C, PM2.5 19.7 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB019",
+      "skin": "combination skin, redness, low reactivity",
+      "weather": "UV 0, humidity 94%, 25 °C, PM2.5 5.6 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB020",
+      "skin": "combination skin, sensitivity, low reactivity",
+      "weather": "UV 0, humidity 88%, 25.4 °C, PM2.5 5.6 µg/m³",
+      "step": "Evening: Barrier-support moisturiser",
+      "option_a": "Ceramide NP: A barrier lipid: one of the fats naturally found in the skin's outer layer.",
+      "option_b": "Squalane: An emollient: an ingredient that softens and smooths the skin's surface."
+    },
+    {
+      "item_id": "AB021",
+      "skin": "combination skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 76%, 31.6 °C, PM2.5 21.2 µg/m³",
+      "step": "Evening: Overnight comfort step",
+      "option_a": "Allantoin: A soothing ingredient used in products made for easily irritated skin.",
+      "option_b": "Madecassoside: A soothing ingredient used in products made for easily irritated skin."
+    },
+    {
+      "item_id": "AB022",
+      "skin": "combination skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 94%, 25.5 °C, PM2.5 8.6 µg/m³",
+      "step": "Evening: Lightweight moisturiser",
+      "option_a": "Niacinamide: A form of vitamin B3 used in moisturisers and serums.",
+      "option_b": "Dimethicone: An emollient that also forms a light film on the skin to slow water loss."
+    },
+    {
+      "item_id": "AB023",
+      "skin": "combination skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 76%, 31.6 °C, PM2.5 21.2 µg/m³",
+      "step": "Evening: Lightweight moisturiser",
+      "option_a": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.",
+      "option_b": "Niacinamide: A form of vitamin B3 used in moisturisers and serums."
+    },
+    {
+      "item_id": "AB024",
+      "skin": "dry skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 74%, 27.7 °C, PM2.5 10.3 µg/m³",
+      "step": "Morning: Hydrating layer",
+      "option_a": "Niacinamide: A form of vitamin B3 used in moisturisers and serums.",
+      "option_b": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin."
+    },
+    {
+      "item_id": "AB025",
+      "skin": "sensitive skin, redness, moderate reactivity",
+      "weather": "UV 8, humidity 71%, 30.5 °C, PM2.5 15.1 µg/m³",
+      "step": "Evening: Overnight comfort step",
+      "option_a": "Allantoin: A soothing ingredient used in products made for easily irritated skin.",
+      "option_b": "Madecassoside: A soothing ingredient used in products made for easily irritated skin."
+    },
+    {
+      "item_id": "AB026",
+      "skin": "combination skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 36%, 29.2 °C, PM2.5 10.2 µg/m³",
+      "step": "Morning: Hydrating layer",
+      "option_a": "Niacinamide: A form of vitamin B3 used in moisturisers and serums.",
+      "option_b": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin."
+    },
+    {
+      "item_id": "AB027",
+      "skin": "combination skin, a sensitive skin barrier, low reactivity",
+      "weather": "UV 12.1, humidity 55%, 34.9 °C, PM2.5 19.7 µg/m³",
+      "step": "Morning: Comfort hydrating layer",
+      "option_a": "Sodium Hyaluronate: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.",
+      "option_b": "Beta-Glucan: A humectant (an ingredient that attracts and holds water) that is also used in soothing products."
+    },
+    {
+      "item_id": "AB028",
+      "skin": "dry skin, dryness, low reactivity",
+      "weather": "UV 8.5, humidity 53%, 33.7 °C, PM2.5 12.8 µg/m³",
+      "step": "Evening: Barrier-support moisturiser",
+      "option_a": "Ceramide NP: A barrier lipid: one of the fats naturally found in the skin's outer layer.",
+      "option_b": "Ceramide EOP: A barrier lipid: one of the fats naturally found in the skin's outer layer."
+    },
+    {
+      "item_id": "AB029",
+      "skin": "combination skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 36%, 29.2 °C, PM2.5 10.2 µg/m³",
+      "step": "Evening: Moisturiser",
+      "option_a": "Linoleic Acid: A barrier lipid: one of the fats naturally found in the skin's outer layer.",
+      "option_b": "Squalane: An emollient: an ingredient that softens and smooths the skin's surface."
+    },
+    {
+      "item_id": "AB030",
+      "skin": "sensitive skin, redness, moderate reactivity",
+      "weather": "UV 6.8, humidity 29%, 39 °C, PM2.5 75.5 µg/m³",
+      "step": "Evening: Overnight comfort step",
+      "option_a": "Allantoin: A soothing ingredient used in products made for easily irritated skin.",
+      "option_b": "Ceramide NP: A barrier lipid: one of the fats naturally found in the skin's outer layer."
+    },
+    {
+      "item_id": "AB031",
+      "skin": "sensitive skin, redness, moderate reactivity",
+      "weather": "UV 8, humidity 71%, 30.5 °C, PM2.5 15.1 µg/m³",
+      "step": "Evening: Barrier-support moisturiser",
+      "option_a": "Dimethicone: An emollient that also forms a light film on the skin to slow water loss.",
+      "option_b": "Squalane: An emollient: an ingredient that softens and smooths the skin's surface."
+    },
+    {
+      "item_id": "AB032",
+      "skin": "combination skin, sensitivity, low reactivity",
+      "weather": "UV 0, humidity 88%, 25.4 °C, PM2.5 5.6 µg/m³",
+      "step": "Evening: Overnight comfort step",
+      "option_a": "Madecassoside: A soothing ingredient used in products made for easily irritated skin.",
+      "option_b": "Allantoin: A soothing ingredient used in products made for easily irritated skin."
+    },
+    {
+      "item_id": "AB033",
+      "skin": "combination skin, uneven tone, low reactivity",
+      "weather": "UV 0.3, humidity 63%, 16.7 °C, PM2.5 0.6 µg/m³",
+      "step": "Evening: Moisturiser",
+      "option_a": "Squalane: An emollient: an ingredient that softens and smooths the skin's surface.",
+      "option_b": "Linoleic Acid: A barrier lipid: one of the fats naturally found in the skin's outer layer."
+    },
+    {
+      "item_id": "AB034",
+      "skin": "combination skin, redness, low reactivity",
+      "weather": "UV 0, humidity 94%, 25 °C, PM2.5 5.6 µg/m³",
+      "step": "Evening: Moisturiser",
+      "option_a": "Ceramide AP: A barrier lipid: one of the fats naturally found in the skin's outer layer.",
+      "option_b": "Squalane: An emollient: an ingredient that softens and smooths the skin's surface."
+    },
+    {
+      "item_id": "AB035",
+      "skin": "oily skin, breakouts, low reactivity",
+      "weather": "UV 6.8, humidity 29%, 39 °C, PM2.5 75.5 µg/m³",
+      "step": "Evening: Lightweight moisturiser",
+      "option_a": "Dimethicone: An emollient that also forms a light film on the skin to slow water loss.",
+      "option_b": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin."
+    },
+    {
+      "item_id": "AB036",
+      "skin": "combination skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 88%, 25.4 °C, PM2.5 5.6 µg/m³",
+      "step": "Evening: Lightweight moisturiser",
+      "option_a": "Dimethicone: An emollient that also forms a light film on the skin to slow water loss.",
+      "option_b": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin."
+    },
+    {
+      "item_id": "AB037",
+      "skin": "oily skin, visible pores, low reactivity",
+      "weather": "UV 0, humidity 80%, 28.1 °C, PM2.5 8.1 µg/m³",
+      "step": "Evening: Texture renewal (exfoliant)",
+      "option_a": "Gluconolactone: A PHA: a gentle type of chemical exfoliant that loosens dead cells on the skin's surface.",
+      "option_b": "Salicylic Acid: A BHA: an oil-soluble chemical exfoliant that loosens dead skin cells, including inside pores."
+    },
+    {
+      "item_id": "AB038",
+      "skin": "oily skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 81%, 27.8 °C, PM2.5 10.3 µg/m³",
+      "step": "Evening: Lightweight moisturiser",
+      "option_a": "Glycerin: A humectant: an ingredient that attracts water and holds it in the top layer of the skin.",
+      "option_b": "Niacinamide: A form of vitamin B3 used in moisturisers and serums."
+    },
+    {
+      "item_id": "AB039",
+      "skin": "combination skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 76%, 31.6 °C, PM2.5 21.2 µg/m³",
+      "step": "Morning: Sun protection",
+      "option_a": "Zinc Oxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light.",
+      "option_b": "Titanium Dioxide: A mineral UV filter: it sits on the skin and reflects and absorbs UV light."
+    },
+    {
+      "item_id": "AB040",
+      "skin": "dry skin, breakouts, low reactivity",
+      "weather": "UV 0, humidity 74%, 27.7 °C, PM2.5 10.3 µg/m³",
+      "step": "Evening: Moisturiser",
+      "option_a": "Ceramide AP: A barrier lipid: one of the fats naturally found in the skin's outer layer.",
+      "option_b": "Squalane: An emollient: an ingredient that softens and smooths the skin's surface."
+    }
+  ]
+}

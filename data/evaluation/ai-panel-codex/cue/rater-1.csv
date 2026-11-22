@@ -1,0 +1,41 @@
+item_id,supported,notes
+CUE001,yes,"All claims are traceable to the supplied step rule, ingredient facts, or evidence."
+CUE002,yes,"The supplied facts support the emollient, film, and gentle-reactivity wording."
+CUE003,yes,Directly restates the overnight-comfort step.
+CUE004,yes,"Skin profile, concern, humidity, and temperature are all supplied."
+CUE005,yes,"UV 11.3, mineral-filter facts, and breakout concern are supplied."
+CUE006,yes,Directly restates the evening comfort category.
+CUE007,yes,Morning cleansing and combination profile are supplied.
+CUE008,yes,"Ingredient function, concern, humidity, and lighter texture are supplied."
+CUE009,yes,The evening-only and sun-sensitivity rule is explicit.
+CUE010,yes,"Dry-feeling context, barrier support, humidity, and temperature are supplied."
+CUE011,yes,"Facts support hydration, soothing use, lighter texture, weather, and reactive skin."
+CUE012,yes,"All the causal inputs are present: concern, humidity, profile, texture, and ingredient function."
+CUE013,yes,"Overnight comfort, soothing function, lighter texture, profile, and conditions are supplied."
+CUE014,yes,Directly restates the supplied evening comfort reason.
+CUE015,yes,"Concern, humidity, humectant function, and lighter texture are supplied."
+CUE016,yes,"Barrier lipid, dryness, dry profile, richer texture, temperature, and humidity are supplied."
+CUE017,no,"The text says Beta-Glucan is often used for a sensitive skin barrier; the facts support soothing/humectant function and fit, but not that frequency-of-use claim."
+CUE018,yes,"Gentle evening cleansing, sunscreen removal, and redness-focused context are supplied."
+CUE019,yes,Ceramide NP facts support barrier lipid and richer texture in the stated conditions.
+CUE020,yes,"Squalane function, richer routine, humidity, and the absence of a pigment-context record are supplied."
+CUE021,yes,"The facts explicitly mention mild cleansing, sunscreen/grime removal, sensitive skin, and PM2.5."
+CUE022,yes,"Mild cleansing, sensitive skin, temperature, humidity, and fragrance-free wording are supplied."
+CUE023,yes,"Niacinamide's class, breakout link, and lighter texture are supplied."
+CUE024,yes,"Cool/humid conditions, barrier-lipid function, and balanced texture are supplied."
+CUE025,yes,"Dry-feeling context, gentle hydration, temperature, and humidity are supplied."
+CUE026,yes,"Allantoin, soothing use, lighter texture, profile, concern, humidity, and heat are supplied."
+CUE027,yes,"Very high UV, mineral filter, and sunscreen requirement are supplied."
+CUE028,yes,"Overnight comfort, soothing use, and lighter texture are supplied."
+CUE029,yes,"Lightweight moisture, ingredient class, breakout link, and lighter texture are supplied."
+CUE030,no,The phrase 'often used for uneven tone' is not directly stated by the supplied facts; brightening class and concern do not establish frequency of use.
+CUE031,yes,Directly restates the supplied overnight-comfort category.
+CUE032,yes,"Breakout concern, humidity, heat, dimethicone function, and lighter-routine fit are supplied."
+CUE033,yes,"Overnight comfort, soothing function, lighter texture, and gentle-reactivity wording are supplied."
+CUE034,yes,The evening-only sun-sensitivity rule is explicit.
+CUE035,yes,"PHA classification, gentle description, and evening sun-sensitivity rule are supplied."
+CUE036,yes,"Niacinamide class, uneven-tone concern, lighter texture, and weather are supplied."
+CUE037,yes,"Overnight comfort, soothing function, and lighter texture are supplied."
+CUE038,yes,"Balanced hydration, redness concern, and 88% humidity are supplied."
+CUE039,yes,Directly restates the supplied final comfort step.
+CUE040,no,"The text says Ceramide NP is often used for a sensitive skin barrier; the supplied facts support its barrier-lipid function and context, but not that exact usage-frequency claim."

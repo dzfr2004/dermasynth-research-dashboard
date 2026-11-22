@@ -1,7 +1,9 @@
 import http from "node:http";
 import { mkdir, writeFile } from "node:fs/promises";
 import { createGptBudget, runWithGptBudget, callResponses } from "../lib/openai.mjs";
-import { synthesizeIngredientSelection, composeRoutineContext } from "../lib/synthesis.mjs";
+import { synthesizeIngredientSelection, composeRoutineContext, synthesizeRoutine } from "../lib/synthesis.mjs";
+import { retrieveEvidence } from "../lib/retrieval.mjs";
+import { secondSafetyPass } from "../lib/safety.mjs";
 import { buildTwoLevelExplanation } from "../lib/peg.mjs";
 import { buildEnvironmentalExplainability } from "../lib/explainability.mjs";
 import { templateRoutine } from "../lib/safety.mjs";
@@ -31,7 +33,14 @@ const server = http.createServer(async (req, res) => {
   const rule = behaviour[name] || {};
   await new Promise((r) => setTimeout(r, rule.delayMs ?? 5));
   if (rule.fail) { res.statusCode = 500; res.end(JSON.stringify({ error: { message: "mock failure", code: "server_error" } })); return; }
+  if (!name && behaviour.rationaleText) {
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ status: "completed", output_text: behaviour.rationaleText }));
+    return;
+  }
   let out = {};
+  if (name === "dermasynth_category_selection") out = { include_hydration: true, evidence_ids: (input.evidence || []).slice(0, 2).map((e) => e.id), rationale_tags: ["environment_context", "eligible_evidence"] };
+  if (name === "cue_verdicts") out = { verdicts: (input.statements || []).map((st) => ({ index: st.index, supported: true, reason: "mock" })) };
   if (name === "ingredient_selection") out = { selections: input.categories.map((c) => ({ category: c.category, ingredientId: c.options[0].id })) };
   if (name === "routine_context") {
     const retry = seen.filter((s) => s.name === "routine_context").length > 1;
@@ -103,10 +112,11 @@ await test("gpt-04", "When the explanation rewrite fails, drafts that already pa
   seen.length = 0;
   const steps = [{ key: "am:low-irritation-cleansing", phase: "am", title: "Low-irritation cleansing", purpose: "A gentle start.", rule: "The morning routine starts with low-irritation cleansing." }];
   const entries = [{ key: "am:comfort-hydration", name: "Glycerin", phase: "am", stepTitle: "Comfort hydration", stepRule: "Humidity is low.", facts: { functional_class: "Humectant" } }];
-  // the second routine_context call (the rewrite) fails
+  // The first round writes steps and ingredients as two parallel calls; the
+  // third routine_context call (the rewrite) fails.
   let calls = 0;
   const original = behaviour;
-  behaviour = new Proxy(original, { get: (target, key) => (key === "routine_context" ? (calls++ >= 1 ? { fail: true } : {}) : target[key]) });
+  behaviour = new Proxy(original, { get: (target, key) => (key === "routine_context" ? (calls++ >= 2 ? { fail: true } : {}) : target[key]) });
   const result = await composeRoutineContext({ config, concernLabel: "Dryness", profile: "dry", environment: { readings: { humidity: 40 } }, steps, entries });
   expect(result.steps["am:low-irritation-cleansing"], "The step draft that passed was lost.");
   expect(result.withheld.some((w) => w.key === "am:comfort-hydration"), "The rejected ingredient should be withheld.");
@@ -138,6 +148,19 @@ await test("gpt-06", "Ingredient explanations come back as what it is / why toda
   expect(item && item.whatItIs && item.whyToday && !("safety" in item), "Expected what it is and why today only.");
   const sent = seen.find((s) => s.name === "routine_context").input.ingredients[0];
   expect(sent.what_it_is_plain && sent.why_today_plain, "Plain facts were not sent to the model.");
+});
+
+await test("gpt-07", "A GPT routine paragraph that names an ingredient is dropped; the GPT routine itself is kept and passes the safety pass", async () => {
+  // Reproduces live run 10 (Cairo, dry skin): the paragraph named an ingredient,
+  // the final safety pass flagged the whole routine and the GPT result was discarded.
+  behaviour = { rationaleText: "Dry air today makes the comfort hydration and barrier support categories reasonable, and glycerin can help the skin hold water. Deterministic safety checks remain the final authority." };
+  const environment = { readings: { uvi: 9, humidity: 22, temperature: 33, pm25: 40 } };
+  const retrieval = await retrieveEvidence({ config: { ...config, ingredientDb: { enabled: true } }, profile: "dry", concern: "dryness", environment });
+  const routine = await synthesizeRoutine({ config, profile: "dry", concern: "dryness", environment, evidence: retrieval.eligibleEvidence, finishPreference: "dewy", reactivityLevel: "low", exposureContext: "indoors" });
+  const pass = secondSafetyPass(routine, { concern: "dryness", environment, reactivityLevel: "low", allowedEvidenceIds: retrieval.eligibleEvidence });
+  expect(pass.status === "cleared", `Second safety pass was ${pass.status}: ${(pass.flags || []).join(" ")}`);
+  expect(!/glycerin/i.test(routine.generation?.aiRationale?.text || ""), "The paragraph naming an ingredient was still shown.");
+  behaviour = {};
 });
 
 server.close();

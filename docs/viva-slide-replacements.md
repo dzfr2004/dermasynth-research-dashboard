@@ -1,214 +1,197 @@
-# Viva / dissertation deck — word-by-word replacements (completed-work framing)
+# Viva / dissertation deck — word-by-word replacements
 
-Narrative: the project is **built, deployed, and evaluated**. Everything is past/achievement tense —
-no "scheduled" or "future work." Each item is a literal FIND (current slide text) → REPLACE.
-Verified against the code in `st/` on 2026-07-16.
+Each item is a literal FIND (text on the current slide) → REPLACE. The FIND text is from the
+original deck; the REPLACE text is checked against the code on 2026-09-25 (branch
+`feat/ui-revamp-simplified`). This replaces the July version of this file.
 
-Where a real result number is needed, I've left a `[INSERT ...]` placeholder — fill in your actual
-κ, UAT n, CUE calibration figure, etc. I have not invented any numbers.
+Where a result needs a human study, there is an `[INSERT ...]` placeholder. Fill it only with a
+real result; if the study is not done by the viva, use the "if not done" wording instead. No
+numbers are invented here.
 
-Legend: **[fix]** = slide contradicts the code and must change; **[soften]** = true but overstated;
+Legend: **[fix]** = slide contradicts the code; **[soften]** = true but overstated;
 **[add]** = new content.
 
 ---
 
-## ⚠️ Read first — repo/thesis consistency
+## ⚠️ Read first — what is measured and what is not
 
-Your `README.md` currently lists under **"Not claimed by this final-review demo"**:
-- "An independent human-domain audit or formal UAT; the supplied evaluation packs are reproducible software tests."
-- "Calibration of the generic CUE proxy against a separate held-out dataset."
+Measured by the software (reproducible with `npm test`): retrieval, Safety-50, extended safety,
+triage on 148 labelled cases, GPT output schemas, the browser checks, and the before/after
+comparison with the pre-September version.
 
-You told me the audit, UAT, and CUE calibration **were** completed. So the repo text disclaims exactly
-what your deck will claim. Before the viva, do one of:
-1. **Update the README** to record the completed audit/UAT/calibration (with where the data lives), or
-2. Keep the README scoped to "the software demo," but be ready to say in the viva: *"the human studies
-   are reported in the thesis, chapter X; the repo README describes only the software component."*
+Needs people (tools are ready; results only if you have run them):
+- **Independent triage set** — someone other than you writes the cases (`npm run eval:independent`).
+- **CUE vs human ratings** — `npm run cue:sheet`, raters fill it, `npm run eval:cue-human` (Cohen's κ).
+- **User test** — check-ins summarised by `npm run report:feedback`, plus your questionnaire.
+- **Live GPT evaluation** — `npm run eval:live` with your keys.
 
-Pick one and stay consistent, or an examiner who reads both will catch the gap.
+The July version of this file assumed a dermatologist audit, UAT and CUE calibration were
+complete. If any of these were not run, do not claim them: use the "if not done" lines below,
+and list them under limitations and future work.
 
 ---
 
 ## Slide 1 — Title
 
-**[fix] this is no longer a proposal**
-
 > FIND: `Proposal Defense with Ts. Faizal Fadzil (DC/UTP)`
 > REPLACE: `Final Viva / Dissertation Defence with Ts. Faizal Fadzil (DC/UTP)`
 
-**[add]** one line under the subtitle:
+**[add]** under the subtitle:
 
-> ADD: `A completed, deployed, and evaluated system`
+> ADD: `A working, tested, weather-aware skincare routine system with safety checks and plain-English explanations`
 
 ---
 
 ## Slide 3 — Project Background (RQ / OBJ table)
 
-**OBJ1 text — [fix] corpus size (build has 20, not 18)**
+**OBJ1 — [fix] corpus size**
 
 > FIND: `over a CIR/EWG knowledge base ranging from 18 ingredients for contextually adaptive skincare synthesis`
-> REPLACE: `over a CIR/EWG source-linked knowledge base of 20 ingredients (37 attributable source records) for contextually adaptive skincare synthesis`
-
-CUE and the human-instrument cells now describe completed work — leave the RQ/OBJ wording as is.
-(The ≥0.80 threshold is fine since you calibrated CUE.)
+> REPLACE: `over a source-linked knowledge base of 50 ingredients and 52 published source records (9 CIR, 1 EWG, 42 journal) with 50 verified safety cards, for contextually adaptive skincare synthesis`
 
 ---
 
-## Slide 4 — Comparative Analysis (your "Proposed Framework" column)
+## Slide 4 — Comparative Analysis ("Proposed Framework" column)
 
-**Clinical Grounding — [fix] there is no embedded CIR/EWG text corpus (rights-compliant, source-linked)**
+**Clinical Grounding — [fix]**
 
 > FIND: `✓ CIR + EWG vector store`
-> REPLACE: `✓ CIR/EWG source-linked + 31 authored evidence cards`
+> REPLACE: `✓ 50 verified safety cards (CIR/SCCS/AICIS/EU, paraphrased) + journal references`
 
-**Dynamic AM/PM Routine — [soften] output is category-level (accurate + still a strength)**
+**Dynamic AM/PM Routine — [fix] it now names ingredients**
 
 > FIND: `✓ Adapts per env. context`
-> REPLACE: `✓ Category-level AM/PM, adapts per env. context`
+> REPLACE: `✓ AM/PM steps with a named ingredient per step, adapted to today's UV peak, humidity, haze, temperature and skin profile`
 
-Hallucination Mitigation (`✓ CUE-gated RAG ≥ 0.80`), Safety Guardrails (dual-pass), Explainability
-(PEG+SHAP), and Live Env. Data cells are all accurate now — leave as is.
+**Hallucination Mitigation — [add] the schema contract**
+
+> FIND: `✓ CUE-gated RAG ≥ 0.80`
+> REPLACE: `✓ GPT restricted to a retrieved, safety-approved pool; outputs schema-checked and CUE-checked (≥ 0.80); rule-based fallback`
 
 ---
 
 ## Slide 5 — Methodology, Tech Stack & Gantt
 
-### 5a. Tech-stack graphic — [fix] biggest correction
-
-The running system has **zero npm dependencies and no Python**. These listed tools are **not in the
-final build** and an examiner asking "show me the React/LangChain code" will find none.
+### 5a. Tech stack — [fix]
 
 **REMOVE (not in the delivered system):**
 `React.js · Recharts · Tailwind CSS · Express · LangChain · ChromaDB · RAGAS · scikit-learn · Python 3.11 · PyMuPDF · Axios · text-embedding-3-small · Firebase · Railway`
 
-**REPLACE the whole stack block with the actual delivered stack:**
-`GPT-4o (OpenAI Responses API) · Pinecone (integrated embedding, REST) · local BM25 + reciprocal-rank fusion · self-implemented exact Shapley + PEG · Node.js (built-in HTTP server) · framework-free JavaScript SPA · hand-authored CSS · OpenWeather One Call 3.0 · IQAir · GitHub (source + deployment) · PyCharm Pro`
-
-Inline label fixes if you keep the logo layout:
+**REPLACE with the delivered stack:**
+`OpenAI GPT (Responses API, strict structured outputs, model fallback) · Pinecone (integrated embedding) + local BM25 · SQLite (better-sqlite3) knowledge base with audit log · Node.js built-in HTTP server · framework-free JavaScript web app (installable on phones) · OpenWeather + IQAir + Open-Meteo · self-implemented CUE, exact Shapley + PEG · Playwright + axe-core for browser and accessibility tests · GitHub`
 
 > FIND: `Node.js + Express`
 > REPLACE: `Node.js (built-in HTTP)`
 
 > FIND: `RAGAS`
-> REPLACE: `CUE (calibrated, self-implemented)`
+> REPLACE: `CUE (self-implemented, LLM judge + lexical fallback)`
 
 > FIND: `React.js`
-> REPLACE: `Framework-free JS SPA`
+> REPLACE: `Framework-free JS web app`
 
-(If PyMuPDF/Python were used **offline only** to extract the source PDFs, add a small separate note
-`Corpus prep (offline): PyMuPDF` rather than listing them as part of the live system.)
-
-### 5b. P5 milestone card — [fix] deployment was GitHub, not Firebase/Railway
+### 5b. P5 milestone card — [fix]
 
 > FIND: `Build React dashboard, connect to Express backend, deploy frontend to Firebase and backend to Railway.`
-> REPLACE: `Built the framework-free SPA on a Node built-in-HTTP backend; deployed via GitHub. (Delivered.)`
+> REPLACE: `Built the framework-free web app on a Node built-in-HTTP backend; runs locally and on a phone over Wi-Fi or a hotspot; single-instance deployment documented for Railway/Render.`
 
-### 5c. Gantt — [fix] all milestones delivered
+### 5c. Gantt
 
-> Mark P1–P8 as complete (e.g. fill all bars / add ✓). Convert the caption to `Delivered timeline — P1–P8 complete`. Remove any implication that later phases are pending.
+> Mark the phases you have completed. If the human studies are still running, show them as in progress rather than complete.
 
 ---
 
 ## Slide 6 — System Implementation
 
-Architecture row (Input · Triage · RAG · Safety · LLM · Output) is all real — your strongest slide.
+**[add] proof-points strip** under the architecture row:
 
-**[add] proof-points** — add a strip under the architecture:
-
-> ADD: `Verified: 50/50 safety cases · 30/30 Recall@5 · MRR 0.98 · dual-pass safety · zero-dependency build`
-
-### Evaluation Framework block — [fix] rewrite as completed studies with results
+> ADD: `Tested: 30/30 retrieval (MRR 0.98) · 50/50 safety cases · 93 extended safety tests + 840-run property check · triage 148 cases · 50 GPT schema checks · 59 browser checks (phone + desktop, 0 serious accessibility issues)`
 
 **CUE Score cell**
 
 > FIND: `An independent evaluator assesses whether system outputs are grounded in retrieved documents or contain hallucinated content not traceable to any source.`
-> REPLACE: `Outputs were scored for grounding against retrieved documents using the calibrated CUE metric. Result: [INSERT CUE score / calibration figure]. Reproducible software pack + held-out calibration set.`
+> REPLACE (if done): `GPT explanations were scored for grounding with CUE against the supplied facts; agreement with human raters: Cohen's κ = [INSERT], n = [INSERT].`
+> REPLACE (if not done): `GPT explanations are scored for grounding with CUE (≥ 0.80, one rewrite, otherwise withheld). Agreement with human raters is set up (rating sheet + κ script) and is future work.`
 
 **Dermatology Audit cell**
 
 > FIND: `Board-certified dermatologist(/s) independently rate blinded routine outputs on clinical appropriateness, ingredient safety, environmental relevance, and explanation quality. Inter-rater agreement is reported via Cohen's κ.`
-> REPLACE: `Board-certified dermatologist(/s) rated blinded outputs on appropriateness, safety, environmental relevance, and explanation quality. Inter-rater agreement: Cohen's κ = [INSERT κ], n = [INSERT number of outputs / raters].`
+> REPLACE (if done): `[INSERT who] rated blinded outputs on appropriateness, safety, environmental relevance and explanation quality. κ = [INSERT], n = [INSERT].`
+> REPLACE (if not done): `An expert review of blinded outputs is future work; the safety rules were instead tested on 148 labelled symptom cases and 93 extended safety tests.`
 
 **User Acceptance Test cell**
 
 > FIND: `Participants interact with the live system using their own skin profiles and complete a structured survey assessing usability, explanation clarity, and recommendation trust. Response latency is logged throughout each session.`
-> REPLACE: `[INSERT n] participants used the live system with their own profiles and completed a usability / explanation-clarity / trust survey. Key results: [INSERT top UAT findings, e.g. mean usability / trust score]. Median response latency: [INSERT ms].`
-
-**Case-safety Test cell** is accurate (50-case pack) — leave as is.
+> REPLACE (if done): `[INSERT n] participants used the system with their own profiles. Usability [INSERT], clarity [INSERT], trust [INSERT]; in-app check-ins: [INSERT]% good, followed the routine [INSERT]%. Median latency [INSERT] s.`
+> REPLACE (if not done): `The user test is set up (consent, in-app check-ins, feedback report) and is being run; results are reported in the dissertation.`
 
 ---
 
-## Slide 7 — Expected Outcome ("Three Modules")
+## Slide 7 — Outcome
 
-The delivered app has **seven tabs**, and "Dynamic Routine Simulator" oversells a category-only preview.
-
-**Slide title — [fix] "Expected" → delivered**
+**Slide title — [fix]**
 
 > FIND: `Expected Outcome: One dashboard. Three modules. Real-time skincare intelligence.`
-> REPLACE: `Delivered System: One dashboard, seven modules, real-time environment-aware research intelligence.`
+> REPLACE: `Delivered: one app, three everyday tools and an expert view — weather-aware skincare you can act on today.`
 
-**Module 1 heading**
+**Module 1**
 
 > FIND: `Module 1 - Live Weather Monitor`
-> REPLACE: `Environment — live weather monitor (UV · humidity · temp · PM2.5)`
+> REPLACE: `Weather — today's UV (with peak and hourly chart), humidity, haze and temperature, and tomorrow's forecast`
 
-**Module 2 heading — [soften] category-level; it's the SHAP/PEG showcase**
+**Module 2**
 
 > FIND: `Module 2 - Dynamic Routine Simulator`
-> REPLACE: `Routine Preview — explainable category-level AM/PM preview (Shapley + PEG)`
-
-**Module 2 body — [soften] "ingredient" → "category"**
+> REPLACE: `Your routine — AM/PM steps with a named ingredient each, a one-line summary, and what changed since last time`
 
 > FIND: `Every ingredient comes with a plain-English card explaining why it was chosen — citing the environmental reading`
-> REPLACE: `Every routine category comes with a plain-English card explaining why it was chosen — citing the environmental reading`
+> REPLACE: `Every ingredient comes with a plain-English "Why?" card — what it is, why it suits today's reading, how it appears on labels, and journal-style references`
 
-**Module 3 heading**
+**Module 3**
 
 > FIND: `Module 3 - Bulk Analysis Suite`
 > REPLACE: `Check my product — paste a label's ingredient list; DermaSynth shows which of today's steps it fits, any clash with today's routine, and safety cautions`
 
-**[add] name the other four tabs** so "seven modules" lands:
+**[add] footer row:**
 
-> ADD footer row: `Also delivered: Overview pipeline map · Ingredient Atlas (20 ingredients, source-linked) · Evaluation (reproducible packs) · Reviewer Queue`
+> ADD: `Also: Ingredient guide (50 ingredients, source-linked) · reminders · shareable story image · Expert view with scores, safety trace, Shapley explanation and run report`
 
 ---
 
-## Slide 8 — Conclusion (three-objective summary)
+## Slide 8 — Conclusion
 
-Rewrite each objective as a delivered result.
-
-**Obj 1 body — [fix] full pipeline delivered**
+**Obj 1**
 
 > FIND: `Pipeline scaffolded; full corpus ingestion occurs at the integration phase (P5).`
-> REPLACE: `Full pipeline built, deployed, and running on the 20-ingredient source-linked corpus.`
+> REPLACE: `Full pipeline built and running on the 50-ingredient, 52-source knowledge base, with one-command rebuild and Pinecone upload.`
 
-**Obj 2 body — [fix] block rate + CUE as delivered results**
+**Obj 2**
 
 > FIND: `RAG pipeline evaluated with at CUE, grounded in a CIR/EWG vector store. Dual-pass safety filter targets 100% block rate on the independent test set. PEG + SHAP-on-surrogate produce auditable rationales.`
-> REPLACE: `RAG pipeline evaluated with calibrated CUE over a CIR/EWG source-linked corpus. Dual-pass safety filter achieved [INSERT block rate, e.g. 50/50] on the independent safety set. PEG + exact Shapley-on-surrogate produce auditable rationales.`
+> REPLACE: `GPT choices are restricted to a retrieved, safety-approved pool and schema-checked; explanations are CUE-checked. Safety: 50/50 Safety-50 cases, 93/93 extended tests, triage [INSERT independent-set sensitivity, or "148/148 on the development sets (tuned on them)"]. Exact Shapley + PEG explain the environmental drivers.`
 
-**Obj 3 body — [fix] all instruments completed**
+**Obj 3**
 
 > FIND: `Multi-instrument evaluation: CIR/EWG benchmark match, CUE scoring, blinded dermatologist audit, case safety suite, and median-latency budget — each mapped to RQ3 with zero unanswered gaps.`
-> REPLACE: `Multi-instrument evaluation completed: calibrated CUE scoring, retrieval pack (30/30 Recall@5), 50-case safety suite, blinded dermatologist audit (κ = [INSERT]), and UAT (n = [INSERT]) — each mapped to RQ3.`
+> REPLACE: `Evaluated with reproducible suites (retrieval, safety, triage, schemas, browser/accessibility), a before/after comparison, [INSERT completed human studies], each mapped to RQ3.`
 
 ---
 
-## New slide to insert — between current 6 and 7
+## New slide — Results & Evaluation Findings (insert between 6 and 7)
 
-**Title:** `Results & Evaluation Findings`
-**Content:** a results table — the single most valuable slide for a completed-work viva:
 - `Retrieval — Recall@5 30/30, MRR 0.98`
-- `Safety — 50/50 software cases; [INSERT] block rate on clinical set`
-- `CUE (calibrated) — [INSERT score]`
-- `Dermatologist audit — Cohen's κ = [INSERT]`
-- `UAT — n = [INSERT], usability/trust = [INSERT]`
-- `Latency — median [INSERT] ms`
-
-This converts "expected outcomes" into demonstrated, quantified results — what examiners weight most.
+- `Safety — Safety-50 50/50; extended 93/93; 840 pipeline runs with no unsafe output`
+- `Triage — keyword baseline caught 22% of cases needing care; rules catch 148/148 on the development sets; fresh blind set 13/15 before fixes; independent set [INSERT or "pending"]`
+- `Before vs after (same inputs, old vs current version) — fresh triage cases caught 3/15 → 13/15; skin type changes the routine in 0/24 → 8/24 cases; result readability (Flesch) −8 → 56; serious accessibility issues 24 → 0`
+- `GPT reliability — 50 schema checks; every failure falls back to the rule-based routine and is shown as Reduced mode`
+- `Live GPT — [INSERT from npm run eval:live, or "pending"]`
+- `CUE vs humans — [INSERT κ, or "pending"]`
+- `User test — [INSERT n and findings, or "in progress"]`
 
 ---
 
-## One-line framing to open the defence with
+## Opening line for the defence
 
-> "I built, deployed, and evaluated a grounded, safety-checked, explainable skincare framework
-> end-to-end — validated across retrieval, safety, a blinded dermatologist audit, and user testing."
+> "I built and tested a weather-aware skincare system that turns today's conditions into a
+> morning and evening routine, checks it for safety before and after the AI, and explains every
+> choice in plain English — and I can show you exactly what was measured and what still needs
+> people to evaluate."

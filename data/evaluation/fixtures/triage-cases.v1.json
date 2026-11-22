@@ -464,6 +464,12 @@
       "category": "cosmetic",
       "expected": "clear",
       "text": ""
+    },
+    {
+      "id": "tri-078",
+      "category": "cosmetic",
+      "expected": "clear",
+      "text": "I put numbing cream on before waxing my brows"
     }
   ]
 }

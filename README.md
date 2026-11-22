@@ -62,6 +62,7 @@ npm run verify:demo-pinecone
 - **CUE** (Context Utilisation Evaluation, `lib/cue.mjs`): any text the model writes (the routine rationale and each ingredient rationale) is split into statements and checked against the facts and evidence the model was given. CUE = supported statements / statements. Below 0.80 the text is regenerated once with feedback, then withheld and replaced by local text. `CUE_METHOD=llm_judge` asks the model to verify each statement (RAGAS-style faithfulness) and falls back to a deterministic lexical check.
 - **Candidate pools** (`lib/candidate-retrieval.mjs`): for each safety-cleared step a query is built from the category and the reading that triggered it, and run over one evidence document per ingredient (`lib/ingredient-evidence-corpus.mjs`) with local BM25 plus Pinecone dense search (`PINECONE_EVIDENCE_NAMESPACE`), fused with reciprocal rank fusion. Only approved ingredients the retriever surfaces for that step enter its pool.
 - **Selection:** each candidate gets a transparent additive score (environmental driver 0.40, retrieval relevance 0.30, evidence strength 0.20, EWG reference 0.10). The model chooses within each pool without seeing the score; an invented or misplaced pick is rejected and the top-scored candidate is used instead.
+- **Rotation (Nov 2026, `lib/rotation.mjs`):** when the model makes no valid pick, candidates within 0.05 of the slot's top score (less than one evidence-grade step) are treated as equally supported, and one is drawn with a seeded weighted draw that favours the higher score and avoids what the slot showed in the last 3 runs. The model is told what each slot showed recently and sees its options in a seeded order. The seed and draw are in the run report and selection log. A clear leader is never displaced; `npm run eval:rotation` checks this and writes `data/evaluation/reports/rotation.latest.md`. `INGREDIENT_ROTATION=false` turns it off.
 - **Safety:** triage, first pass, second pass over the model's routine text, and a **post-selection pass** over the final named ingredients (excluded ingredients such as retinal, prescription-only actives, incompatible pairs, photosensitisers in a morning step, exfoliants under the barrier guardrail, restricted claims in model text). A failing ingredient is removed and reported.
 - **Explainability:** level 1 is the environmental Shapley surrogate (weights now fitted by non-negative least squares; see `data/models/README.md`). Level 2 explains each step (the rule and reading that added it) and each ingredient (Shapley values of the candidate score, including the contrast with the runner-up in the same pool). The text is template-generated from computed values only.
 - **GPT context for every step and ingredient:** after a routine is shown, the browser asks `/api/ai/routine-context` for plain-language context. The server writes it with GPT from that run's own facts (readings, the rule behind each step, the retrieved pool and score comparison, the verified safety card, the EWG reference), checks every item with CUE, regenerates failing items once and keeps the score-based text for anything still below the threshold.
@@ -146,16 +147,58 @@ npm run eval:safety-50
 
 The retrieval pack contains 30 source-discovery queries over the local registry and reports Recall@5, MRR, source coverage, and latency. The safety pack contains 50 deterministic routing and output-contract cases. Their current exports are [retrieval-evaluation.latest.md](data/evaluation/reports/retrieval-evaluation.latest.md) and [safety-50-case.latest.md](data/evaluation/reports/safety-50-case.latest.md).
 
+## User study site (/study)
+
+The user test runs inside DermaSynth, so participants use one link on their phone.
+
+1. Add a private researcher token (16 or more characters) to `.env`: `STUDY_ADMIN_TOKEN=...`, and `STUDY_MODE=on` for session days, then restart with `npm start` (or `HOST=0.0.0.0 npm start` for phones on your hotspot). With `STUDY_MODE=on`, anyone opening the app sees a "Take part" invitation card; a link ending in `/?study` goes straight to consent even when it is off.
+2. Participants open `http://<laptop-ip>:4173/study`, tap **Take part**, give consent and get a code (P01, P02...). The code is remembered on their phone.
+   - **Guided mode (default):** they tap **Start the tasks**. The app opens with a task card at the bottom that shows one task at a time, notices when it is done (routine built, Why? opened, product checked, story saved, redirect shown), times it and saves it. The sun and tomorrow tasks ask for a short typed answer, checked against what the app showed. "I'm stuck" gives a hint (recorded as *with help*), then "Skip" (recorded as *failed*). After the last task it opens the questionnaire. You can review or correct any result on the researcher page.
+   - **Moderated mode:** if you read the tasks yourself, they use "open DermaSynth without the task card" and you record the tasks as in step 3.
+3. You open `/study#admin` on your laptop, enter the token, choose their code and record each of the 7 tasks (Start, then Success / With help / Failed / Skipped). Time is saved automatically.
+4. After the tasks they open **Questionnaire**: profile, the 10 SUS statements, 7 DermaSynth statements and two comments.
+5. **Results** shows the SUS mean, SD, median, range and adjective against the average of 68, task completion and median times, per-statement medians and agreement, comments and the names of people who agreed to be thanked. Export the questionnaire and task CSVs for the dissertation (codes only, no names).
+6. The independent case writer opens `/study#cases` (over the HTTPS tunnel if remote). On **Case sets**, **Use for eval:independent** writes their set unchanged to `data/evaluation/independent/cases.json`; then run `npm run eval:independent`.
+
+Records are kept in `data/study/study.sqlite`, which git ignores and the knowledge-base rebuild never touches. **Withdraw** deletes a participant's consent, tasks and answers. Delete the file after the project is graded, as the consent page promises. `npm run eval:study-site` tests the whole flow on a throwaway database.
+
 ## Run the triage, extended safety and independent sets
 
 ```sh
-npm run eval:triage              # 117 labelled symptom texts, v1 keywords vs v2 rules
+npm run eval:triage              # 148 labelled symptom texts, v1 keywords vs v2 rules
 npm run eval:triage -- --llm     # also v2 rules + GPT second opinion (needs .env keys)
-npm run eval:safety-extended     # 88 cases incl. all incompatible pairs and 210 pipeline runs
+npm run eval:safety-extended     # 93 cases incl. all incompatible pairs and 840 pipeline runs
 npm run eval:independent         # cases written by the supervisor or a dermatologist
 ```
 
 The triage report gives sensitivity and specificity per method and records the honest first blind run of the held-out set. The independent set lives in [data/evaluation/independent](data/evaluation/independent/README.md) and is reported separately. `npm test` runs the triage and extended suites.
+
+## November 2026: viva evidence
+
+One command refreshes every live (GPT) measurement used in the viva materials. Run it on the machine that holds `.env`, with no other server running; it checks that OpenAI answers first, starts its own server, and takes about 15 to 25 minutes (roughly USD 0.50):
+
+```sh
+npm run eval:viva-refresh        # all of the below
+npm run eval:viva-live           # only the end-to-end runs and repeatability (about 8 to 10 minutes)
+```
+
+The individual steps:
+
+```sh
+npm run eval:triage-blind              # guideline-based blind set (40 cases), rules alone, offline
+npm run eval:triage-blind -- --llm     # rules + GPT second opinion on the cases the frozen rules cleared
+npm run eval:cue-calibration -- --live # CUE judge v1 vs v2 on controls and planted false sentences
+npm run eval:label-scan -- --live      # 16 synthetic label photos, 2 deliberately blurred
+npm run eval:live                      # 20 end-to-end runs (needs npm start)
+npm run eval:repeatability             # 3 profiles x 5 identical requests (needs npm start)
+npm run eval:safety-traceability       # every safety rule has a status and a known source (offline)
+```
+
+- **Guideline-based blind set** (`data/evaluation/fixtures/triage-cases.blind2.v1.json`): 40 cases written on 6 Nov 2026 from NHS and DermNet red-flag guidance by someone other than the rule author (an AI writing assistant, not a clinician). The first run of each method is stored in the fixture with a fingerprint of the rule files and is never overwritten. First runs: rules alone 15/25 and 15/15; rules + GPT 25/25 and 15/15. Rules were extended afterwards (including Malay terms), so later runs on this set are optimistic.
+- **CUE judge**: prompt v2 is the default (`JUDGE_INSTRUCTIONS` in `lib/cue.mjs`). If the judge call fails it is retried once and then the draft is withheld; the lexical proxy is used only offline.
+- **Safety-rule sources**: `data/ingredients/safety-rule-sources.v1.json` lists the sources; each rule's status and source ids sit next to it in `incompatibility-matrix.v1.json` and `safety-flags.v1.json`. Current trace: 38 rules, 15 confirmed, 5 extended, 17 design choices (stricter than any source), 1 pending (tazarotene, not registered in Malaysia).
+- **Speed**: the GPT ingredient pick starts in parallel with the category pick (any skipped step is asked again), and explanations are written in parallel groups. Median wait on 6 Nov 2026: 8.7 s to the routine, 6.4 s to the explanations.
+- **AI rater panel**: `data/evaluation/ai-panel-codex/` holds simulated ratings produced by OpenAI Codex. They are not human ratings and must never be reported as a human evaluation. The human rating folders (`cue-rating/ratings/`, `ablation/ratings/`) are for real raters only.
 
 ## How the user's inputs shape the routine
 
@@ -173,6 +216,35 @@ The app opens on the routine page in the **consumer view**: today's conditions (
 Technical failures are shown to consumers in plain words; configuration details stay in Expert view and the server log.
 
 `npm run test:browser` (part of `npm test`) opens the app in headless Chromium at phone and desktop widths and checks for JavaScript errors, sideways scrolling, serious accessibility violations (axe-core, WCAG 2.1 AA), the safety question, the Why? buttons, the check-up redirect and Expert view. First time only: `npm install` then `npx playwright install chromium`. Without them the test reports that it was skipped.
+
+## Interface design (November 2026, after the user study)
+
+The consumer interface was redesigned after all three study rounds, so no SUS score applies to it.
+
+- Layout: on the Today page the routine comes first, with one main action (Save as my usual routine), Share, and a More menu for reminders and the product check. The "Skin reacting badly?" line stays visible because 6 of 10 Round 1 participants needed a hint to find it.
+- Living Sky: the page background is the day's sky. `skyPalette()` in `ui/hero.js` picks dawn, day, dusk or night from the local hour, then warms the day sky with UV and dulls it with haze. The droplet in `sky.js` is drawn as glass on a transparent canvas over that sky.
+- The routine sits on a paper sheet over the sky: cream by day, deep green with an amber accent at night, when the evening steps come first.
+- Styles: everything is in one file, `styles.css`, read top to bottom (base layout, consumer pages, then the Living Sky design layer). Hover effects apply only to mouse users, animations stay under 300 ms, and reduced motion keeps fades without movement.
+- Checks: `npm run test:browser` (68 checks, including an axe accessibility scan) passes at day and at night, and text on the sky was measured from rendered pixels at 7 am, 1 pm, 6 pm and 9 pm.
+
+## Front-end code layout
+
+`index.html` loads `styles.css` and `app.js`. `app.js` is a short entry point (page-wide event handlers and start-up); each feature is an ES module in `ui/`:
+
+| File | What it holds |
+|---|---|
+| `ui/state.js` | the shared `state` object, routes, default location, localStorage helpers |
+| `ui/shell.js` | page frame, navigation, `render()`, view transitions, toasts, routing |
+| `ui/hero.js` | Living Sky hero and the sky palette |
+| `ui/today.js`, `ui/result.js`, `ui/result-actions.js`, `ui/daily.js` | the Today page, the routine result, its actions, the checklist and streak |
+| `ui/routine.js` | routine requests and normalisation |
+| `ui/environment.js`, `ui/location.js` | weather readings and choosing a location |
+| `ui/weather.js`, `ui/week.js` | Weather page and the weekly planner |
+| `ui/shelf.js`, `ui/story.js`, `ui/atlas.js` | My shelf, the share image, the Ingredients page |
+| `ui/expert.js` | Expert view panels, run report and the defence walkthrough |
+| `ui/data.js`, `ui/util.js` | static data tables and small helpers |
+
+The server serves every `.js` file in `ui/` automatically. `npm run check` syntax-checks each module, and `npm run test:browser` covers the pages end to end.
 
 ## Reliability and deployment
 
@@ -211,7 +283,7 @@ Technical failures are shown to consumers in plain words; configuration details 
 - Every step always has a rule-based reason. The Expert view toggle on the routine card shows the rule-based and GPT versions side by side, with CUE scores.
 - CUE against people: `npm run cue:sheet` builds a blinded rating sheet from logged drafts; raters fill it; `npm run eval:cue-human` reports agreement and Cohen's kappa. Steps are in [data/evaluation/cue-rating](data/evaluation/cue-rating/README.md).
 - `npm run eval:gpt-layer` (part of `npm test`) checks these contracts offline against a mock of the OpenAI API.
-- **Output schema contract (C2):** every GPT reply is checked against the schema that was sent (`lib/schema-check.mjs`); a reply that is not JSON, misses a field, has a wrong type or an extra field counts as a failed call and the rule-based result is used. `npm run eval:gpt-schemas` (part of `npm test`) checks that each of the 7 schemas is accepted by OpenAI strict mode, matches the committed snapshot (`data/evaluation/fixtures/gpt-schemas.snapshot.json`), that matching replies are used and malformed ones rejected, and that no new GPT call is left untested. After a deliberate schema change, run `npm run eval:gpt-schemas -- --update`.
+- **Output schema contract (C2):** every GPT reply is checked against the schema that was sent (`lib/schema-check.mjs`); a reply that is not JSON, misses a field, has a wrong type or an extra field counts as a failed call and the rule-based result is used. `npm run eval:gpt-schemas` (part of `npm test`) checks that each of the 8 schemas is accepted by OpenAI strict mode, matches the committed snapshot (`data/evaluation/fixtures/gpt-schemas.snapshot.json`), that matching replies are used and malformed ones rejected, and that no new GPT call is left untested. After a deliberate schema change, run `npm run eval:gpt-schemas -- --update`.
 
 ## When live weather is unavailable
 

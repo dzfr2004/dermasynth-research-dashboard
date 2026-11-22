@@ -1,10 +1,10 @@
 # GPT output schema contract (C2)
 
-Generated 2026-09-24 by `npm run eval:gpt-schemas` against a local mock of the Responses API. Result: **50/50 passed**.
+Generated 2026-11-06 by `npm run eval:gpt-schemas` against a local mock of the Responses API. Result: **57/57 passed**.
 
 | ID | Check | Result |
 | --- | --- | --- |
-| schema-00 | Every structured-output call in lib/ is covered (7 found) | passed |
+| schema-00 | Every structured-output call in lib/ is covered (8 found) | passed |
 | schema-01a | triage_second_opinion: schema is valid for OpenAI strict mode | passed |
 | schema-01b | triage_second_opinion: schema matches the committed snapshot | passed |
 | schema-01c | triage_second_opinion: a reply matching the schema is read and used | passed |
@@ -47,11 +47,18 @@ Generated 2026-09-24 by `npm run eval:gpt-schemas` against a local mock of the R
 | schema-06-wrong_type | cue_batch_verdicts: a reply with wrong type is rejected and the rule-based path is used | passed |
 | schema-06-extra_field | cue_batch_verdicts: a reply with extra field is rejected and the rule-based path is used | passed |
 | schema-06-not_json | cue_batch_verdicts: a reply with not json is rejected and the rule-based path is used | passed |
-| schema-07a | ingredient_rationales: schema is valid for OpenAI strict mode | passed |
-| schema-07b | ingredient_rationales: schema matches the committed snapshot | passed |
-| schema-07c | ingredient_rationales: a reply matching the schema is read and used | passed |
-| schema-07-missing_field | ingredient_rationales: a reply with missing field is rejected and the rule-based path is used | passed |
-| schema-07-wrong_type | ingredient_rationales: a reply with wrong type is rejected and the rule-based path is used | passed |
-| schema-07-extra_field | ingredient_rationales: a reply with extra field is rejected and the rule-based path is used | passed |
-| schema-07-not_json | ingredient_rationales: a reply with not json is rejected and the rule-based path is used | passed |
+| schema-07a | label_transcription: schema is valid for OpenAI strict mode | passed |
+| schema-07b | label_transcription: schema matches the committed snapshot | passed |
+| schema-07c | label_transcription: a reply matching the schema is read and used | passed |
+| schema-07-missing_field | label_transcription: a reply with missing field is rejected and the rule-based path is used | passed |
+| schema-07-wrong_type | label_transcription: a reply with wrong type is rejected and the rule-based path is used | passed |
+| schema-07-extra_field | label_transcription: a reply with extra field is rejected and the rule-based path is used | passed |
+| schema-07-not_json | label_transcription: a reply with not json is rejected and the rule-based path is used | passed |
+| schema-08a | ingredient_rationales: schema is valid for OpenAI strict mode | passed |
+| schema-08b | ingredient_rationales: schema matches the committed snapshot | passed |
+| schema-08c | ingredient_rationales: a reply matching the schema is read and used | passed |
+| schema-08-missing_field | ingredient_rationales: a reply with missing field is rejected and the rule-based path is used | passed |
+| schema-08-wrong_type | ingredient_rationales: a reply with wrong type is rejected and the rule-based path is used | passed |
+| schema-08-extra_field | ingredient_rationales: a reply with extra field is rejected and the rule-based path is used | passed |
+| schema-08-not_json | ingredient_rationales: a reply with not json is rejected and the rule-based path is used | passed |
 

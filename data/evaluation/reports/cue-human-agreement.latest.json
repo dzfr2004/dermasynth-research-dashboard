@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-11-06T15:45:13.955Z",
+  "raters": [
+    "rater-2",
+    "rater-3"
+  ],
+  "items": 40,
+  "interRater": [
+    {
+      "raters": [
+        "rater-2",
+        "rater-3"
+      ],
+      "n": 40,
+      "observed": 0.85,
+      "expected": 0.7062499999999999,
+      "kappa": 0.4893617021276596
+    }
+  ],
+  "cueVsHumans": {
+    "n": 40,
+    "observed": 0.35,
+    "expected": 0.5,
+    "kappa": -0.30000000000000004
+  },
+  "confusion": {
+    "cueSupported_humanSupported": 12,
+    "cueSupported_humanUnsupported": 8,
+    "cueUnsupported_humanSupported": 18,
+    "cueUnsupported_humanUnsupported": 2
+  },
+  "cueRecallOfUnsupported": 0.2,
+  "unsupportedShownRate": 0.2
+}

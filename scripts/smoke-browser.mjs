@@ -42,6 +42,11 @@ try {
   process.exit(0);
 }
 
+async function openMore(page) {
+  const more = page.locator(".more-actions");
+  if (await more.count() && !(await more.evaluate((el) => el.open))) { await more.locator("summary").click(); await page.waitForTimeout(250); }
+}
+
 async function reservePort() {
   const server = createServer();
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -80,7 +85,7 @@ const base = `http://127.0.0.1:${port}/`;
 
 let browser;
 try {
-  browser = await chromium.launch();
+  browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 } catch (error) {
   child.kill();
   const message = `Browser smoke test skipped: no Chromium build (run \`npx playwright install chromium\`). ${String(error?.message || "").split("\n")[0]}`;
@@ -100,6 +105,12 @@ const CONFIG_LEAK = /\.env\b|LIVE_SERVICES_ENABLED|OPENAI_API_KEY|OPENWEATHER_AP
 async function openPage(width) {
   // bypassCSP only so the axe script can be injected; the app itself is unchanged.
   const context = await browser.newContext({ viewport: { width, height: width < 500 ? 812 : 900 }, bypassCSP: true, acceptDownloads: true });
+  // A routine "from yesterday", so the next-day check-in is asked.
+  await context.addInitScript(() => {
+    try {
+      if (!localStorage.getItem("dermasynth.last-routine.v1")) localStorage.setItem("dermasynth.last-routine.v1", JSON.stringify({ steps: ["am:low-irritation-cleansing", "pm:low-irritation-cleansing"], readings: { uvi: 3, humidity: 60, pm25: 10, temperature: 28 }, at: new Date(Date.now() - 864e5).toISOString(), profile: "combination", concern: "acne", status: "cleared" }));
+    } catch {}
+  });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
@@ -119,14 +130,30 @@ async function axeViolations(page) {
   });
 }
 
+// Stand-in for /api/week (the smoke server runs without live weather, so the
+// real endpoint has no forecast).
+function weekOutlookFixture() {
+  const start = new Date();
+  const iso = (i) => new Date(start.getTime() + i * 864e5).toISOString().slice(0, 10);
+  const am = ["low-irritation-cleansing", "light-hydration", "daytime-photoprotection"];
+  const pm = ["low-irritation-cleansing", "lightweight-moisturising", "overnight-comfort"];
+  const days = Array.from({ length: 7 }, (_, i) => ({ date: iso(i), isToday: i === 0, readings: { uvi: i === 3 ? 2 : 9, humidity: 80, temperature: 32, temperatureMin: 25, pm25: i > 4 ? null : 20 }, precipitation: 40, sky: "partly cloudy", uvWindow: i === 3 ? null : { start: `${iso(i)}T09:00`, end: `${iso(i)}T17:00`, peak: { uvi: 9, time: `${iso(i)}T13:00` } }, steps: { am: i === 3 ? am.filter((x) => x !== "daytime-photoprotection") : am, pm }, unknown: i > 4 ? ["antioxidant-context"] : [], changes: [], sameAsToday: i !== 3, ingredients: { "am:light-hydration": { id: "sodium-hyaluronate", name: "Sodium Hyaluronate", sameAsToday: true }, ...(i === 3 ? {} : { "am:daytime-photoprotection": { id: "zinc-oxide", name: "Zinc Oxide", sameAsToday: true } }), "pm:lightweight-moisturising": { id: i === 2 ? "glycerin" : "squalane", name: i === 2 ? "Glycerin" : "Squalane", sameAsToday: i !== 2 } } }));
+  return { available: true, source: "Weather data by Open-Meteo.com", week: { days, note: "Forecasts further ahead are less certain." } };
+}
+
 for (const width of [375, 1280]) {
   const label = width < 500 ? "phone" : "desktop";
   const { page, context, errors } = await openPage(width);
+  await page.route("**/api/week", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(weekOutlookFixture()) }));
   await check(`${label}-landing`, `${label}: a consumer lands on the routine page`, async () => {
     expect((await page.locator("#page-title").innerText()).trim() === "Your routine", "Landing page is not the routine page.");
   });
-  for (const view of ["simulator", "monitor", "dashboard", "knowledge"]) {
+  const views = width < 500 ? ["simulator", "monitor", "shelf", "knowledge"] : ["simulator", "monitor", "shelf", "dashboard", "knowledge"];
+  for (const view of views) {
     await goTo(page, view);
+    if (width < 500) await check(`${label}-${view}-reached`, `${label}: the ${view} page is reachable from the bottom navigation`, async () => {
+      expect(await page.evaluate((v) => document.querySelector(`.mobile-nav [data-view="${v}"]`)?.classList.contains("is-active"), view), "Nav item not active.");
+    });
     if (view === "knowledge") await page.waitForTimeout(1200);
     await check(`${label}-${view}-layout`, `${label}: ${view} page has no sideways scroll`, async () => {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
@@ -135,6 +162,28 @@ for (const width of [375, 1280]) {
     await check(`${label}-${view}-a11y`, `${label}: ${view} page has no serious accessibility violations`, async () => {
       const violations = await axeViolations(page);
       expect(!violations.length, violations.join("; "));
+    });
+  }
+  if (width < 500) {
+    await check("phone-nav", "phone: the bottom navigation is Today / Weather / Shelf / Ingredients", async () => {
+      const labels = await page.locator(".mobile-nav-item span").allInnerTexts();
+      expect(labels.join("/") === "Today/Weather/Shelf/Ingredients", `Nav is ${labels.join("/")}`);
+    });
+    await goTo(page, "monitor");
+    await check("phone-weather", "phone: the Weather page is plain (no research terms) and shows today's readings", async () => {
+      await page.waitForSelector(".today-card", { timeout: 5000 });
+      const text = await page.locator(".view").innerText();
+      const leak = text.match(/not_configured|Shapley|surrogate|\bGPT\b|research context/i);
+      expect(!leak, `Found "${leak?.[0]}".`);
+    });
+    await goTo(page, "simulator");
+    await check("phone-no-zoom", "phone: form fields use at least 16 px text (no zoom on focus in iOS)", async () => {
+      const small = await page.evaluate(() => [...document.querySelectorAll("input, select, textarea")].filter((el) => el.offsetParent && parseFloat(getComputedStyle(el).fontSize) < 16).map((el) => el.id || el.className));
+      expect(!small.length, `Under 16 px: ${small.join(", ")}`);
+    });
+    await check("phone-tap-targets", "phone: buttons and fields are at least 44 px tall", async () => {
+      const small = await page.evaluate(() => [...document.querySelectorAll(".view button, .view input, .view select, .mobile-nav button, .topbar button")].filter((el) => el.offsetParent).map((el) => ({ t: (el.innerText || el.id || el.className).trim().slice(0, 24), h: el.getBoundingClientRect().height })).filter((x) => x.h < 43.5));
+      expect(!small.length, small.map((x) => `${x.t} (${Math.round(x.h)} px)`).join(", "));
     });
   }
   await goTo(page, "simulator");
@@ -151,6 +200,18 @@ for (const width of [375, 1280]) {
     expect(steps >= 4 && reasons === steps, `${steps} steps, ${reasons} with a reason.`);
     expect(await page.locator(".today-card").count() === 1, "Today's conditions card missing.");
     await page.waitForTimeout(1400); // let the entrance animation and background updates settle
+  });
+  await check(`${label}-checklist`, `${label}: ticking a step marks it done and keeps focus on it`, async () => {
+    const tick = page.locator('[data-action="step-done"]').first();
+    const key = await tick.getAttribute("data-key");
+    await tick.click();
+    await page.waitForTimeout(300);
+    const after = page.locator(`[data-action="step-done"][data-key="${key}"]`);
+    expect(await after.getAttribute("aria-pressed") === "true", "Step was not marked done.");
+    expect(await page.evaluate((k) => document.activeElement?.dataset?.key === k, key), "Focus left the tick button.");
+    await after.click();
+    await page.waitForTimeout(300);
+    expect(await page.locator(`[data-action="step-done"][data-key="${key}"]`).getAttribute("aria-pressed") === "false", "Step could not be unticked.");
   });
   await check(`${label}-why`, `${label}: "Why?" opens, closes and keeps focus`, async () => {
     const button = page.locator('[data-action="toggle-why"]').first();
@@ -171,7 +232,9 @@ for (const width of [375, 1280]) {
     await button.click();
     await page.waitForTimeout(500);
     const labels = await page.locator(".consumer-why:not([hidden]) .why-row dt").allInnerTexts();
-    expect(["What it is", "Why today", "On labels", "References"].every((l) => labels.includes(l)), `Rows: ${labels.join(", ")}`);
+    expect(["What it is", "On labels", "References"].every((l) => labels.includes(l)), `Rows: ${labels.join(", ")}`);
+    // "Why today" is left out only when it would repeat the step's own reason.
+    if (!labels.includes("Why today")) expect((await page.locator(".consumer-step").first().locator(".step-line").innerText()).trim().length > 15, "No reason shown for today.");
     expect(await page.locator(".consumer-why:not([hidden]) .reference-list li").count() >= 1, "No journal-style reference shown.");
     const text = await page.locator(".consumer-why:not([hidden])").innerText();
     expect(!/picked from|approved ingredients|score|rank|retriev/i.test(text), "System wording in the Why? panel.");
@@ -187,12 +250,17 @@ for (const width of [375, 1280]) {
     const leak = text.match(CONFIG_LEAK);
     expect(!leak, `Found "${leak?.[0]}".`);
   });
-  await check(`${label}-one-line`, `${label}: "Today in one line" summarises the day above the routine`, async () => {
+  await check(`${label}-one-line`, `${label}: the hero sums up the day's plan in one line above the routine`, async () => {
     const text = (await page.locator(".hero-text").innerText()).trim();
     expect(text.length > 15 && /sunscreen|UV/i.test(text), `Summary missing or unexpected: "${text}"`);
   });
-  await check(`${label}-collapsed`, `${label}: the form folds into "Edit my skin details" and the result is in view`, async () => {
-    expect(await page.locator(".form-panel.is-collapsed").count() === 1, "Form did not collapse.");
+  await check(`${label}-collapsed`, label === "desktop" ? `${label}: "About your skin" stays open on the left and the result is beside it` : `${label}: the form folds into "Edit my skin details" and the result is in view`, async () => {
+    if (label === "desktop") {
+      const [form, result] = await Promise.all([page.locator(".simulator-grid > .form-panel").boundingBox(), page.locator("#routine-result").boundingBox()]);
+      expect(form && result && form.x + form.width <= result.x && !(await page.locator(".form-panel.is-collapsed").count()), "Form is not open to the left of the result.");
+    } else {
+      expect(await page.locator(".form-panel.is-collapsed").count() === 1, "Form did not collapse.");
+    }
     const top = await page.locator("#routine-result").evaluate((el) => el.getBoundingClientRect().top);
     expect(top < 400, `Result starts ${Math.round(top)} px down the screen.`);
   });
@@ -212,22 +280,23 @@ for (const width of [375, 1280]) {
     expect(/1 of 3 ingredients/.test(await page.locator(".pc-note").innerText()), "Unrecognised ingredient not reported.");
   });
   await check(`${label}-product-example`, `${label}: "Check my product" is one tap from the summary and the example runs`, async () => {
+    await openMore(page);
     await page.locator('[data-action="pc-focus"]').click();
     await page.waitForTimeout(700);
     expect(await page.evaluate(() => document.activeElement?.id) === "pc-text", "The ingredient box was not focused.");
     await page.locator('[data-action="pc-example"]').click();
     await page.waitForSelector(".pc-result.is-good", { timeout: 10000 });
   });
-  await check(`${label}-checkin`, `${label}: the one-tap check-in is sent`, async () => {
+  await check(`${label}-checkin`, `${label}: the next-day check-in is asked and sent`, async () => {
     const posted = page.waitForRequest((r) => r.url().endsWith("/api/feedback") && r.method() === "POST");
     await page.locator('[data-action="checkin"][data-value="good"]').click();
     await page.locator('[data-action="checkin-follow"][data-value="partly"]').click();
     const body = JSON.parse((await posted).postData() || "{}");
-    expect(body.rating === "good" && body.followed === "partly", "Check-in body wrong.");
+    expect(body.rating === "good" && body.followed === "partly" && body.about === "yesterday", "Check-in body wrong.");
     await page.waitForSelector(".checkin-card.is-done", { timeout: 5000 });
   });
   await check(`${label}-reminders`, `${label}: reminders download as a calendar file`, async () => {
-    const [download] = await Promise.all([page.waitForEvent("download"), page.locator('[data-action="reminders"]').click()]);
+    const [download] = await Promise.all([page.waitForEvent("download"), openMore(page).then(() => page.locator('[data-action="reminders"]').click())]);
     expect(download.suggestedFilename() === "dermasynth-reminders.ics", "Wrong file name.");
     const text = await readFile(await download.path(), "utf8");
     expect(text.startsWith("BEGIN:VCALENDAR") && text.includes("BEGIN:VEVENT"), "Not a calendar file.");
@@ -249,8 +318,27 @@ for (const width of [375, 1280]) {
     const violations = await axeViolations(page);
     expect(!violations.length, violations.join("; "));
   });
+  await check(`${label}-week`, `${label}: "This week" shows each day's ingredients in a 7-day planner that fits the screen and exports a landscape image`, async () => {
+    await page.waitForSelector(".result-switch", { timeout: 15000 });
+    await page.locator('[data-action="result-view"][data-view="week"]').click();
+    await page.waitForSelector(".week-table", { timeout: 5000 });
+    const cols = await page.locator(".week-table thead tr:first-child th").count();
+    expect(cols === 8, `Expected 7 days plus the label column, got ${cols - 1} days.`);
+    expect(await page.locator(".week-table td.is-changed").count() >= 2, "The low-UV day and the changed ingredient are not highlighted.");
+    const cells = await page.locator(".week-table td.is-on .week-ing").allInnerTexts();
+    expect(cells.includes("Zinc Oxide") && cells.includes("Squalane") && cells.includes("Glycerin"), `Ingredients not shown: ${cells.slice(0, 8).join(", ")}`);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow <= 1, `The page scrolls sideways by ${overflow} px.`);
+    await page.locator('[data-action="week-export"]').click();
+    await page.waitForSelector("#story-modal.is-landscape .story-preview", { timeout: 8000 });
+    const size = await page.locator("#story-modal .story-preview").evaluate((img) => [img.naturalWidth, img.naturalHeight]);
+    expect(size[0] === 1920 && size[1] === 1080, `Image is ${size.join(" x ")}.`);
+    await page.locator("#story-modal .story-close").click();
+    await page.locator('[data-action="result-view"][data-view="today"]').click();
+    await page.waitForSelector(".consumer-step", { timeout: 5000 });
+  });
   await check(`${label}-redirect`, `${label}: symptoms that need care show the check-up screen and no routine`, async () => {
-    await page.locator('[data-action="edit-form"]').click();
+    if (await page.locator('[data-action="edit-form"]').count()) await page.locator('[data-action="edit-form"]').click();
     await page.waitForSelector("#symptoms", { timeout: 5000 });
     await page.fill("#symptoms", "my lips started swelling after a new cream");
     await page.locator('[data-action="simulate"]').first().click();

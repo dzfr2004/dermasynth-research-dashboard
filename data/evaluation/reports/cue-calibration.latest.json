@@ -1,0 +1,167 @@
+{
+  "generatedAt": "2026-11-06T13:54:25.895Z",
+  "model": "gpt-5.6-sol",
+  "threshold": 0.8,
+  "results": {
+    "v1": {
+      "unanswered": 0,
+      "controlSentences": 120,
+      "controlSentencesRejected": 0,
+      "controlTextsRejected": 0,
+      "injectedCaught": 40,
+      "injectedTextsRejected": 40,
+      "byKind": {
+        "new number": {
+          "n": 8,
+          "caught": 8
+        },
+        "wrong reading": {
+          "n": 8,
+          "caught": 8
+        },
+        "invented mechanism": {
+          "n": 8,
+          "caught": 8
+        },
+        "unsupported cause": {
+          "n": 8,
+          "caught": 8
+        },
+        "guarantee": {
+          "n": 8,
+          "caught": 8
+        }
+      },
+      "realPassed": 32,
+      "realVerdicts": {
+        "CUE001": "passed",
+        "CUE002": "rejected",
+        "CUE003": "rejected",
+        "CUE004": "passed",
+        "CUE005": "passed",
+        "CUE006": "passed",
+        "CUE007": "passed",
+        "CUE008": "passed",
+        "CUE009": "passed",
+        "CUE010": "passed",
+        "CUE011": "passed",
+        "CUE012": "passed",
+        "CUE013": "rejected",
+        "CUE014": "passed",
+        "CUE015": "passed",
+        "CUE016": "rejected",
+        "CUE017": "passed",
+        "CUE018": "passed",
+        "CUE019": "rejected",
+        "CUE020": "rejected",
+        "CUE021": "passed",
+        "CUE022": "passed",
+        "CUE023": "passed",
+        "CUE024": "passed",
+        "CUE025": "rejected",
+        "CUE026": "passed",
+        "CUE027": "passed",
+        "CUE028": "passed",
+        "CUE029": "passed",
+        "CUE030": "passed",
+        "CUE031": "passed",
+        "CUE032": "passed",
+        "CUE033": "passed",
+        "CUE034": "passed",
+        "CUE035": "passed",
+        "CUE036": "rejected",
+        "CUE037": "passed",
+        "CUE038": "passed",
+        "CUE039": "passed",
+        "CUE040": "passed"
+      }
+    },
+    "v2": {
+      "unanswered": 0,
+      "controlSentences": 120,
+      "controlSentencesRejected": 0,
+      "controlTextsRejected": 0,
+      "injectedCaught": 40,
+      "injectedTextsRejected": 40,
+      "byKind": {
+        "new number": {
+          "n": 8,
+          "caught": 8
+        },
+        "wrong reading": {
+          "n": 8,
+          "caught": 8
+        },
+        "invented mechanism": {
+          "n": 8,
+          "caught": 8
+        },
+        "unsupported cause": {
+          "n": 8,
+          "caught": 8
+        },
+        "guarantee": {
+          "n": 8,
+          "caught": 8
+        }
+      },
+      "realPassed": 24,
+      "realVerdicts": {
+        "CUE001": "passed",
+        "CUE002": "passed",
+        "CUE003": "rejected",
+        "CUE004": "rejected",
+        "CUE005": "rejected",
+        "CUE006": "passed",
+        "CUE007": "passed",
+        "CUE008": "passed",
+        "CUE009": "passed",
+        "CUE010": "passed",
+        "CUE011": "rejected",
+        "CUE012": "rejected",
+        "CUE013": "rejected",
+        "CUE014": "passed",
+        "CUE015": "rejected",
+        "CUE016": "rejected",
+        "CUE017": "passed",
+        "CUE018": "passed",
+        "CUE019": "rejected",
+        "CUE020": "passed",
+        "CUE021": "rejected",
+        "CUE022": "rejected",
+        "CUE023": "passed",
+        "CUE024": "passed",
+        "CUE025": "rejected",
+        "CUE026": "rejected",
+        "CUE027": "passed",
+        "CUE028": "passed",
+        "CUE029": "rejected",
+        "CUE030": "passed",
+        "CUE031": "passed",
+        "CUE032": "passed",
+        "CUE033": "passed",
+        "CUE034": "passed",
+        "CUE035": "passed",
+        "CUE036": "rejected",
+        "CUE037": "rejected",
+        "CUE038": "passed",
+        "CUE039": "passed",
+        "CUE040": "passed"
+      }
+    }
+  },
+  "flips": [
+    "CUE002",
+    "CUE004",
+    "CUE005",
+    "CUE011",
+    "CUE012",
+    "CUE015",
+    "CUE020",
+    "CUE021",
+    "CUE022",
+    "CUE026",
+    "CUE029",
+    "CUE037"
+  ]
+}

@@ -4,6 +4,10 @@ import { checkProduct, parseIngredientList } from "../lib/product-check.mjs";
 import { planningUvi } from "../lib/uv.mjs";
 import { readingChanges, tomorrowChanges } from "../lib/outlook.mjs";
 import { templateRoutine } from "../lib/safety.mjs";
+import { isPrivateAddress, networkLocation } from "../lib/network-location.mjs";
+import { prefetchSlotSearches, retrieveSlotCandidates } from "../lib/candidate-retrieval.mjs";
+import { cachedSearch, clearSearchCache } from "../lib/search-cache.mjs";
+import { createConfig } from "../lib/config.mjs";
 
 /**
  * Offline tests for the result-impact features:
@@ -73,6 +77,13 @@ await test("imp-06", "Unknown ingredients are counted as not checked, never gues
   expect(/didn't recognise/.test(none.verdict), "An all-unknown list must say nothing was recognised.");
 });
 
+await test("imp-06b", "Spaces, hyphens and underscores match the same ingredient (Round 1: 'Alpha Arbutin')", async () => {
+  for (const text of ["Aqua, Alpha Arbutin", "Aqua, Alpha-Arbutin", "Aqua, alpha_arbutin"]) {
+    const r = checkProduct({ text, repository, routine });
+    expect(r.unrecognised.length === 0, `${text}: not recognised (${r.unrecognised.join(", ")})`);
+  }
+});
+
 await test("imp-07", "Sunscreen is planned on today's peak UV, not the reading at build time", async () => {
   expect(planningUvi({ uvi: 1, uviMaxToday: 9 }) === 9, "Peak should win when higher.");
   expect(planningUvi({ uvi: 4 }) === 4, "Without a forecast the current reading is used.");
@@ -90,6 +101,73 @@ await test("imp-08", "Changes since last time: steps and readings are described 
   const diff = tomorrowChanges({ todaySteps: ["am:low-irritation-cleansing"], tomorrowRoutine: today, readings: { uvi: 9, humidity: 55, pm25: 14, temperature: 31 }, when: "today" });
   expect(diff.changes.some((c) => c.change === "added" && /sunscreen/i.test(c.text)), "Sunscreen should be reported as added.");
   expect(!diff.changes.some((c) => /forecast/.test(c.text)), "Today's comparison must not talk about a forecast.");
+});
+
+await test("imp-09", "Network location: only for the same private network, never in demo mode, never sends a visitor's address", async () => {
+  expect(isPrivateAddress("192.168.1.5") && isPrivateAddress("::ffff:10.0.0.2") && isPrivateAddress("127.0.0.1") && isPrivateAddress("::1") && isPrivateAddress("172.20.1.1"), "private ranges");
+  expect(!isPrivateAddress("8.8.8.8") && !isPrivateAddress("172.32.0.1") && !isPrivateAddress("::ffff:203.0.113.9"), "public ranges");
+  const realFetch = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url) => { urls.push(String(url)); return new Response(JSON.stringify({ success: true, city: "Seri Iskandar", region: "Perak", country_code: "MY", latitude: 4.3616, longitude: 100.9796 }), { status: 200 }); };
+  try {
+    const cfg = { liveServicesEnabled: true, requestTimeoutMs: 2000 };
+    expect((await networkLocation({ ...cfg, liveServicesEnabled: false }, "192.168.1.5")).available === false, "should be off in demo mode");
+    expect((await networkLocation(cfg, "203.0.113.9")).reason === "remote" && urls.length === 0, "remote visitors must not trigger a lookup");
+    const r = await networkLocation(cfg, "::ffff:192.168.1.23");
+    expect(r.available && r.approximate && r.name === "Seri Iskandar, MY" && r.lat === 4.36 && r.lon === 100.98, JSON.stringify(r));
+    expect(urls.every((u) => !u.includes("192.168")), "the visitor's address must never be sent");
+  } finally { globalThis.fetch = realFetch; }
+});
+
+await test("imp-10", "Search cache: a repeated or prefetched search is reused, cleared on re-sync, off at 0, failures not kept", async () => {
+  const realFetch = globalThis.fetch;
+  let searches = 0;
+  globalThis.fetch = async (url) => {
+    const u = String(url);
+    if (u.includes("api.pinecone.io/indexes/")) return new Response(JSON.stringify({ host: "idx.test", embed: { field_map: { text: "chunk_text" } } }), { status: 200 });
+    searches += 1;
+    await new Promise((r) => setTimeout(r, 30));
+    return new Response(JSON.stringify({ result: { hits: [{ _score: 0.9, fields: { ingredient_ids: ["glycerin"] } }] } }), { status: 200 });
+  };
+  const base = { liveServicesEnabled: true, requestTimeoutMs: 2000, pinecone: { apiKey: "k", index: "imp10", evidenceNamespace: "ev", textField: "chunk_text" } };
+  const env = { readings: { uvi: 9, humidity: 80, pm25: 10 } };
+  const ask = (cfg) => retrieveSlotCandidates({ config: cfg, corpus: [], categoryIds: ["comfort-hydration"], concern: "acne", environment: env });
+  try {
+    clearSearchCache();
+    const cfg = { ...base, searchCacheMs: 60_000 };
+    const first = await ask(cfg);
+    await ask(cfg);
+    expect(searches === 1, `repeat should reuse the search, ran ${searches}`);
+    expect(first.get("comfort-hydration").mode === "hybrid-bm25-dense-rrf", "dense result used");
+    // Prefetch while "GPT" is working, then the real call picks up the running search.
+    clearSearchCache(); searches = 0;
+    expect(prefetchSlotSearches({ config: cfg, categoryIds: ["comfort-hydration", "daytime-photoprotection"], concern: "acne", environment: env }) === 2, "two prefetched");
+    const later = await ask(cfg);
+    expect(searches === 2 && later.get("comfort-hydration").ranked[0].ingredientId === "glycerin", `prefetched search reused, ran ${searches}`);
+    clearSearchCache(); await ask(cfg);
+    expect(searches === 3, "cleared cache searches again");
+    searches = 0; const off = { ...base, searchCacheMs: 0 };
+    await ask(off); await ask(off);
+    expect(searches === 2 && prefetchSlotSearches({ config: off, categoryIds: ["comfort-hydration"], concern: "acne", environment: env }) === 0, "0 turns the cache and prefetch off");
+    let calls = 0;
+    const failing = () => { calls += 1; return Promise.reject(new Error("down")); };
+    await cachedSearch(60_000, "imp10-fail", failing).catch(() => {});
+    await new Promise((r) => setTimeout(r, 0));
+    await cachedSearch(60_000, "imp10-fail", failing).catch(() => {});
+    expect(calls === 2, "a failed search must not be cached");
+  } finally { globalThis.fetch = realFetch; clearSearchCache(); }
+});
+
+await test("imp-11", "GPT time limits are on by default (25 s per routine, 20 s per explanation set)", async () => {
+  const keys = ["GPT_ROUTINE_BUDGET_MS", "GPT_CONTEXT_BUDGET_MS"];
+  const saved = keys.map((k) => process.env[k]);
+  try {
+    keys.forEach((k) => delete process.env[k]);
+    const cfg = createConfig();
+    expect(cfg.openai.routineBudgetMs === 25_000 && cfg.openai.contextBudgetMs === 20_000, JSON.stringify([cfg.openai.routineBudgetMs, cfg.openai.contextBudgetMs]));
+    process.env.GPT_ROUTINE_BUDGET_MS = "0";
+    expect(createConfig().openai.routineBudgetMs === 0, "0 still turns the limit off");
+  } finally { keys.forEach((k, i) => { if (saved[i] === undefined) delete process.env[k]; else process.env[k] = saved[i]; }); }
 });
 
 const passed = results.filter((r) => r.status === "passed").length;

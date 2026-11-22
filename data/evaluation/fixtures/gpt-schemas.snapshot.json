@@ -212,6 +212,44 @@
       "items"
     ]
   },
+  "label_transcription": {
+    "type": "object",
+    "properties": {
+      "brand": {
+        "type": "string"
+      },
+      "ingredients_text": {
+        "type": "string"
+      },
+      "legible": {
+        "type": "boolean"
+      },
+      "product_name": {
+        "type": "string"
+      },
+      "product_type": {
+        "type": "string",
+        "enum": [
+          "cleanser",
+          "toner",
+          "serum",
+          "moisturiser",
+          "sunscreen",
+          "exfoliant",
+          "mask",
+          "oil",
+          "other"
+        ]
+      }
+    },
+    "required": [
+      "brand",
+      "ingredients_text",
+      "legible",
+      "product_name",
+      "product_type"
+    ]
+  },
   "ingredient_rationales": {
     "type": "object",
     "properties": {

@@ -1,0 +1,134 @@
+{
+  "generatedAt": "2026-11-06T14:30:14.006Z",
+  "base": "http://127.0.0.1:4173",
+  "live": true,
+  "runsPerProfile": 5,
+  "results": [
+    {
+      "input": {
+        "profile": "combination",
+        "concern": "acne",
+        "finishPreference": "matte",
+        "reactivityLevel": "low",
+        "exposureContext": "outdoors"
+      },
+      "runs": 5,
+      "completed": 5,
+      "identical": {
+        "triageStatus": true,
+        "safetyStatus": true,
+        "routineSteps": true,
+        "readings": true,
+        "fullPickSet": true
+      },
+      "pickStability": {
+        "slots": 4,
+        "stableSlots": 4,
+        "perSlot": {
+          "am:daytime-photoprotection": {
+            "zinc-oxide": 5
+          },
+          "pm:lightweight-moisturising": {
+            "dimethicone": 5
+          },
+          "pm:texture-renewal": {
+            "salicylic-acid": 5
+          },
+          "pm:overnight-comfort": {
+            "allantoin": 5
+          }
+        }
+      },
+      "outOfPoolPicks": 0,
+      "unsafeRuns": 0,
+      "selectedBy": [
+        "llm_from_rag_pool"
+      ]
+    },
+    {
+      "input": {
+        "profile": "sensitive",
+        "concern": "redness",
+        "finishPreference": "no-preference",
+        "reactivityLevel": "high",
+        "exposureContext": "mixed"
+      },
+      "runs": 5,
+      "completed": 5,
+      "identical": {
+        "triageStatus": true,
+        "safetyStatus": true,
+        "routineSteps": true,
+        "readings": true,
+        "fullPickSet": false
+      },
+      "pickStability": {
+        "slots": 4,
+        "stableSlots": 3,
+        "perSlot": {
+          "am:comfort-hydration": {
+            "beta-glucan": 5
+          },
+          "am:daytime-photoprotection": {
+            "zinc-oxide": 5
+          },
+          "pm:barrier-support-moisturising": {
+            "dimethicone": 4,
+            "ceramide-np": 1
+          },
+          "pm:overnight-comfort": {
+            "allantoin": 5
+          }
+        }
+      },
+      "outOfPoolPicks": 0,
+      "unsafeRuns": 0,
+      "selectedBy": [
+        "llm_from_rag_pool"
+      ]
+    },
+    {
+      "input": {
+        "profile": "dry",
+        "concern": "dryness",
+        "finishPreference": "dewy",
+        "reactivityLevel": "moderate",
+        "exposureContext": "indoors"
+      },
+      "runs": 5,
+      "completed": 5,
+      "identical": {
+        "triageStatus": true,
+        "safetyStatus": true,
+        "routineSteps": true,
+        "readings": true,
+        "fullPickSet": false
+      },
+      "pickStability": {
+        "slots": 4,
+        "stableSlots": 2,
+        "perSlot": {
+          "am:comfort-hydration": {
+            "beta-glucan": 5
+          },
+          "am:daytime-photoprotection": {
+            "zinc-oxide": 5
+          },
+          "pm:barrier-support-moisturising": {
+            "squalane": 1,
+            "ceramide-np": 4
+          },
+          "pm:overnight-comfort": {
+            "ceramide-np": 1,
+            "squalane": 4
+          }
+        }
+      },
+      "outOfPoolPicks": 0,
+      "unsafeRuns": 0,
+      "selectedBy": [
+        "llm_from_rag_pool"
+      ]
+    }
+  ]
+}
