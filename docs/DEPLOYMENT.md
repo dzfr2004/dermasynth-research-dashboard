@@ -35,7 +35,7 @@ What changes on Vercel:
 Steps:
 
 1. On vercel.com, **Add New > Project**, import `dzfr2004/dermasynth-research-dashboard` and pick the production branch. Keep the settings from `vercel.json`. Do not change the framework, build command or output directory.
-2. **Storage > Create Database > Neon (Postgres)**, free plan, connect it to the project. This sets `DATABASE_URL` and `POSTGRES_URL`. Tables are created on first use.
+2. **Storage > Create Database > Neon (Postgres)**, free plan, connect it to the project. This sets `DATABASE_URL` and `POSTGRES_URL`. Tables are created on first use. Pick the Singapore region (`sin1`), the same region `vercel.json` runs the function in, so each database call stays inside one region.
 3. **Settings > Environment Variables**: everything from `.env.example` that you use locally. That means `LIVE_SERVICES_ENABLED`, `INGREDIENT_DB_ENABLED`, `INGREDIENT_SELECTION_ENABLED` and the OpenAI, OpenWeather, IQAir and Pinecone keys, plus `STUDY_ADMIN_TOKEN` if the study pages are used. Do not set `HOST` or `PORT`.
 4. Deploy, then open `/api/health` and check the providers show as configured.
 5. Optional uptime alert: add the repository variable `SITE_URL` (the Vercel address). `.github/workflows/uptime.yml` then checks `/api/health`, the home page and a routine every 2 hours, and GitHub emails you if a check fails.
