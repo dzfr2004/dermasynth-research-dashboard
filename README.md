@@ -209,7 +209,7 @@ npm run eval:safety-traceability       # every safety rule has a status and a kn
 
 `npm run eval:input-sensitivity` measures how much each input changes the output (full grid, about 2 minutes). `npm test` runs a 720-run quick version and fails if any input stops mattering.
 
-## Consumer view and Expert view
+## Consumer view and "Show the science" (expert view)
 
 The app opens on the routine page in the **consumer view**: today's conditions (UV, humidity, haze, temperature in plain bands), then the morning and evening routine as short steps with the ingredient to look for, one plain reason, and a **Why?** button. The **Expert view** button in the top bar (remembered in this browser) adds everything an examiner needs: ingredient scores and Shapley bars, selection traces, run progress, the run report, evidence grounding, the defence walkthrough, and the rule-based and GPT versions of each explanation side by side.
 
@@ -280,7 +280,7 @@ The server serves every `.js` file in `ui/` automatically. `npm run check` synta
 - `npm run eval:live` (with `npm start` running and live keys in `.env`) sends 20 routine requests across 10 cities and 4 profiles, asks for the GPT explanations of each, and reports GPT success, invented or out-of-pool picks, agreement with the candidate score, degraded runs, CUE results and latency (`data/evaluation/reports/live-gpt-evaluation.latest.md`). `npm run report:selection-log` summarises everything logged, including explanation drafts from `data/logs/context-log.jsonl`.
 - The ingredient picker is never shown the candidate score, retrieval rank, fit factor or EWG reference, and options are listed alphabetically, so agreement with the score is an independent result. The report gives agreement expected by chance and kappa.
 - GPT has no overall time limit by default; each call has a 90 s safety timeout (`OPENAI_TIMEOUT_MS`) so a dropped connection cannot hang a request. An optional cap per routine (`GPT_ROUTINE_BUDGET_MS`) and per explanation request (`GPT_CONTEXT_BUDGET_MS`) can be set in `.env`. When GPT fails, times out or reaches a cap, the rule-based result is used and the response carries `degraded` with plain-language reasons, shown in the app as "Reduced mode".
-- Every step always has a rule-based reason. The Expert view toggle on the routine card shows the rule-based and GPT versions side by side, with CUE scores.
+- Every step always has a rule-based reason. The "Show the science" toggle (expert view) on the routine card shows the rule-based and GPT versions side by side, with CUE scores.
 - CUE against people: `npm run cue:sheet` builds a blinded rating sheet from logged drafts; raters fill it; `npm run eval:cue-human` reports agreement and Cohen's kappa. Steps are in [data/evaluation/cue-rating](data/evaluation/cue-rating/README.md).
 - `npm run eval:gpt-layer` (part of `npm test`) checks these contracts offline against a mock of the OpenAI API.
 - **Output schema contract (C2):** every GPT reply is checked against the schema that was sent (`lib/schema-check.mjs`); a reply that is not JSON, misses a field, has a wrong type or an extra field counts as a failed call and the rule-based result is used. `npm run eval:gpt-schemas` (part of `npm test`) checks that each of the 8 schemas is accepted by OpenAI strict mode, matches the committed snapshot (`data/evaluation/fixtures/gpt-schemas.snapshot.json`), that matching replies are used and malformed ones rejected, and that no new GPT call is left untested. After a deliberate schema change, run `npm run eval:gpt-schemas -- --update`.

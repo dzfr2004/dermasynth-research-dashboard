@@ -1,6 +1,6 @@
 # Browser smoke test
 
-Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, axe-core WCAG 2.1 A/AA, serious and critical only). Result: **59/59 passed**.
+Generated 2026-11-22 by `npm run test:browser` (Chromium, 375 px and 1280 px, axe-core WCAG 2.1 A/AA, serious and critical only). Result: **68/68 passed**.
 
 | Check | Result |
 | --- | --- |
@@ -11,28 +11,33 @@ Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, ax
 | phone: the monitor page is reachable from the bottom navigation | passed |
 | phone: monitor page has no sideways scroll | passed |
 | phone: monitor page has no serious accessibility violations | passed |
+| phone: the shelf page is reachable from the bottom navigation | passed |
+| phone: shelf page has no sideways scroll | passed |
+| phone: shelf page has no serious accessibility violations | passed |
 | phone: the knowledge page is reachable from the bottom navigation | passed |
 | phone: knowledge page has no sideways scroll | passed |
 | phone: knowledge page has no serious accessibility violations | passed |
-| phone: the bottom navigation is Today / Weather / Ingredients | passed |
+| phone: the bottom navigation is Today / Weather / Shelf / Ingredients | passed |
 | phone: the Weather page is plain (no research terms) and shows today's readings | passed |
 | phone: form fields use at least 16 px text (no zoom on focus in iOS) | passed |
 | phone: buttons and fields are at least 44 px tall | passed |
 | phone: the skin question is shown in plain words before the build button | passed |
 | phone: a routine builds and every step has a reason | passed |
+| phone: ticking a step marks it done and keeps focus on it | passed |
 | phone: "Why?" opens, closes and keeps focus | passed |
 | phone: the Why? panel explains what it is, why today, label names and references | passed |
 | phone: the routine page shows the disclaimer once | passed |
 | phone: no configuration text is shown to a consumer | passed |
-| phone: "Today in one line" summarises the day above the routine | passed |
+| phone: the hero sums up the day's plan in one line above the routine | passed |
 | phone: the form folds into "Edit my skin details" and the result is in view | passed |
 | phone: the routine can be saved as "my routine" with product names | passed |
 | phone: "Check a product" reads an ingredient list | passed |
 | phone: "Check my product" is one tap from the summary and the example runs | passed |
-| phone: the one-tap check-in is sent | passed |
+| phone: the next-day check-in is asked and sent | passed |
 | phone: reminders download as a calendar file | passed |
 | phone: the story image is 1080 x 1920 and the dialog closes with Escape | passed |
 | phone: the routine result has no serious accessibility violations | passed |
+| phone: "This week" shows each day's ingredients in a 7-day planner that fits the screen and exports a landscape image | passed |
 | phone: symptoms that need care show the check-up screen and no routine | passed |
 | phone: Expert view shows the scoring and hides it again | passed |
 | phone: no JavaScript errors | passed |
@@ -41,25 +46,29 @@ Generated 2026-09-24 by `npm run test:browser` (Chromium, 375 px and 1280 px, ax
 | desktop: simulator page has no serious accessibility violations | passed |
 | desktop: monitor page has no sideways scroll | passed |
 | desktop: monitor page has no serious accessibility violations | passed |
+| desktop: shelf page has no sideways scroll | passed |
+| desktop: shelf page has no serious accessibility violations | passed |
 | desktop: dashboard page has no sideways scroll | passed |
 | desktop: dashboard page has no serious accessibility violations | passed |
 | desktop: knowledge page has no sideways scroll | passed |
 | desktop: knowledge page has no serious accessibility violations | passed |
 | desktop: the skin question is shown in plain words before the build button | passed |
 | desktop: a routine builds and every step has a reason | passed |
+| desktop: ticking a step marks it done and keeps focus on it | passed |
 | desktop: "Why?" opens, closes and keeps focus | passed |
 | desktop: the Why? panel explains what it is, why today, label names and references | passed |
 | desktop: the routine page shows the disclaimer once | passed |
 | desktop: no configuration text is shown to a consumer | passed |
-| desktop: "Today in one line" summarises the day above the routine | passed |
-| desktop: the form folds into "Edit my skin details" and the result is in view | passed |
+| desktop: the hero sums up the day's plan in one line above the routine | passed |
+| desktop: "About your skin" stays open on the left and the result is beside it | passed |
 | desktop: the routine can be saved as "my routine" with product names | passed |
 | desktop: "Check a product" reads an ingredient list | passed |
 | desktop: "Check my product" is one tap from the summary and the example runs | passed |
-| desktop: the one-tap check-in is sent | passed |
+| desktop: the next-day check-in is asked and sent | passed |
 | desktop: reminders download as a calendar file | passed |
 | desktop: the story image is 1080 x 1920 and the dialog closes with Escape | passed |
 | desktop: the routine result has no serious accessibility violations | passed |
+| desktop: "This week" shows each day's ingredients in a 7-day planner that fits the screen and exports a landscape image | passed |
 | desktop: symptoms that need care show the check-up screen and no routine | passed |
 | desktop: Expert view shows the scoring and hides it again | passed |
 | desktop: no JavaScript errors | passed |

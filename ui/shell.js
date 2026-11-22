@@ -106,7 +106,7 @@ export function shell(view) {
       <header class="topbar">
         <div class="page-title"><img class="topbar-mark" src="/assets/dermasynth-mark.svg" alt="" width="30" height="30" /><div class="page-title-text"><h1 id="page-title" tabindex="-1">${title}</h1><p class="location-line">${icon("pin", 15)}<span>${escapeHtml(locationLabel())}</span><span>· ${escapeHtml(environmentModeLabel())}</span></p></div></div>
         <div class="topbar-actions">
-          <button class="expert-toggle-top" type="button" data-action="toggle-expert" aria-pressed="${state.expertView}">${icon("layers", 14)} <span>Expert view</span></button>
+          <button class="expert-toggle-top" type="button" data-action="toggle-expert" aria-pressed="${state.expertView}">${icon("layers", 14)} <span>Show the science</span></button>
           ${
             state.expertView
               ? `<button class="presentation-button" type="button" data-action="presentation-start">${icon("sparkles", 14)} Defence walkthrough</button>

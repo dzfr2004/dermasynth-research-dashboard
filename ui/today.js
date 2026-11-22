@@ -80,7 +80,7 @@ export function simulatorView() {
       `<h2 class="sr-only">Your routine for today</h2><div class="simulator-grid today-grid-layout ${formPanel === inputs ? "" : "is-form-collapsed"} ${state.routineMeta || running ? "has-result" : ""}">${skyHero(state.routineMeta)}${formPanel}${result}</div>`,
     );
   return shell(
-    `<div class="view-heading ${state.expertView ? "" : "is-sky-replaced"} ${state.routineMeta && !state.expertView ? "has-result" : ""}"><div><h2>${state.expertView ? "Routine preview (expert view)" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"} ${state.routineMeta || running ? "has-result" : ""}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`,
+    `<div class="view-heading ${state.expertView ? "" : "is-sky-replaced"} ${state.routineMeta && !state.expertView ? "has-result" : ""}"><div><h2>${state.expertView ? "Your routine, with the science" : "Your routine for today"}</h2><p>${state.expertView ? "The same routine with scores, traces, evidence and the run report." : "Based on today's weather where you are and what you tell us about your skin."}</p></div></div><div class="simulator-grid ${formPanel === inputs ? "" : "is-form-collapsed"} ${state.routineMeta || running ? "has-result" : ""}">${formPanel}${result}</div>${state.expertView ? `<div class="simulator-report-grid">${progressPanel()}${reportPanel()}${evidencePanel()}</div>` : ""}`,
   );
 }
 
