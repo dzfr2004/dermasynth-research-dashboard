@@ -4,6 +4,9 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "public",
+  "regions": [
+    "sin1"
+  ],
   "functions": {
     "api/index.mjs": {
       "maxDuration": 300,
@@ -11,5 +14,10 @@
       "includeFiles": "{index.html,app.js,styles.css,sky.js,manifest.webmanifest,labelling.html,labelling.js,study.html,study.js,study.css,study-guide.js,server.mjs,ui/**,lib/**,assets/**,data/**}"
     }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ]
 }
