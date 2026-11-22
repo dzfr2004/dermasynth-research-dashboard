@@ -1,9 +1,9 @@
 name: Uptime check
 
 # Checks the deployed app every 2 hours and on demand. A failed run makes
-# GitHub email the repository owner. Set the repository variable SITE_URL
-# (Settings > Secrets and variables > Actions > Variables), for example
-# https://dermasynth.vercel.app. Without it the check is skipped.
+# GitHub email the repository owner. It checks the live Vercel site; set the
+# repository variable SITE_URL (Settings > Secrets and variables > Actions >
+# Variables) to check a different address.
 on:
   schedule:
     - cron: "17 */2 * * *"
@@ -13,18 +13,19 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: ${{ vars.SITE_URL != '' }}
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://dermasynth-research-dashboard.vercel.app' }}
     steps:
       - name: Health endpoint answers
         run: |
-          body=$(curl -fsS --max-time 60 "${{ vars.SITE_URL }}/api/health")
+          body=$(curl -fsS --max-time 60 "$SITE_URL/api/health")
           echo "$body" | head -c 400; echo
           echo "$body" | grep -q '"status":"ok"'
       - name: Home page loads
-        run: curl -fsS --max-time 60 -o /dev/null "${{ vars.SITE_URL }}/"
+        run: curl -fsS --max-time 60 -o /dev/null "$SITE_URL/"
       - name: A routine can be generated
         run: |
-          body=$(curl -fsS --max-time 120 -X POST "${{ vars.SITE_URL }}/api/routine" \
+          body=$(curl -fsS --max-time 120 -X POST "$SITE_URL/api/routine" \
             -H 'content-type: application/json' \
             -d '{"profile":"combination","concern":"barrier","reportedConditions":{"sky":"some_sun","air":"comfortable","haze":"clear","temperature":"mild"}}')
           echo "$body" | grep -q '"am"'
