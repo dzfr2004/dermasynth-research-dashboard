@@ -363,15 +363,21 @@ Annotations are written atomically to the ignored local file described in [data/
 
 This implementation intentionally uses a framework-free SPA, CSS, DOM/SVG visualisations, and a Node core HTTP server. It does not claim React, Recharts, Tailwind, Express, Firebase, Railway deployment, cloud authentication, or server-side participant persistence. Run history and exports are browser-local; the reviewer queue is a local, protected instrument only.
 
-Before a human study or production deployment, complete qualified source review and upload governance, CUE calibration against a held-out judged set, a blinded expert-rating workflow with pre-specified agreement analysis, consent/persistence design, accessibility/mobile testing with users, and deployment hardening.
+## Evaluations completed with people
+
+- **Usability study (UAT), three rounds** on participants' own phones with seven guided tasks and the SUS: Round 1 SUS 67.3 (n = 10), Round 2 58.9 (n = 7), Round 3 85.0 (n = 7, 6 November build). Participants signed an informed-consent form on the study page (`/study.html`), and their answers are stored under a participant code. The raw SUS responses are not in this repository; `npm run eval:uat` scores a response file in the same format.
+- **CUE against human judgements**: 40 GPT-written drafts rated blind by two lay raters (`data/evaluation/reports/cue-human-agreement.latest.md`). The raters agreed with each other at κ = 0.49. CUE agreed with them at κ = −0.30. It caught 40/40 planted fabrications, but on real borderline drafts it disagreed in both directions: it passed 8 of the 10 drafts the raters judged unsupported.
+- **Blind triage set 2** written from NHS and DermNet red flags after the rules were frozen (`data/evaluation/reports/triage-evaluation.latest.md`).
+
+Before a production deployment, complete qualified (clinician) source and rule review, recalibrate CUE on the human-rated drafts, run a blinded expert-rating workflow with pre-specified agreement analysis, and run a larger usability round.
 
 ## Not claimed by this final-review demo
 
 - Obtain permission before any CIR report text or EWG Skin Deep data is copied or embedded. The knowledge base stores only paraphrased CIR/SCCS/AICIS conclusions and one attributed EWG score per ingredient with a check date.
 - A clinical trial, treatment decision, product recommendation, or real-world safety/effectiveness claim.
 - A copied/embedded CIR report or EWG Skin Deep database; CIR conclusions are paraphrased with attribution and EWG is recorded as one dated score per ingredient.
-- An independent human-domain audit or formal UAT; the supplied evaluation packs are reproducible software tests.
+- An independent clinician audit of the rules, thresholds and safety cards. The usability study above is a student UAT, not a clinical evaluation.
 - A BYO-vector Pinecone adapter; the current demo index is integrated-embedding.
-- Calibration of CUE (either method) against human faithfulness judgements; this is planned alongside the expert audit.
+- That CUE agrees with human faithfulness judgements: the comparison above found it does not on borderline drafts, so recalibration is planned alongside the expert audit.
 - A clinically validated environmental model: the surrogate is fitted to a constructed dataset until the expert labels are collected, and the Shapley view is exact for whichever fitted surrogate is loaded.
-- Cloud persistence, authentication, consent/data-retention rules, and audit logs before handling real participant data.
+- User accounts or authentication. The hosted app stores logs, feedback and anonymous study responses in Postgres (`docs/DEPLOYMENT.md`); a formal data-retention policy is still to be written.
