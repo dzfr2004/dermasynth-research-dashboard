@@ -142,7 +142,7 @@ export function todayOneLine(meta, routine) {
 // Round 1 of the user study: 6 of 10 people needed a hint to find where to
 // report a skin problem, so the entry point is shown on the result itself.
 export function skinProblemPrompt() {
-  return `<section class="skin-problem-prompt" aria-label="Report a skin problem"><p>${icon("shield", 15)} <span>Skin reacting badly today, such as swelling, burning or a rash?</span></p><button type="button" class="text-button" data-action="redirect-edit">Tell us first</button></section>`;
+  return `<section class="skin-problem-prompt" aria-label="Report a skin problem"><p>${icon("shield", 15)} <span>Swelling, burning or a rash today?</span></p><button type="button" class="text-button" data-action="redirect-edit">Tell us first</button></section>`;
 }
 
 // Ingredients that differ from the ones saved with "my usual routine", and
@@ -199,14 +199,14 @@ export function myRoutineControls() {
   const saved = my?.steps?.length;
   const same = saved && currentStepKeys().join(",") === my.steps.join(",");
   if (state.editingProducts && saved)
-    return `<div class="my-routine-bar is-editing"><span>Type the product you use for each step (optional). It stays in this browser.</span><button type="button" class="pill-button is-selected" data-action="products-done">${icon("check", 13)} Done</button></div>`;
+    return `<div class="my-routine-bar is-editing"><span>Your product for each step (optional).</span><button type="button" class="pill-button is-selected" data-action="products-done">${icon("check", 13)} Done</button></div>`;
   const primaryLabel =
     saved && !same ? "Make this my usual routine" : saved ? "Edit my products" : "Save as my usual routine";
   const note = saved
     ? `${icon("check", 13)} Your usual routine is saved${same ? " (this one)" : ""}.`
-    : "Save it and tomorrow you'll only see what changes.";
+    : "Tomorrow you'll only see what changes.";
   const open = Boolean(state.openToggles?.more);
-  return `<div class="result-actions"><button type="button" class="share-card" data-action="story-open"><span class="share-thumb" aria-hidden="true"><span class="share-thumb-line"></span><span class="share-thumb-line is-short"></span><span class="share-thumb-sheet"></span></span><span class="share-copy"><strong>Share today's skin plan</strong><small>A story image of today's sky and your steps, ready for Instagram or WhatsApp</small></span><span class="share-go" aria-hidden="true">${icon("share", 20)}</span></button><div class="result-actions-row"><button type="button" class="primary-button" data-action="save-my-routine">${icon(saved && same ? "sliders" : "check", 15)} ${primaryLabel}</button><details class="more-actions" data-toggle-key="more" ${open ? "open" : ""}><summary class="ghost-button">More<span class="sr-only"> actions</span> ${icon("arrow", 13)}</summary><div class="more-menu"><button type="button" class="menu-item" data-action="reminders">${icon("bell", 15)} Add reminders to my calendar</button><button type="button" class="menu-item" data-action="pc-focus">${icon("layers", 15)} Check a product I own</button>${saved ? `<button type="button" class="menu-item" data-action="clear-my-routine">${icon("close", 15)} Forget my usual routine</button>` : ""}</div></details></div><p class="result-actions-note">${note}</p></div>`;
+  return `<div class="result-actions"><button type="button" class="share-card" data-action="story-open"><span class="share-thumb" aria-hidden="true"><span class="share-thumb-line"></span><span class="share-thumb-line is-short"></span><span class="share-thumb-sheet"></span></span><span class="share-copy"><strong>Share today's skin plan</strong><small>An image for Instagram or WhatsApp</small></span><span class="share-go" aria-hidden="true">${icon("share", 20)}</span></button><div class="result-actions-row"><button type="button" class="primary-button" data-action="save-my-routine">${icon(saved && same ? "sliders" : "check", 15)} ${primaryLabel}</button><details class="more-actions" data-toggle-key="more" ${open ? "open" : ""}><summary class="ghost-button">More<span class="sr-only"> actions</span> ${icon("arrow", 13)}</summary><div class="more-menu"><button type="button" class="menu-item" data-action="reminders">${icon("bell", 15)} Add reminders to my calendar</button><button type="button" class="menu-item" data-action="pc-focus">${icon("layers", 15)} Check a product I own</button>${saved ? `<button type="button" class="menu-item" data-action="clear-my-routine">${icon("close", 15)} Forget my usual routine</button>` : ""}</div></details></div><p class="result-actions-note">${note}</p></div>`;
 }
 
 export function productNameFor(key) {
@@ -301,7 +301,7 @@ export function buildPipeline(slow) {
 }
 
 export function safetySeal() {
-  return `<div class="safety-seal"><svg class="safety-seal-mark" width="42" height="42" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 33 8.4v9.4c0 8.2-5.4 15.2-13 18.2-7.6-3-13-10-13-18.2V8.4L20 3.5Z" class="seal-fill"/><path d="M20 6.6 30.2 10.4v7.4c0 6.5-4.2 12.2-10.2 14.8-6-2.6-10.2-8.3-10.2-14.8v-7.4L20 6.6Z" class="seal-line"/><path d="m14.6 19.6 3.8 3.8 7.2-7.6" class="seal-tick"/></svg><div><strong>Safety checks passed</strong><span>Every step and ingredient was checked against DermaSynth's safety rules before you saw it.</span></div></div>`;
+  return `<div class="safety-seal"><svg class="safety-seal-mark" width="42" height="42" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3.5 33 8.4v9.4c0 8.2-5.4 15.2-13 18.2-7.6-3-13-10-13-18.2V8.4L20 3.5Z" class="seal-fill"/><path d="M20 6.6 30.2 10.4v7.4c0 6.5-4.2 12.2-10.2 14.8-6-2.6-10.2-8.3-10.2-14.8v-7.4L20 6.6Z" class="seal-line"/><path d="m14.6 19.6 3.8 3.8 7.2-7.6" class="seal-tick"/></svg><div><strong>Safety checks passed</strong><span>Every step and ingredient was checked before you saw it.</span></div></div>`;
 }
 
 export function consumerResult(routine, meta, running) {
@@ -310,7 +310,7 @@ export function consumerResult(routine, meta, running) {
     return `<section class="consumer-card is-loading build-card" aria-live="polite" aria-busy="true"><h3>${slow ? "This is taking longer than usual" : "Building your routine…"}</h3>${slow ? `<p>The AI is still choosing and checking. You can keep waiting, or see the standard routine now: it uses the same safety checks and rules, without the AI's choices.</p>` : ""}${buildPipeline(slow)}${slow ? `<div class="form-actions"><button class="primary-button" type="button" data-action="standard-routine">Show the standard routine now</button><span class="consumer-wait shimmer-text">Still waiting for the AI…</span></div>` : ""}</section>`;
   }
   if (!meta) {
-    return `<section class="consumer-card is-ready" aria-live="polite"><h3>Your routine will appear here</h3><p>Choose your skin type and main concern, answer the skin question, then press <b>Build routine</b>.</p><ul class="ready-list"><li>${icon("sun", 15)} A morning and evening routine for today's weather</li><li>${icon("sparkles", 15)} The ingredient to look for in each step, and why</li><li>${icon("layers", 15)} A check for products you already own</li></ul>${readyPreview()}</section>`;
+    return `<section class="consumer-card is-ready" aria-live="polite"><h3>Your routine will appear here</h3><p>Fill in your skin, then press <b>Build routine</b>.</p><ul class="ready-list"><li>${icon("sun", 15)} Morning and evening steps for today's weather</li><li>${icon("sparkles", 15)} What to look for in each step</li><li>${icon("layers", 15)} A check for products you own</li></ul>${readyPreview()}</section>`;
   }
   if (meta.mode === "local") {
     const busy = meta.errorKind === "busy";

@@ -279,7 +279,7 @@ export function shelfView() {
   const gaps = check?.withRoutine ? check.gaps.length : 0;
   const clashes = check?.clashes || [];
   const intro = !state.shelf.length
-    ? `<section class="panel shelf-empty"><div class="shelf-empty-art" aria-hidden="true">${bottleSvg("cleanser", "a1", 46)}${bottleSvg("serum", "b2", 46)}${bottleSvg("moisturiser", "c3", 46)}${bottleSvg("sunscreen", "d4", 46)}</div><h3>Your shelf is empty</h3><p>Add the products you already own. DermaSynth will line up the ones to use for today's routine, warn you about any that clash, and show the steps you have nothing for.</p><button type="button" class="primary-button" data-action="shelf-add">${icon("upload", 15)} Add your first product</button></section>`
+    ? `<section class="panel shelf-empty"><div class="shelf-empty-art" aria-hidden="true">${bottleSvg("cleanser", "a1", 46)}${bottleSvg("serum", "b2", 46)}${bottleSvg("moisturiser", "c3", 46)}${bottleSvg("sunscreen", "d4", 46)}</div><h3>Your shelf is empty</h3><p>Add what you own. We'll show what to use today and what clashes.</p><button type="button" class="primary-button" data-action="shelf-add">${icon("upload", 15)} Add your first product</button></section>`
     : "";
   const status =
     state.shelfCheckStatus === "loading" && !check
@@ -298,7 +298,7 @@ export function shelfView() {
 export function shelfTodayCard(meta) {
   if (!meta || meta.status !== "cleared") return "";
   if (!state.shelf.length)
-    return `<section class="shelf-today-card"><div class="shelf-today-art" aria-hidden="true">${bottleSvg("serum", "x1", 34)}${bottleSvg("sunscreen", "x2", 34)}</div><div><p class="shelf-today-title">Use what you already own</p><p>Add your products to your shelf and DermaSynth will pick the right one for each step.</p></div><button type="button" class="ghost-button" data-action="navigate" data-view="shelf">Open my shelf</button></section>`;
+    return `<section class="shelf-today-card"><div class="shelf-today-art" aria-hidden="true">${bottleSvg("serum", "x1", 34)}${bottleSvg("sunscreen", "x2", 34)}</div><div><p class="shelf-today-title">Use what you already own</p><p>Add them to your shelf and we'll match one to each step.</p></div><button type="button" class="ghost-button" data-action="navigate" data-view="shelf">Open my shelf</button></section>`;
   const check = state.shelfCheck;
   if (!check?.withRoutine) return "";
   const missing = check.steps.filter((s) => !s.productId).map((s) => s.step);

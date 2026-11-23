@@ -221,7 +221,7 @@ Technical failures are shown to consumers in plain words; configuration details 
 
 The consumer interface was redesigned after all three study rounds, so no SUS score applies to it.
 
-- Layout: on the Today page the routine comes first, with one main action (Save as my usual routine), Share, and a More menu for reminders and the product check. The "Skin reacting badly?" line stays visible because 6 of 10 Round 1 participants needed a hint to find it.
+- Layout: on the Today page the routine comes first, with one main action (Save as my usual routine), Share, and a More menu for reminders and the product check. The "Swelling, burning or a rash today?" line stays visible because 6 of 10 Round 1 participants needed a hint to find it.
 - Living Sky: the page background is the day's sky. `skyPalette()` in `ui/hero.js` picks dawn, day, dusk or night from the local hour, then warms the day sky with UV and dulls it with haze. The droplet in `sky.js` is drawn as glass on a transparent canvas over that sky.
 - The routine sits on a paper sheet over the sky: cream by day, deep green with an amber accent at night, when the evening steps come first.
 - Styles: everything is in one file, `styles.css`, read top to bottom (base layout, consumer pages, then the Living Sky design layer). Hover effects apply only to mouse users, animations stay under 300 ms, and reduced motion keeps fades without movement.

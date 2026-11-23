@@ -32,9 +32,9 @@ export function weatherView() {
         : wo?.status === "loading"
           ? `<section class="tomorrow-card is-loading" aria-live="polite"><h3>${icon("activity", 15)} Tomorrow</h3><p class="shimmer-text">Checking tomorrow's forecast…</p></section>`
           : "";
-  const cta = `<section class="weather-cta"><p>${hasRoutine ? "Your routine already uses these readings." : "DermaSynth turns today's weather into a morning and evening routine for your skin."}</p><button type="button" class="primary-button" data-action="navigate" data-view="simulator">${icon("sparkles", 15)} ${hasRoutine ? "See my routine" : "Build today's routine"}</button></section>`;
+  const cta = `<section class="weather-cta"><p>${hasRoutine ? "Your routine already uses these readings." : "Turn today's weather into a routine for your skin."}</p><button type="button" class="primary-button" data-action="navigate" data-view="simulator">${icon("sparkles", 15)} ${hasRoutine ? "See my routine" : "Build today's routine"}</button></section>`;
   return shell(
-    `<div class="view-heading"><div><h2>Today's weather for your skin</h2><p>UV, humidity, haze and temperature where you are, and what tomorrow looks like.</p></div><button type="button" class="ghost-button" data-action="refresh" ${isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button></div><div class="weather-layout"><section class="panel monitor-location-panel" id="monitor-location">${locationPicker({ label: "Location", compact: true })}</section><div class="weather-stack">${conditionsSummaryCard(null, wo)}${tomorrowHtml}${cta}</div></div>`,
+    `<div class="view-heading"><div><h2>Today's weather for your skin</h2><p>UV, haze, humidity and heat, today and tomorrow.</p></div><button type="button" class="ghost-button" data-action="refresh" ${isLocationUpdating() ? "disabled" : ""}>${icon("refresh", 15)} Refresh</button></div><div class="weather-layout"><section class="panel monitor-location-panel" id="monitor-location">${locationPicker({ label: "Location", compact: true })}</section><div class="weather-stack">${conditionsSummaryCard(null, wo)}${tomorrowHtml}${cta}</div></div>`,
   );
 }
 
