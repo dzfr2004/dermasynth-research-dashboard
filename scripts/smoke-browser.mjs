@@ -285,7 +285,9 @@ for (const width of [375, 1280]) {
     await page.waitForTimeout(700);
     expect(await page.evaluate(() => document.activeElement?.id) === "pc-text", "The ingredient box was not focused.");
     await page.locator('[data-action="pc-example"]').click();
-    await page.waitForSelector(".pc-result.is-good", { timeout: 10000 });
+    // The example is a random sample label, so the verdict can be any tone.
+    await page.waitForSelector(".pc-result", { timeout: 10000 });
+    expect((await page.locator(".pc-sample").innerText()).startsWith("Example label:"), "Example label name not shown.");
   });
   await check(`${label}-checkin`, `${label}: the next-day check-in is asked and sent`, async () => {
     const posted = page.waitForRequest((r) => r.url().endsWith("/api/feedback") && r.method() === "POST");

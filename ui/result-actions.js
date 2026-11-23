@@ -11,13 +11,56 @@ import { LAST_ROUTINE_KEY, MY_ROUTINE_KEY, readStore, state, writeStore } from "
 import { escapeHtml, hourLabel, icon } from "./util.js";
 
 // 5. Check my product.
-export function productCheckExample() {
+// "Try an example" draws a different sample label each tap, so a room
+// trying the app together sees a believable mix: some products fit today's
+// routine, some need a pharmacist, and some depend on the user's skin and
+// routine. The labels are generic, unbranded INCI lists; the server runs the
+// same deterministic check on them as on a pasted label.
+const PRODUCT_EXAMPLES = Object.freeze([
+  // Usually a good fit
+  { name: "Hydrating niacinamide serum", text: "Aqua, Glycerin, Niacinamide, Sodium Hyaluronate, Panthenol, Allantoin, Pentylene Glycol, Phenoxyethanol, Ethylhexylglycerin" },
+  { name: "Barrier repair moisturiser", text: "Aqua, Glycerin, Caprylic/Capric Triglyceride, Ceramide NP, Ceramide AP, Cholesterol, Squalane, Dimethicone, Carbomer, Phenoxyethanol" },
+  { name: "Mineral sunscreen SPF 50", text: "Aqua, Zinc Oxide, Titanium Dioxide, Caprylic/Capric Triglyceride, Cyclopentasiloxane, Dimethicone, Tocopherol, Phenoxyethanol" },
+  { name: "Calming centella gel", text: "Aqua, Centella Asiatica Extract, Madecassoside, Beta-Glucan, Glycerin, Allantoin, Sodium Hyaluronate, Phenoxyethanol" },
+  { name: "today", text: null },
+  // Not suitable: prescription-only or excluded ingredients
+  { name: "Brightening night cream", text: "Aqua, Hydroquinone, Glycerin, Cetearyl Alcohol, Tocopherol, Sodium Metabisulfite, Phenoxyethanol" },
+  { name: "Acne clearing gel", text: "Aqua, Adapalene, Carbomer, Propylene Glycol, Poloxamer 182, Disodium EDTA, Methylparaben" },
+  { name: "Advanced retinal serum", text: "Aqua, Retinal, Squalane, Caprylic/Capric Triglyceride, Tocopherol, Phenoxyethanol" },
+  { name: "Anti-itch cream", text: "Aqua, Hydrocortisone, Glycerin, Cetearyl Alcohol, Petrolatum, Phenoxyethanol" },
+  // Depends on the skin and today's routine: sun timing, exfoliant limits, clashes
+  { name: "Glycolic exfoliating toner", text: "Aqua, Glycolic Acid, Glycerin, Aloe Barbadensis Leaf Juice, Sodium Hydroxide, Panthenol" },
+  { name: "Benzoyl peroxide spot gel", text: "Aqua, Benzoyl Peroxide, Glycerin, Carbomer, Sodium Hydroxide" },
+  { name: "Retinol night serum", text: "Aqua, Retinol, Squalane, Caprylic/Capric Triglyceride, Tocopherol, Phenoxyethanol" },
+]);
+let lastExample = -1;
+// Example text -> its made-up product name, so the name shows only while the
+// box still holds that example (typing in the box hides it).
+const exampleNames = new Map();
+
+function todaysPickExample() {
   const entries = state.routineMeta?.ingredientCandidates?.entries || [];
   const chosen = entries.find((e) => e.phase === "am" && e.categoryId !== "daytime-photoprotection") || entries[0];
-  return ["Aqua", "Glycerin", chosen?.displayName, "Butylene Glycol", "Panthenol", "Phenoxyethanol"]
-    .filter(Boolean)
-    .filter((v, i, a) => a.indexOf(v) === i)
-    .join(", ");
+  if (!chosen?.displayName) return null;
+  return {
+    name: `Product with today's ${chosen.displayName.toLowerCase()}`,
+    text: ["Aqua", "Glycerin", chosen.displayName, "Butylene Glycol", "Panthenol", "Phenoxyethanol"]
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .join(", "),
+  };
+}
+
+/** Returns the label text of a random sample product, never the same one twice in a row. */
+export function productCheckExample(random = Math.random) {
+  let i = Math.floor(random() * PRODUCT_EXAMPLES.length);
+  if (i === lastExample) i = (i + 1) % PRODUCT_EXAMPLES.length;
+  lastExample = i;
+  const pick = PRODUCT_EXAMPLES[i];
+  const example = pick.text
+    ? { name: pick.name, text: `Ingredients: ${pick.text}` }
+    : todaysPickExample() || { name: PRODUCT_EXAMPLES[0].name, text: `Ingredients: ${PRODUCT_EXAMPLES[0].text}` };
+  exampleNames.set(example.text, example.name);
+  return example.text;
 }
 
 export function productCheckTone(r) {
@@ -53,7 +96,7 @@ export function productCheckCard(meta) {
       )}${r.recognised?.length ? `<p class="pc-found">Recognised: ${escapeHtml(r.recognised.map((x) => x.name).join(", "))}.</p>` : ""}${r.note ? `<p class="pc-note">${escapeHtml(r.note)}</p>` : ""}</div>`
     : "";
   const busy = pc.status === "loading";
-  return `<section class="product-card" id="product-check" style="view-transition-name: product-card" aria-labelledby="pc-title"><div class="pc-head"><span class="pc-badge" aria-hidden="true">${icon("layers", 20)}</span><div><h3 id="pc-title">Already have a product? Check it here</h3><p class="pc-help">Paste the ingredient list from the label. DermaSynth tells you which of today's steps it can fill, and whether it clashes with anything in your routine.</p></div></div><label class="sr-only" for="pc-text">Ingredient list from the product label</label><textarea id="pc-text" data-action="pc-text" rows="4" maxlength="4000" placeholder="Ingredients: Aqua, Glycerin, Niacinamide, Sodium Hyaluronate, …">${escapeHtml(pc.text || "")}</textarea><div class="pc-actions"><button type="button" class="primary-button" data-action="pc-run" ${busy ? "disabled" : ""}>${icon("check", 15)} ${busy ? "Checking…" : "Check this product"}</button><button type="button" class="ghost-button" data-action="pc-example" ${busy ? "disabled" : ""}>Try an example</button>${r ? `<button type="button" class="text-button" data-action="pc-clear">Check another</button>` : ""}</div><p class="pc-tip">Tip: the list is usually on the back of the box or bottle, after "Ingredients".</p>${pc.status === "error" ? `<p class="pc-note">${escapeHtml(pc.error || "The check couldn't run. Try again.")}</p>` : ""}${resultHtml}</section>`;
+  return `<section class="product-card" id="product-check" style="view-transition-name: product-card" aria-labelledby="pc-title"><div class="pc-head"><span class="pc-badge" aria-hidden="true">${icon("layers", 20)}</span><div><h3 id="pc-title">Already have a product? Check it here</h3><p class="pc-help">Paste the ingredient list from the label. DermaSynth tells you which of today's steps it can fill, and whether it clashes with anything in your routine.</p></div></div><label class="sr-only" for="pc-text">Ingredient list from the product label</label><textarea id="pc-text" data-action="pc-text" rows="4" maxlength="4000" placeholder="Ingredients: Aqua, Glycerin, Niacinamide, Sodium Hyaluronate, …">${escapeHtml(pc.text || "")}</textarea>${exampleNames.has(pc.text) ? `<p class="pc-tip pc-sample">Example label: <strong>${escapeHtml(exampleNames.get(pc.text))}</strong> (a made-up product)</p>` : ""}<div class="pc-actions"><button type="button" class="primary-button" data-action="pc-run" ${busy ? "disabled" : ""}>${icon("check", 15)} ${busy ? "Checking…" : "Check this product"}</button><button type="button" class="ghost-button" data-action="pc-example" ${busy ? "disabled" : ""}>Try an example</button>${r ? `<button type="button" class="text-button" data-action="pc-clear">Check another</button>` : ""}</div><p class="pc-tip">Tip: the list is usually on the back of the box or bottle, after "Ingredients".</p>${pc.status === "error" ? `<p class="pc-note">${escapeHtml(pc.error || "The check couldn't run. Try again.")}</p>` : ""}${resultHtml}</section>`;
 }
 
 export function focusProductCheck() {
