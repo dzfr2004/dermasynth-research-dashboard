@@ -117,7 +117,7 @@ export function shell(view) {
           ${state.expertView ? `<button class="refresh-button" type="button" data-action="refresh" aria-label="Refresh environment readings" ${locationUpdating ? "disabled" : ""}>${icon("refresh", 16)} <span>Refresh environment</span></button>` : ""}
         </div>
       </header>
-      <div class="scope-banner" role="note">${icon("shield", 14)}<span><strong>Research prototype, not medical advice.</strong> Patch-test new products first.</span></div>
+      <div class="scope-banner" role="note">${icon("shield", 14)}<span><strong>Research prototype, not medical advice.</strong> Patch-test new products and stop if your skin reacts.</span></div>
       <div class="content"><div class="view" style="view-transition-name: page-view">${view}</div></div>
     </main>
     <div class="toast" role="status" aria-live="polite" id="toast"></div>
