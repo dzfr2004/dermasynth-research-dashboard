@@ -5,6 +5,8 @@ import { planningUvi } from "../lib/uv.mjs";
 import { readingChanges, tomorrowChanges } from "../lib/outlook.mjs";
 import { templateRoutine } from "../lib/safety.mjs";
 import { isPrivateAddress, networkLocation } from "../lib/network-location.mjs";
+import { clientAddress } from "../lib/client-address.mjs";
+import { skyHeadline } from "../ui/sky-headline.js";
 import { prefetchSlotSearches, retrieveSlotCandidates } from "../lib/candidate-retrieval.mjs";
 import { cachedSearch, clearSearchCache } from "../lib/search-cache.mjs";
 import { createConfig } from "../lib/config.mjs";
@@ -117,6 +119,30 @@ await test("imp-09", "Network location: only for the same private network, never
     expect(r.available && r.approximate && r.name === "Seri Iskandar, MY" && r.lat === 4.36 && r.lon === 100.98, JSON.stringify(r));
     expect(urls.every((u) => !u.includes("192.168")), "the visitor's address must never be sent");
   } finally { globalThis.fetch = realFetch; }
+});
+
+await test("imp-09b", "clientAddress reads the real visitor IP from X-Forwarded-For on Vercel by default, so network-location doesn't mistake every public visitor for the local study network", async () => {
+  const realVercel = process.env.VERCEL;
+  const realHops = process.env.TRUST_PROXY_HOPS;
+  delete process.env.TRUST_PROXY_HOPS;
+  try {
+    process.env.VERCEL = "1";
+    const fakeRequest = { socket: { remoteAddress: "127.0.0.1" }, headers: { "x-forwarded-for": "9.9.9.9, 203.0.113.9" } };
+    expect(clientAddress(fakeRequest) === "203.0.113.9", "on Vercel, the real visitor address (the rightmost, Vercel-appended entry) must be read from X-Forwarded-For, not the local socket address");
+    expect(isPrivateAddress(clientAddress(fakeRequest)) === false, "a real public visitor on Vercel must not be classified as a private/local-network address");
+    delete process.env.VERCEL;
+    expect(clientAddress(fakeRequest) === "127.0.0.1", "off Vercel, with no TRUST_PROXY_HOPS set, the header must still be ignored by default");
+  } finally {
+    if (realVercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = realVercel;
+    if (realHops === undefined) delete process.env.TRUST_PROXY_HOPS; else process.env.TRUST_PROXY_HOPS = realHops;
+  }
+});
+
+await test("imp-09c", "Sky headline considers temperature as well as humidity, so a cold humid day isn't called warm", async () => {
+  const noon = new Date("2026-11-23T12:00:00");
+  expect(skyHeadline({ humidity: 96, temperature: 0, uvi: 1, pm25: 21 }, noon) === "Cold and humid today. Keep your skin barrier covered.", "a cold, humid reading must not say \"Warm and humid\"");
+  expect(skyHeadline({ humidity: 90, temperature: 30, uvi: 1, pm25: 10 }, noon) === "Warm and humid. Keep your layers light.", "a genuinely warm, humid reading should still say so");
+  expect(skyHeadline({ humidity: 50, temperature: 5, uvi: 1, pm25: 10 }, noon) === "Cold today. Give your skin extra moisture.", "a cold, dry-ish reading should call out the cold");
 });
 
 await test("imp-10", "Search cache: a repeated or prefetched search is reused, cleared on re-sync, off at 0, failures not kept", async () => {

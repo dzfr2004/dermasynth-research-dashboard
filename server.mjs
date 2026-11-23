@@ -2102,7 +2102,7 @@ async function routeApi(request, response, url, requestId) {
 
   if (request.method === "GET" && url.pathname === "/api/locations/network") {
     enforceLocationSearchRateLimit(request);
-    const result = await networkLocation(config, request.socket.remoteAddress, { reverse: (lat, lon) => reverseLocation(config, lat, lon) });
+    const result = await networkLocation(config, clientAddress(request), { reverse: (lat, lon) => reverseLocation(config, lat, lon) });
     return sendJson(response, 200, { ...result, requestId }, requestId);
   }
 
